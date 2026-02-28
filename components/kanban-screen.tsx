@@ -1,31 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-type SupportType = "Cash" | "Ploughing";
-type Stage =
-  | "pending_scoring"
-  | "scoring_complete"
-  | "pending_approval"
-  | "approved"
-  | "agent_confirmed"
-  | "funds_disbursed";
-
-interface FarmerRequest {
-  id: string;
-  date: string;
-  agent: string;
-  community: string;
-  groupName: string;
-  score: number | null;
-  stage: Stage;
-  supportType: SupportType;
-  farmers: number;
-  onHold: boolean;
-}
+import SlideOverPanel from "@/components/slide-over-panel";
+import type { FarmerRequest, Stage } from "@/components/slide-over-panel";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -177,20 +154,23 @@ function KanbanCard({
   request,
   actionLabel,
   actionActive,
+  onClick,
 }: {
   request: FarmerRequest;
   actionLabel: string;
   actionActive: boolean;
+  onClick: () => void;
 }) {
   const agentShort = request.agent.split(" ").slice(0, 2).join(" ");
 
   return (
     <div
-      className="bg-white rounded-xl p-[14px] mb-3"
+      className="bg-white rounded-xl p-[14px] mb-3 cursor-pointer hover:shadow-md transition-shadow"
       style={{
         boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
         border: request.onHold ? "1.5px dashed #D97706" : "1px solid #F3F4F6",
       }}
+      onClick={onClick}
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -251,6 +231,7 @@ function KanbanCard({
               ? { background: "#16A34A", color: "#fff" }
               : { background: "#F3F4F6", color: "#6B7280" }
           }
+          onClick={(e) => e.stopPropagation()}
         >
           {actionLabel}
         </button>
@@ -290,6 +271,7 @@ function ColumnHeader({ label, color, count }: { label: string; color: string; c
 export default function KanbanScreen() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"All Types" | "Cash" | "Ploughing">("All Types");
+  const [selectedCard, setSelectedCard] = useState<FarmerRequest | null>(null);
 
   const filtered = useMemo(() => {
     return MOCK_REQUESTS.filter((r) => {
@@ -379,6 +361,7 @@ export default function KanbanScreen() {
                         request={r}
                         actionLabel={col.actionLabel}
                         actionActive={col.actionActive}
+                        onClick={() => setSelectedCard(r)}
                       />
                     ))
                   )}
@@ -388,6 +371,11 @@ export default function KanbanScreen() {
           })}
         </div>
       </div>
+
+      {/* Slide-over panel */}
+      {selectedCard && (
+        <SlideOverPanel card={selectedCard} onClose={() => setSelectedCard(null)} />
+      )}
     </div>
   );
 }
