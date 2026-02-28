@@ -376,10 +376,10 @@ export default function KanbanScreen() {
         <SlideOverPanel
           card={selectedCard}
           onClose={() => setSelectedCard(null)}
-          onApprove={(card) => setApproveCard(card)}
-          onHold={(card) => setHoldCard(card)}
-          onScore={(card) => setScoreCard(card)}
-          onDisburse={(card) => setDisburseCard(card)}
+          onApprove={(card) => { setSelectedCard(null); setApproveCard(card); }}
+          onHold={(card) => { setSelectedCard(null); setHoldCard(card); }}
+          onScore={(card) => { setSelectedCard(null); setScoreCard(card); }}
+          onDisburse={(card) => { setSelectedCard(null); setDisburseCard(card); }}
         />
       )}
       {approveCard && <ApprovalModal card={approveCard} onClose={() => setApproveCard(null)} onApprove={handleApprove} />}

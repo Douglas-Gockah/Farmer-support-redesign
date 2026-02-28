@@ -3,13 +3,19 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types (re-exported so kanban-screen can import them)
 // ---------------------------------------------------------------------------
 export type SupportType = "Cash" | "Ploughing";
 export type Stage =
@@ -61,7 +67,10 @@ function ScoreBar({ score }: { score: number }) {
   const pct = Math.max(0, Math.min(100, score));
   return (
     <div className="w-full">
-      <div className="relative h-2.5 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
+      <div
+        className="relative h-2.5 rounded-full"
+        style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}
+      >
         <div
           className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-zinc-500 shadow"
           style={{ left: `calc(${pct}% - 8px)` }}
@@ -109,7 +118,7 @@ function CriterionRow({ label, type, score, max = 10 }: {
 }
 
 // ---------------------------------------------------------------------------
-// Main component
+// Main component — now a Dialog instead of a slide-over
 // ---------------------------------------------------------------------------
 export default function SlideOverPanel({
   card,
@@ -127,7 +136,6 @@ export default function SlideOverPanel({
   onDisburse?: (card: FarmerRequest) => void;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "score_details">("overview");
 
   const stageStyle = STAGE_STYLES[card.stage];
   const supportStyle =
@@ -137,90 +145,69 @@ export default function SlideOverPanel({
   const scoreDisplay = card.score !== null ? `${card.score}%` : "Not yet scored";
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.15)" }}
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <div
-        className="fixed top-0 right-0 z-50 flex flex-col bg-white"
-        style={{
-          width: 420,
-          height: "100vh",
-          overflowY: "auto",
-          boxShadow: "-4px 0 24px rgba(0,0,0,0.10)",
-          animation: "slideIn 200ms ease-out forwards",
-        }}
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        className="p-0 gap-0 flex flex-col"
+        style={{ maxWidth: 580, maxHeight: "85vh", overflow: "hidden" }}
       >
-        {/* ── HEADER ─────────────────────────────────────────────────────── */}
-        <div className="px-6 pt-5 border-b border-border shrink-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="min-w-0 pr-8">
-              <h2 className="text-[16px] font-bold text-foreground leading-snug">{card.groupName}</h2>
-              <p className="text-[12px] text-muted-foreground mt-0.5">
+        {/* ── HEADER ──────────────────────────────────────────────────── */}
+        <DialogHeader className="px-6 pt-5 pb-0 border-b border-border shrink-0">
+          <DialogTitle className="text-[16px] font-bold leading-snug">
+            {card.groupName}
+          </DialogTitle>
+          <DialogDescription asChild>
+            <div className="space-y-0.5 mt-0.5">
+              <p className="text-[12px] text-muted-foreground">
                 {card.community} &middot; {card.farmers} farmers
+                <span className="ml-2 font-mono text-[10px] text-muted-foreground/50">{card.id}</span>
               </p>
-              <p className="text-[10px] font-mono text-muted-foreground/50 mt-0.5">{card.id}</p>
+              {/* Stage + support chips */}
+              <div className="flex items-center gap-2 pt-1 pb-3">
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0"
+                  style={stageStyle}
+                >
+                  {STAGE_LABELS[card.stage]}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0"
+                  style={supportStyle}
+                >
+                  {card.supportType}
+                </Badge>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 rounded-full w-8 h-8"
-              onClick={onClose}
-              aria-label="Close panel"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </Button>
-          </div>
+          </DialogDescription>
 
-          {/* Stage + support chips */}
-          <div className="flex items-center gap-2 mt-2 mb-3">
-            <Badge variant="outline" className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0" style={stageStyle}>
-              {STAGE_LABELS[card.stage]}
-            </Badge>
-            <Badge variant="outline" className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0" style={supportStyle}>
-              {card.supportType}
-            </Badge>
-          </div>
-
-          {/* Tab triggers */}
-          <div className="flex gap-0">
-            {(["overview", "score_details"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="px-4 py-2.5 text-[13px] font-semibold relative transition-colors"
-                style={{ color: activeTab === tab ? "#16A34A" : "#6B7280" }}
+          {/* Tabs — live inside the header border area */}
+          <Tabs defaultValue="overview" className="-mb-px">
+            <TabsList className="bg-transparent rounded-none p-0 h-auto gap-0">
+              <TabsTrigger
+                value="overview"
+                className="rounded-none px-4 py-2.5 text-[13px] font-semibold border-b-2 border-transparent data-[state=active]:border-[#16A34A] data-[state=active]:text-[#16A34A] data-[state=inactive]:text-muted-foreground bg-transparent shadow-none"
               >
-                {tab === "overview" ? "Overview" : "Score Details"}
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-sm transition-transform"
-                  style={{
-                    background: "#16A34A",
-                    transform: activeTab === tab ? "scaleX(1)" : "scaleX(0)",
-                    transformOrigin: "left center",
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="score_details"
+                className="rounded-none px-4 py-2.5 text-[13px] font-semibold border-b-2 border-transparent data-[state=active]:border-[#16A34A] data-[state=active]:text-[#16A34A] data-[state=inactive]:text-muted-foreground bg-transparent shadow-none"
+              >
+                Score Details
+              </TabsTrigger>
+            </TabsList>
 
-        {/* ── BODY (scrollable) ──────────────────────────────────────────── */}
-        <ScrollArea className="flex-1">
-          <div className="px-6 py-5 space-y-5">
-            {activeTab === "overview" && (
-              <>
+            {/* ── BODY (scrollable) ──────────────────────────────────── */}
+            <div style={{ overflowY: "auto", maxHeight: "calc(85vh - 280px)" }}>
+              {/* Overview tab */}
+              <TabsContent value="overview" className="mt-0 px-6 py-5 space-y-5">
                 {/* Group Score */}
                 <section>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">Group Score</p>
+                    <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Group Score
+                    </p>
                     <span className="text-[20px] font-bold text-foreground">{scoreDisplay}</span>
                   </div>
                   {card.score !== null ? (
@@ -234,13 +221,18 @@ export default function SlideOverPanel({
 
                 {/* Support Interests */}
                 <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Support Interests</p>
+                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Support Interests
+                  </p>
                   <div className="space-y-2">
                     {[
                       { label: "Primary",   value: card.supportType },
                       { label: "Secondary", value: card.supportType === "Cash" ? "Ploughing" : "Cash" },
                     ].map((row) => (
-                      <div key={row.label} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2.5">
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2.5"
+                      >
                         <span className="text-[12px] text-muted-foreground">{row.label}</span>
                         <span className="text-[12px] font-semibold text-foreground">{row.value}</span>
                       </div>
@@ -252,9 +244,11 @@ export default function SlideOverPanel({
 
                 {/* Agent */}
                 <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Agent</p>
+                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Agent
+                  </p>
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#F0FDF4] flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-full bg-[#F0FDF4] flex items-center justify-center shrink-0">
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                         <circle cx="8" cy="5" r="3" stroke="#16A34A" strokeWidth="1.5"/>
                         <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round"/>
@@ -271,7 +265,9 @@ export default function SlideOverPanel({
 
                 {/* Voice Note Evidence */}
                 <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Voice Note Evidence</p>
+                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Voice Note Evidence
+                  </p>
                   <div className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3">
                     <Button
                       size="icon"
@@ -296,61 +292,70 @@ export default function SlideOverPanel({
                     <span className="text-[11px] text-muted-foreground shrink-0">0:23</span>
                   </div>
                 </section>
-              </>
-            )}
+              </TabsContent>
 
-            {activeTab === "score_details" && (
-              <section>
-                <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Scoring Criteria</p>
+              {/* Score Details tab */}
+              <TabsContent value="score_details" className="mt-0 px-6 py-5">
+                <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  Scoring Criteria
+                </p>
                 <div className="rounded-xl border border-border px-4">
                   <CriterionRow label="Meeting Attendance"              type="Auto-scored" score={8} />
-                  <CriterionRow label="Group Savings"                  type="Auto-scored" score={7} />
-                  <CriterionRow label="Meeting Minutes Records"        type="Manual"      score={6} />
-                  <CriterionRow label="Financial Contribution Records" type="Manual"      score={9} />
+                  <CriterionRow label="Group Savings"                   type="Auto-scored" score={7} />
+                  <CriterionRow label="Meeting Minutes Records"         type="Manual"      score={6} />
+                  <CriterionRow label="Financial Contribution Records"  type="Manual"      score={9} />
                 </div>
-              </section>
-            )}
-          </div>
-        </ScrollArea>
-
-        {/* ── FOOTER ACTIONS ─────────────────────────────────────────────── */}
-        <div className="border-t border-border px-6 py-4 shrink-0">
-          {card.stage === "pending_scoring" && (
-            <Button className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => onScore && onScore(card)}>
-              Update Scores
-            </Button>
-          )}
-          {card.stage === "pending_approval" && (
-            <div className="flex gap-3">
-              <Button className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => onApprove && onApprove(card)}>
-                Approve Request
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => onHold && onHold(card)}>
-                Place on Hold
-              </Button>
+              </TabsContent>
             </div>
-          )}
-          {card.stage === "agent_confirmed" && (
-            <Button className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => onDisburse && onDisburse(card)}>
-              Disburse Funds
-            </Button>
-          )}
-          {(card.stage === "scoring_complete" || card.stage === "approved" || card.stage === "funds_disbursed") && (
-            <p className="text-[12px] text-center text-muted-foreground">
-              {card.stage === "scoring_complete" && "Scoring complete — awaiting approval review."}
-              {card.stage === "approved" && "This request has been approved."}
-              {card.stage === "funds_disbursed" && "Funds have been successfully disbursed."}
-            </p>
-          )}
-        </div>
-      </div>
 
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to   { transform: translateX(0); }
-        }
-      `}</style>
-    </>
+            {/* ── FOOTER ACTIONS ─────────────────────────────────────── */}
+            <div className="border-t border-border px-6 py-4 shrink-0">
+              {card.stage === "pending_scoring" && (
+                <Button
+                  className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white"
+                  onClick={() => { onClose(); onScore && onScore(card); }}
+                >
+                  Update Scores
+                </Button>
+              )}
+              {card.stage === "pending_approval" && (
+                <div className="flex gap-3">
+                  <Button
+                    className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white"
+                    onClick={() => { onClose(); onApprove && onApprove(card); }}
+                  >
+                    Approve Request
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => { onClose(); onHold && onHold(card); }}
+                  >
+                    Place on Hold
+                  </Button>
+                </div>
+              )}
+              {card.stage === "agent_confirmed" && (
+                <Button
+                  className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white"
+                  onClick={() => { onClose(); onDisburse && onDisburse(card); }}
+                >
+                  Disburse Funds
+                </Button>
+              )}
+              {card.stage === "scoring_complete" && (
+                <p className="text-[12px] text-center text-muted-foreground">Awaiting approver review</p>
+              )}
+              {card.stage === "approved" && (
+                <p className="text-[12px] text-center text-muted-foreground">Awaiting field agent confirmation</p>
+              )}
+              {card.stage === "funds_disbursed" && (
+                <p className="text-[12px] text-center text-muted-foreground">Funds have been disbursed</p>
+              )}
+            </div>
+          </Tabs>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 }
