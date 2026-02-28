@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import DashboardScreen from "@/components/dashboard-screen";
 
 type ActiveScreen = "dashboard" | "kanban";
 
 export default function Home() {
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>("kanban");
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>("dashboard");
 
   return (
     <div className="flex min-h-screen bg-[#F9FAFB]">
@@ -21,11 +22,7 @@ export default function Home() {
 
         {/* Page body */}
         <main className="flex-1 p-6">
-          {activeScreen === "dashboard" && (
-            <div className="flex items-center justify-center h-64 rounded-xl border border-dashed border-gray-300 bg-white">
-              <p className="text-gray-400 text-sm">Dashboard content coming soon</p>
-            </div>
-          )}
+          {activeScreen === "dashboard" && <DashboardScreen />}
           {activeScreen === "kanban" && (
             <div className="flex items-center justify-center h-64 rounded-xl border border-dashed border-gray-300 bg-white">
               <p className="text-gray-400 text-sm">Farmer Support board coming soon</p>
