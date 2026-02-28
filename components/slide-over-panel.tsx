@@ -122,10 +122,14 @@ export default function SlideOverPanel({
   card,
   onClose,
   onApprove,
+  onHold,
+  onScore,
 }: {
   card: FarmerRequest;
   onClose: () => void;
   onApprove?: (card: FarmerRequest) => void;
+  onHold?: (card: FarmerRequest) => void;
+  onScore?: (card: FarmerRequest) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"overview" | "score_details">("overview");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -322,7 +326,10 @@ export default function SlideOverPanel({
         {/* ---------------------------------------------------------------- */}
         <div className="border-t border-gray-100 px-6 py-4">
           {card.stage === "pending_scoring" && (
-            <button className="w-full py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors">
+            <button
+              className="w-full py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors"
+              onClick={() => onScore && onScore(card)}
+            >
               Update Scores
             </button>
           )}
@@ -334,7 +341,10 @@ export default function SlideOverPanel({
               >
                 Approve Request
               </button>
-              <button className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-[13px] font-semibold hover:bg-gray-50 transition-colors">
+              <button
+                className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-[13px] font-semibold hover:bg-gray-50 transition-colors"
+                onClick={() => onHold && onHold(card)}
+              >
                 Place on Hold
               </button>
             </div>

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
+import { HoldModal, ScoringModal } from "@/components/hold-scoring-modals";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -157,12 +158,14 @@ function KanbanCard({
   actionActive,
   onClick,
   onApprove,
+  onScore,
 }: {
   request: FarmerRequest;
   actionLabel: string;
   actionActive: boolean;
   onClick: () => void;
   onApprove?: (e: React.MouseEvent) => void;
+  onScore?: (e: React.MouseEvent) => void;
 }) {
   const agentShort = request.agent.split(" ").slice(0, 2).join(" ");
 
@@ -237,6 +240,7 @@ function KanbanCard({
           onClick={(e) => {
             e.stopPropagation();
             if (actionLabel === "Approve" && onApprove) onApprove(e);
+            if (actionLabel === "Score" && onScore) onScore(e);
           }}
         >
           {actionLabel}
@@ -280,14 +284,35 @@ export default function KanbanScreen() {
   const [filterType, setFilterType] = useState<"All Types" | "Cash" | "Ploughing">("All Types");
   const [selectedCard, setSelectedCard] = useState<FarmerRequest | null>(null);
   const [approveCard, setApproveCard] = useState<FarmerRequest | null>(null);
+  const [holdCard, setHoldCard] = useState<FarmerRequest | null>(null);
+  const [scoreCard, setScoreCard] = useState<FarmerRequest | null>(null);
 
   function handleApprove(id: string) {
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, stage: "approved" as Stage } : r))
     );
-    // Also update selectedCard if it's the same one
     setSelectedCard((prev) => (prev?.id === id ? { ...prev, stage: "approved" as Stage } : prev));
     setApproveCard(null);
+  }
+
+  function handleHold(id: string) {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, onHold: true } : r))
+    );
+    setSelectedCard((prev) => (prev?.id === id ? { ...prev, onHold: true } : prev));
+    setHoldCard(null);
+  }
+
+  function handleScore(id: string, score: number) {
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, stage: "scoring_complete" as Stage, score } : r
+      )
+    );
+    setSelectedCard((prev) =>
+      prev?.id === id ? { ...prev, stage: "scoring_complete" as Stage, score } : prev
+    );
+    setScoreCard(null);
   }
 
   const filtered = useMemo(() => {
@@ -380,6 +405,7 @@ export default function KanbanScreen() {
                         actionActive={col.actionActive}
                         onClick={() => setSelectedCard(r)}
                         onApprove={(e) => { e.stopPropagation(); setApproveCard(r); }}
+                        onScore={(e) => { e.stopPropagation(); setScoreCard(r); }}
                       />
                     ))
                   )}
@@ -396,6 +422,8 @@ export default function KanbanScreen() {
           card={selectedCard}
           onClose={() => setSelectedCard(null)}
           onApprove={(card) => setApproveCard(card)}
+          onHold={(card) => setHoldCard(card)}
+          onScore={(card) => setScoreCard(card)}
         />
       )}
 
@@ -405,6 +433,24 @@ export default function KanbanScreen() {
           card={approveCard}
           onClose={() => setApproveCard(null)}
           onApprove={handleApprove}
+        />
+      )}
+
+      {/* Hold modal */}
+      {holdCard && (
+        <HoldModal
+          card={holdCard}
+          onClose={() => setHoldCard(null)}
+          onConfirm={handleHold}
+        />
+      )}
+
+      {/* Scoring modal */}
+      {scoreCard && (
+        <ScoringModal
+          card={scoreCard}
+          onClose={() => setScoreCard(null)}
+          onConfirm={handleScore}
         />
       )}
     </div>
