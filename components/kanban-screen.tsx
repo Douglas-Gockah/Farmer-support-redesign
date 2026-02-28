@@ -152,16 +152,59 @@ function avatarColor(name: string) {
 // ---------------------------------------------------------------------------
 // Column header
 // ---------------------------------------------------------------------------
-function ColumnHeader({ label, dotColor, count }: { label: string; dotColor: string; count: number }) {
+type ScoreSort = "default" | "desc" | "asc";
+
+function ColumnHeader({
+  label, dotColor, count, scoreSort, onCycleSort,
+}: {
+  label: string;
+  dotColor: string;
+  count: number;
+  scoreSort?: ScoreSort;
+  onCycleSort?: () => void;
+}) {
   return (
     <div className="flex items-center justify-between px-3 py-2.5 rounded-xl mb-2" style={{ background: "#F3F4F6" }}>
       <div className="flex items-center gap-2">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dotColor }} />
         <span className="text-[13px] font-bold text-gray-800">{label}</span>
       </div>
-      <span className="flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold text-white shrink-0" style={{ background: dotColor }}>
-        {count}
-      </span>
+      <div className="flex items-center gap-1.5">
+        {onCycleSort && (
+          <div className="relative group">
+            <button
+              onClick={onCycleSort}
+              className="flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-gray-200"
+              style={{ color: scoreSort !== "default" ? "#2563EB" : "#9CA3AF" }}
+              aria-label={scoreSort === "desc" ? "Sorted: Highest first" : scoreSort === "asc" ? "Sorted: Lowest first" : "Sort by score"}
+            >
+              {scoreSort === "desc" ? (
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 2v10M4 9l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : scoreSort === "asc" ? (
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 12V2M4 5l3-3 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M4 5l3-3 3 3M4 9l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+            {/* Tooltip */}
+            <div
+              className="absolute right-0 top-8 z-20 px-2 py-1 rounded-md text-[11px] font-semibold text-white whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: "#1F2937" }}
+            >
+              {scoreSort === "desc" ? "Highest first" : scoreSort === "asc" ? "Lowest first" : "Sort by score"}
+            </div>
+          </div>
+        )}
+        <span className="flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold text-white shrink-0" style={{ background: dotColor }}>
+          {count}
+        </span>
+      </div>
     </div>
   );
 }
@@ -782,6 +825,11 @@ export default function KanbanScreen() {
   const [scoreCard,    setScoreCard]    = useState<FarmerRequest | null>(null);
   const [disburseCard, setDisburseCard] = useState<FarmerRequest | null>(null);
   const [toasts, setToasts]             = useState<ToastMessage[]>([]);
+  const [scoreSort, setScoreSort]       = useState<"default" | "desc" | "asc">("default");
+
+  function cycleScoreSort() {
+    setScoreSort((s) => s === "default" ? "desc" : s === "desc" ? "asc" : "default");
+  }
 
   function showToast(message: string) {
     const id = Date.now();
@@ -1196,11 +1244,26 @@ export default function KanbanScreen() {
       <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
         <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
           {COLUMNS.map((col) => {
-            const cards = filtered.filter((r) => r.stage === col.id);
+            let cards = filtered.filter((r) => r.stage === col.id);
+            // Apply score sort only to pending_approval
+            if (col.id === "pending_approval" && scoreSort !== "default") {
+              cards = [...cards].sort((a, b) => {
+                const sa = a.score ?? -1;
+                const sb = b.score ?? -1;
+                return scoreSort === "desc" ? sb - sa : sa - sb;
+              });
+            }
+            const isPendingCol = col.id === "pending_approval";
             return (
               <div key={col.id} style={{ width: 288, minWidth: 288, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
                 <div style={{ flexShrink: 0 }}>
-                  <ColumnHeader label={col.label} dotColor={col.dotColor} count={cards.length} />
+                  <ColumnHeader
+                    label={col.label}
+                    dotColor={col.dotColor}
+                    count={cards.length}
+                    scoreSort={isPendingCol ? scoreSort : undefined}
+                    onCycleSort={isPendingCol ? cycleScoreSort : undefined}
+                  />
                 </div>
                 <ScrollArea className="flex-1 min-h-0">
                   <div style={{ paddingBottom: 16 }}>
