@@ -395,18 +395,19 @@ function ScoreSlider({ label, value, onChange }: {
 }
 
 
-function ScoreBar({ score }: { score: number }) {
+function ScoreBadge({ score }: { score: number }) {
   const pct = Math.max(0, Math.min(100, score));
+  let bg = "#FEE2E2", color = "#DC2626";
+  if (pct >= 90) { bg = "#BBF7D0"; color = "#166534"; }
+  else if (pct >= 70) { bg = "#DCFCE7"; color = "#16A34A"; }
+  else if (pct >= 40) { bg = "#FEF3C7"; color = "#D97706"; }
   return (
-    <div className="w-full mb-3">
-      <div className="relative h-1.5 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
-        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-gray-500 shadow-sm"
-          style={{ left: `calc(${pct}% - 6px)` }} />
-      </div>
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>Poor</span><span>Fair</span><span>Good</span>
-      </div>
-    </div>
+    <span
+      className="inline-flex items-center h-5 px-1.5 rounded-full text-[11px] font-bold shrink-0"
+      style={{ background: bg, color }}
+    >
+      {pct}%
+    </span>
   );
 }
 
@@ -460,11 +461,16 @@ function KanbanCard({
           <p className="text-[15px] font-semibold text-gray-900 leading-snug">{r.groupName}</p>
         </div>
 
-        {/* Row 2: subtitle */}
-        <p className="text-[12px] font-medium text-gray-500 mb-3 truncate">{r.community} &middot; {r.farmers} farmers</p>
-
-        {/* Score bar — only on pending_approval */}
-        {isPending && r.score !== null && <ScoreBar score={r.score} />}
+        {/* Row 2: subtitle + inline score badge */}
+        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+          <p className="text-[12px] font-medium text-gray-500 truncate">{r.community} &middot; {r.farmers} farmers</p>
+          {r.score !== null && (isPending || isAgentConf || isFinance || isDisbursed) && (
+            <>
+              <span className="text-[12px] text-gray-400">&middot;</span>
+              <ScoreBadge score={r.score} />
+            </>
+          )}
+        </div>
 
         {/* Support type badges */}
         {(isSynced || isPending || isRejected) && (
