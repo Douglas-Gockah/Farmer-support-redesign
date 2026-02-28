@@ -336,14 +336,15 @@ export default function KanbanScreen() {
                   display: "flex",
                   flexDirection: "column",
                   height: "100%",
+                  overflow: "hidden",
                 }}
               >
                 {/* Column header — fixed height, never shrinks */}
                 <div style={{ flexShrink: 0 }}>
                   <ColumnHeader label={col.label} color={col.color} count={cards.length} />
                 </div>
-                {/* Card list — scrolls vertically */}
-                <ScrollArea style={{ flex: 1 }}>
+                {/* Card list — scrolls vertically within the column's flex-allocated height */}
+                <ScrollArea className="flex-1 min-h-0">
                   <div style={{ paddingBottom: 16 }}>
                     {cards.length === 0 ? (
                       <div className="flex items-center justify-center h-20">
