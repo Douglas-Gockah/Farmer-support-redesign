@@ -6,6 +6,7 @@ import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage, SupportType } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
 import DisbursementModal from "@/components/disbursement-modal";
+import ManagerConfirmationModal from "@/components/manager-confirmation-modal";
 import { ToastContainer, ToastMessage } from "@/components/toast-notification";
 
 // ---------------------------------------------------------------------------
@@ -130,7 +131,7 @@ const COLUMNS: ColDef[] = [
   { id: "synced",               label: "Synced Requests",        dotColor: "#D97706", ctaLabel: "Score",    ctaStages: ["synced"] },
   { id: "pending_approval",     label: "Pending Approval",       dotColor: "#2563EB", ctaLabel: "Review",   ctaStages: ["pending_approval"] },
   { id: "rejected",             label: "Rejected",               dotColor: "#DC2626", ctaLabel: "",         ctaStages: [] },
-  { id: "agent_confirmation",   label: "Agent Confirmation",     dotColor: "#16A34A", ctaLabel: "",         ctaStages: [] },
+  { id: "agent_confirmation",   label: "Manager Confirmation",   dotColor: "#16A34A", ctaLabel: "Confirm", ctaStages: ["agent_confirmation"] },
   { id: "finance_disbursement", label: "Finance & Disbursement", dotColor: "#7C3AED", ctaLabel: "Disburse", ctaStages: ["finance_disbursement"] },
   { id: "disbursed",            label: "Disbursed",              dotColor: "#6B7280", ctaLabel: "",         ctaStages: [] },
 ];
@@ -570,7 +571,7 @@ function KanbanCard({
 
         {/* Agent confirmation waiting text */}
         {isAgentConf && (
-          <p className="text-[11px] font-medium italic text-gray-500 mb-3">Awaiting agent confirmation</p>
+          <p className="text-[11px] font-medium italic text-gray-500 mb-3">Awaiting manager confirmation</p>
         )}
 
         {/* Row: assignee + date (all stages except agent_conf and disbursed which use their own layout) */}
@@ -823,7 +824,8 @@ export default function KanbanScreen() {
   const [selectedCard, setSelectedCard] = useState<FarmerRequest | null>(null);
   const [reviewCard,   setReviewCard]   = useState<FarmerRequest | null>(null);
   const [scoreCard,    setScoreCard]    = useState<FarmerRequest | null>(null);
-  const [disburseCard, setDisburseCard] = useState<FarmerRequest | null>(null);
+  const [disburseCard,  setDisburseCard]  = useState<FarmerRequest | null>(null);
+  const [managerCard,   setManagerCard]   = useState<FarmerRequest | null>(null);
   const [toasts, setToasts]             = useState<ToastMessage[]>([]);
   const [scoreSort, setScoreSort]       = useState<"default" | "desc" | "asc">("default");
 
@@ -845,11 +847,18 @@ export default function KanbanScreen() {
       approvedAmountPerFarmer: amountPerFarmer, approvedLandSizePerFarmer: landSizePerFarmer,
     }));
     setReviewCard(null);
-    showToast("Request moved to Agent Confirmation");
+    showToast("Request moved to Manager Confirmation");
   }
 
-  function handleHeld(id: string, comment: string) {
-    setRequests((prev) => prev.map((r) => r.id !== id ? r : { ...r, onHold: true, holdComment: comment }));
+  function handleManagerConfirmed(id: string, momoNumber: string, momoName: string) {
+    setRequests((prev) => prev.map((r) => r.id !== id ? r : {
+      ...r, stage: "finance_disbursement" as Stage, momoNumber, momoName,
+    }));
+    setManagerCard(null);
+    showToast("Manager confirmation complete — request moved to Finance & Disbursement");
+  }
+
+  function handleHeld(id: string, comment: string) {    setRequests((prev) => prev.map((r) => r.id !== id ? r : { ...r, onHold: true, holdComment: comment }));
     setReviewCard(null);
     showToast("Request placed on hold");
   }
@@ -905,6 +914,7 @@ export default function KanbanScreen() {
   function ctaAction(r: FarmerRequest, stage: Stage) {
     if (stage === "synced")               { setScoreCard(r); }
     if (stage === "pending_approval")     { setReviewCard(r); }
+    if (stage === "agent_confirmation")   { setManagerCard(r); }
     if (stage === "finance_disbursement") { setDisburseCard(r); }
   }
 
@@ -1292,6 +1302,13 @@ export default function KanbanScreen() {
       </div>
 
       {/* Modals + panels */}
+      {managerCard && (
+        <ManagerConfirmationModal
+          card={managerCard}
+          onClose={() => setManagerCard(null)}
+          onConfirmed={handleManagerConfirmed}
+        />
+      )}
       {selectedCard && (
         <SlideOverPanel
           card={selectedCard}

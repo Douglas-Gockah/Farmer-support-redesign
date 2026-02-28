@@ -104,14 +104,6 @@ function SupportOptionCard({
               <p className="text-[10px] text-muted-foreground">Total amount</p>
               <p className="text-[13px] font-semibold">GHS {((interest.amountPerFarmer ?? 0) * farmers).toFixed(2)}</p>
             </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground">MoMo number</p>
-              <p className="text-[13px] font-semibold font-mono">{interest.momoNumber}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-[10px] text-muted-foreground">MoMo name</p>
-              <p className="text-[13px] font-semibold">{interest.momoName}</p>
-            </div>
           </>
         ) : (
           <>
