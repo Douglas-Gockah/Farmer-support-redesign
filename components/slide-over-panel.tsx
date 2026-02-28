@@ -1,21 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types (exported for use in kanban-screen)
 // ---------------------------------------------------------------------------
 export type SupportType = "Cash" | "Ploughing";
 
@@ -30,11 +22,9 @@ export type Stage =
 export interface SupportInterest {
   rank: "Primary" | "Secondary";
   type: SupportType;
-  // Cash fields
   amountPerFarmer?: number;
   momoNumber?: string;
   momoName?: string;
-  // Ploughing fields
   landSizePerFarmer?: number;
 }
 
@@ -62,66 +52,30 @@ export interface FarmerRequest {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Section card wrapper
 // ---------------------------------------------------------------------------
-const STAGE_LABELS: Record<Stage, string> = {
-  synced:                "Synced",
-  pending_approval:      "Pending Approval",
-  rejected:              "Rejected",
-  agent_confirmation:    "Agent Confirmation",
-  finance_disbursement:  "Finance Review",
-  disbursed:             "Disbursed",
-};
-
-const STAGE_STYLES: Record<Stage, React.CSSProperties> = {
-  synced:               { background: "#FEF3C7", color: "#D97706" },
-  pending_approval:     { background: "#DBEAFE", color: "#2563EB" },
-  rejected:             { background: "#FEE2E2", color: "#DC2626" },
-  agent_confirmation:   { background: "#DCFCE7", color: "#16A34A" },
-  finance_disbursement: { background: "#EDE9FE", color: "#7C3AED" },
-  disbursed:            { background: "#F3F4F6", color: "#6B7280" },
-};
-
-// ---------------------------------------------------------------------------
-// ScoreBar
-// ---------------------------------------------------------------------------
-function ScoreBar({ score }: { score: number }) {
-  const pct = Math.max(0, Math.min(100, score));
+function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="w-full">
-      <div className="relative h-2.5 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
-        <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-zinc-500 shadow" style={{ left: `calc(${pct}% - 8px)` }} />
-      </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-        <span>Poor</span><span>Fair</span><span>Good</span>
-      </div>
+    <div className={`rounded-xl border border-gray-200 bg-white p-4 ${className}`}>
+      {children}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// CriterionRow
+// Info row for cost breakdown
 // ---------------------------------------------------------------------------
-function CriterionRow({ label, type, score, max = 10 }: { label: string; type: "Auto-scored" | "Manual"; score: number; max?: number }) {
-  const pct = (score / max) * 100;
+function InfoRow({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className="py-3 border-b border-border last:border-0">
-      <div className="flex items-center justify-between mb-1.5">
-        <div>
-          <p className="text-[13px] font-medium text-foreground">{label}</p>
-          <Badge variant="outline" className="text-[10px] font-semibold border-0 px-1.5 py-0.5 mt-0.5" style={type === "Auto-scored" ? { background: "#DBEAFE", color: "#2563EB" } : { background: "#FEF3C7", color: "#D97706" }}>
-            {type}
-          </Badge>
-        </div>
-        <span className="text-[13px] font-bold text-muted-foreground">{score}/{max}</span>
-      </div>
-      <Progress value={pct} className="h-1.5 [&>div]:bg-[#16A34A]" />
+    <div className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+      <span className="text-[12px] text-gray-400">{label}</span>
+      <span className={`text-[13px] ${bold ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}>{value}</span>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Main component
+// Main
 // ---------------------------------------------------------------------------
 export default function SlideOverPanel({
   card,
@@ -136,142 +90,220 @@ export default function SlideOverPanel({
   onReview?: (card: FarmerRequest) => void;
   onDisburse?: (card: FarmerRequest) => void;
 }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const stageStyle = STAGE_STYLES[card.stage];
-  const scoreDisplay = card.score !== null ? `${card.score}%` : "Not yet scored";
+  // Close on Escape key
+  useEffect(() => {
+    function handler(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const primaryInterest = card.supportInterests.find((si) => si.rank === "Primary");
+  const isCash = card.approvedSupportType === "Cash" || primaryInterest?.type === "Cash";
+
+  const totalAmount = isCash
+    ? (card.approvedAmountPerFarmer ?? primaryInterest?.amountPerFarmer ?? 0) * card.farmers
+    : null;
+
+  const momoNumber = card.momoNumber ?? primaryInterest?.momoNumber ?? "—";
+  const momoName   = card.momoName   ?? primaryInterest?.momoName   ?? "—";
+
+  const isFinance = card.stage === "finance_disbursement";
+  const disbursed = card.stage === "disbursed";
+
+  // CTA wiring
+  function handleCta() {
+    if (card.stage === "synced")               { onClose(); onScore?.(card); }
+    if (card.stage === "pending_approval")     { onClose(); onReview?.(card); }
+    if (card.stage === "finance_disbursement") { onClose(); onDisburse?.(card); }
+  }
+
+  const ctaLabel =
+    card.stage === "synced"               ? "Begin Review" :
+    card.stage === "pending_approval"     ? "Approve Application" :
+    card.stage === "finance_disbursement" ? "Verify MoMo & Disburse" :
+    null;
+
+  const ctaLocked = card.stage === "agent_confirmation" || disbursed;
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="p-0 gap-0 flex flex-col" style={{ maxWidth: 580, maxHeight: "85vh", overflow: "hidden" }}>
-        <DialogHeader className="px-6 pt-5 pb-0 border-b border-border shrink-0">
-          <DialogTitle className="text-[16px] font-bold leading-snug">{card.groupName}</DialogTitle>
-          <DialogDescription asChild>
-            <div className="space-y-0.5 mt-0.5">
-              <p className="text-[12px] text-muted-foreground">
-                {card.community} &middot; {card.farmers} farmers
-                <span className="ml-2 font-mono text-[10px] text-muted-foreground/50">{card.id}</span>
-              </p>
-              <div className="flex items-center gap-2 pt-1 pb-3">
-                <Badge variant="outline" className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0" style={stageStyle}>
-                  {STAGE_LABELS[card.stage]}
-                </Badge>
-                {card.supportInterests.map((si) => (
-                  <Badge key={si.rank} variant="outline" className="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0"
-                    style={si.type === "Cash" ? { background: "#EFF6FF", color: "#2563EB" } : { background: "#F3E8FF", color: "#7C3AED" }}>
-                    {si.type}
-                  </Badge>
-                ))}
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40"
+        style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}
+        onClick={onClose}
+        aria-hidden
+      />
+
+      {/* Drawer */}
+      <div
+        className="fixed top-0 right-0 z-50 flex flex-col bg-white"
+        style={{
+          width: "min(480px, 45vw)",
+          minWidth: 360,
+          height: "100vh",
+          boxShadow: "-6px 0 32px rgba(0,0,0,0.12)",
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+          <div className="min-w-0 pr-4">
+            <h2 className="text-[17px] font-bold text-gray-900 leading-snug">{card.groupName}</h2>
+            <p className="text-[12px] text-gray-400 mt-0.5">{card.community}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors shrink-0"
+            aria-label="Close panel"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+
+          {/* 1. Summary card */}
+          <SectionCard>
+            <p className="text-[12px] font-bold text-gray-900 mb-3">{card.groupName}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="6" cy="5" r="2.5" stroke="#6B7280" strokeWidth="1.3"/>
+                    <circle cx="11" cy="5" r="2.5" stroke="#6B7280" strokeWidth="1.3"/>
+                    <path d="M1 14c0-2.761 2.015-4 5-4" stroke="#6B7280" strokeWidth="1.3" strokeLinecap="round"/>
+                    <path d="M15 14c0-2.761-2.015-4-5-4" stroke="#6B7280" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Farmers</p>
+                  <p className="text-[15px] font-bold text-gray-900">{card.farmers}</p>
+                </div>
               </div>
-            </div>
-          </DialogDescription>
-
-          <Tabs defaultValue="overview" className="-mb-px">
-            <TabsList className="bg-transparent rounded-none p-0 h-auto gap-0">
-              <TabsTrigger value="overview" className="rounded-none px-4 py-2.5 text-[13px] font-semibold border-b-2 border-transparent data-[state=active]:border-[#16A34A] data-[state=active]:text-[#16A34A] data-[state=inactive]:text-muted-foreground bg-transparent shadow-none">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="score_details" className="rounded-none px-4 py-2.5 text-[13px] font-semibold border-b-2 border-transparent data-[state=active]:border-[#16A34A] data-[state=active]:text-[#16A34A] data-[state=inactive]:text-muted-foreground bg-transparent shadow-none">
-                Score Details
-              </TabsTrigger>
-            </TabsList>
-
-            <div style={{ overflowY: "auto", maxHeight: "calc(85vh - 280px)" }}>
-              <TabsContent value="overview" className="mt-0 px-6 py-5 space-y-5">
-                <section>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">Group Score</p>
-                    <span className="text-[20px] font-bold text-foreground">{scoreDisplay}</span>
+              {totalAmount !== null && (
+                <div className="flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <rect x="1" y="4" width="14" height="9" rx="2" stroke="#6B7280" strokeWidth="1.3"/>
+                      <path d="M1 7h14" stroke="#6B7280" strokeWidth="1.3"/>
+                    </svg>
                   </div>
-                  {card.score !== null ? <ScoreBar score={card.score} /> : <div className="h-2.5 rounded-full bg-muted" />}
-                </section>
-
-                <Separator />
-
-                <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Support Interests</p>
-                  <div className="space-y-2">
-                    {card.supportInterests.map((si) => (
-                      <div key={si.rank} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2.5">
-                        <span className="text-[12px] text-muted-foreground">{si.rank}</span>
-                        <span className="text-[12px] font-semibold text-foreground">{si.type} Support</span>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="text-[10px] text-gray-400">Total amount</p>
+                    <p className="text-[15px] font-bold text-gray-900">GHS {totalAmount.toLocaleString()}</p>
                   </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Agent</p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#F0FDF4] flex items-center justify-center shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#16A34A" strokeWidth="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-foreground">{card.agent}</p>
-                      <p className="text-[11px] text-muted-foreground">Requested: {card.date}</p>
-                    </div>
-                  </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Voice Note Evidence</p>
-                  <div className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3">
-                    <Button size="icon" className="w-9 h-9 rounded-full shrink-0 bg-[#16A34A] hover:bg-[#15803D]" onClick={() => setIsPlaying(!isPlaying)} aria-label={isPlaying ? "Pause" : "Play"}>
-                      {isPlaying ? <svg width="12" height="12" viewBox="0 0 12 12" fill="white"><rect x="2" y="1" width="3" height="10" rx="1"/><rect x="7" y="1" width="3" height="10" rx="1"/></svg>
-                        : <svg width="12" height="12" viewBox="0 0 12 12" fill="white"><path d="M3 2l7 4-7 4V2z"/></svg>}
-                    </Button>
-                    <div className="flex-1"><Progress value={35} className="h-1.5 [&>div]:bg-[#16A34A]" /></div>
-                    <span className="text-[11px] text-muted-foreground shrink-0">0:23</span>
-                  </div>
-                </section>
-              </TabsContent>
-
-              <TabsContent value="score_details" className="mt-0 px-6 py-5">
-                <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Scoring Criteria</p>
-                <div className="rounded-xl border border-border px-4">
-                  <CriterionRow label="Meeting Attendance"             type="Auto-scored" score={8} />
-                  <CriterionRow label="Group Savings"                  type="Auto-scored" score={7} />
-                  <CriterionRow label="Meeting Minutes Records"        type="Manual"      score={6} />
-                  <CriterionRow label="Financial Contribution Records" type="Manual"      score={9} />
-                </div>
-              </TabsContent>
-            </div>
-
-            <div className="border-t border-border px-6 py-4 shrink-0">
-              {card.stage === "synced" && (
-                <Button className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => { onClose(); onScore && onScore(card); }}>
-                  Score Request
-                </Button>
-              )}
-              {card.stage === "pending_approval" && (
-                <Button className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => { onClose(); onReview && onReview(card); }}>
-                  Review &amp; Decide
-                </Button>
-              )}
-              {card.stage === "finance_disbursement" && (
-                <Button className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => { onClose(); onDisburse && onDisburse(card); }}>
-                  Disburse Funds
-                </Button>
-              )}
-              {card.stage === "agent_confirmation" && (
-                <p className="text-[12px] text-center text-muted-foreground">Awaiting field agent confirmation</p>
-              )}
-              {card.stage === "rejected" && (
-                <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3">
-                  <p className="text-[12px] font-semibold text-red-700 mb-0.5">Rejection reason</p>
-                  <p className="text-[12px] text-red-600">{card.rejectionComment || "No reason provided."}</p>
                 </div>
               )}
-              {card.stage === "disbursed" && (
-                <p className="text-[12px] text-center text-muted-foreground">Funds have been disbursed &middot; {card.transactionId}</p>
-              )}
             </div>
-          </Tabs>
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
+          </SectionCard>
+
+          {/* 2. Wallet Verification card (for finance / disbursement stages) */}
+          {(isFinance || disbursed) && (
+            <SectionCard>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-bold text-gray-900">Wallet Verification</p>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: "#FEF3C7", color: "#D97706" }}>
+                  MTN | MoMo
+                </span>
+              </div>
+              {/* Phone number display */}
+              <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3" style={{ background: "#F3F4F6" }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="4" y="1" width="8" height="14" rx="2" stroke="#6B7280" strokeWidth="1.3"/>
+                  <circle cx="8" cy="12" r="0.8" fill="#6B7280"/>
+                </svg>
+                <span className="text-[14px] font-semibold font-mono text-gray-800">{momoNumber}</span>
+              </div>
+              {!disbursed && (
+                <button
+                  className="w-full h-9 rounded-lg border-2 text-[13px] font-semibold transition-colors hover:bg-green-50"
+                  style={{ borderColor: "#16A34A", color: "#16A34A", background: "transparent" }}
+                >
+                  Check Wallet Name against Database →
+                </button>
+              )}
+            </SectionCard>
+          )}
+
+          {/* 3. Cost Breakdown card */}
+          <SectionCard>
+            <p className="text-[13px] font-bold text-gray-900 mb-1">Cost Breakdown</p>
+            <div>
+              <InfoRow label="Community"   value={card.community} />
+              <InfoRow label="Farmers"     value={`${card.farmers} members`} />
+              {isCash && (
+                <>
+                  <InfoRow label="Amount per farmer" value={`GHS ${(card.approvedAmountPerFarmer ?? primaryInterest?.amountPerFarmer ?? 0).toFixed(2)}`} />
+                  <InfoRow label="Total disbursement" value={`GHS ${(totalAmount ?? 0).toLocaleString()}`} bold />
+                </>
+              )}
+              {!isCash && primaryInterest?.landSizePerFarmer && (
+                <>
+                  <InfoRow label="Land per farmer" value={`${primaryInterest.landSizePerFarmer} ac`} />
+                  <InfoRow label="Total land" value={`${(primaryInterest.landSizePerFarmer * card.farmers).toFixed(1)} ac`} bold />
+                </>
+              )}
+              {momoName !== "—" && <InfoRow label="MoMo name" value={momoName} />}
+              {card.score !== null && <InfoRow label="Score" value={`${card.score}%`} />}
+              {card.transactionId && <InfoRow label="Transaction ID" value={card.transactionId} bold />}
+              {card.disbursedDate && <InfoRow label="Disbursed on" value={card.disbursedDate} />}
+            </div>
+          </SectionCard>
+
+          {/* Hold warning */}
+          {card.onHold && card.holdComment && (
+            <div className="rounded-xl border border-amber-200 px-4 py-3" style={{ background: "#FFFBEB" }}>
+              <p className="text-[11px] font-bold text-amber-700 mb-0.5">On hold</p>
+              <p className="text-[12px] text-amber-600">{card.holdComment}</p>
+            </div>
+          )}
+
+          {/* Rejection reason */}
+          {card.stage === "rejected" && card.rejectionComment && (
+            <div className="rounded-xl border border-red-200 px-4 py-3" style={{ background: "#FEF2F2" }}>
+              <p className="text-[11px] font-bold text-red-700 mb-0.5">Rejected</p>
+              <p className="text-[12px] text-red-600">{card.rejectionComment}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky footer */}
+        <div className="px-5 py-4 border-t border-gray-100 shrink-0">
+          {ctaLabel && !ctaLocked ? (
+            <button
+              onClick={handleCta}
+              className="w-full h-11 rounded-xl text-[14px] font-bold text-white flex items-center justify-center gap-2 transition-colors"
+              style={{ background: "#16A34A" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#15803D")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#16A34A")}
+            >
+              {isFinance && (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.41 1.41M11.36 11.36l1.42 1.42M11.36 4.64l1.42-1.42M3.22 12.78l1.41-1.41" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                  <circle cx="8" cy="8" r="3" stroke="white" strokeWidth="1.4"/>
+                </svg>
+              )}
+              {card.stage === "finance_disbursement" ? "Disburse Funds (verify first)" : ctaLabel}
+            </button>
+          ) : ctaLocked ? (
+            <button
+              disabled
+              className="w-full h-11 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+              style={{ background: "#E5E7EB", color: "#9CA3AF" }}
+            >
+              {disbursed ? "Funds disbursed" : "Awaiting confirmation"}
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="w-full h-11 rounded-xl border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

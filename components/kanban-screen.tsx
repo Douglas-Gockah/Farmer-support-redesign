@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Header from "@/components/header";
 import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage, SupportType } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
@@ -17,7 +13,6 @@ import { ToastContainer, ToastMessage } from "@/components/toast-notification";
 // Mock data
 // ---------------------------------------------------------------------------
 const MOCK_REQUESTS: FarmerRequest[] = [
-  // Col 1 — Synced Requests
   {
     id: "FS-2024-001", date: "12 Jan 2024", agent: "Kofi Mensah", community: "Tamale Metro",
     groupName: "Savannah Growers Union", score: null, stage: "synced", farmers: 22,
@@ -36,8 +31,6 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 100, momoNumber: "0200-123-456", momoName: "Northern Coop" },
     ],
   },
-
-  // Col 2 — Pending Approval
   {
     id: "FS-2024-003", date: "18 Jan 2024", agent: "Yaw Darko", community: "Bole",
     groupName: "Bole Farmers Alliance", score: 62, stage: "pending_approval", farmers: 14,
@@ -56,8 +49,6 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 200, momoNumber: "0244-987-654", momoName: "WE Crop Circle" },
     ],
   },
-
-  // Col 3 — Rejected
   {
     id: "FS-2024-005", date: "10 Jan 2024", agent: "Kwame Boateng", community: "Tamale Metro",
     groupName: "Metro Harvest Group", score: 38, stage: "rejected", farmers: 9,
@@ -67,8 +58,6 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 0.5 },
     ],
   },
-
-  // Col 4 — Agent Confirmation
   {
     id: "FS-2024-006", date: "22 Jan 2024", agent: "Efua Nkrumah", community: "Sawla-Tuna-Kalba",
     groupName: "Kalba Green Initiative", score: 84, stage: "agent_confirmation", farmers: 27,
@@ -79,8 +68,6 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
     ],
   },
-
-  // Col 5 — Finance Review & Disbursement
   {
     id: "FS-2024-007", date: "25 Jan 2024", agent: "Nana Adjei", community: "Bole",
     groupName: "Bole Plough Collective", score: 91, stage: "finance_disbursement", farmers: 16,
@@ -103,8 +90,6 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.2 },
     ],
   },
-
-  // Col 6 — Disbursed
   {
     id: "FS-2024-008", date: "30 Jan 2024", agent: "Akosua Frimpong", community: "Tamale Metro",
     groupName: "Metro Food Security Group", score: 88, stage: "disbursed", farmers: 34,
@@ -117,6 +102,17 @@ const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
     ],
   },
+  {
+    id: "FS-2024-010", date: "28 Jan 2024", agent: "Ama Owusu", community: "Wa East",
+    groupName: "Wa East Food Coalition", score: 95, stage: "disbursed", farmers: 40,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 180,
+    momoNumber: "0244-999-000", momoName: "WE Food Coalition",
+    transactionId: "TXN-7C3D9E2A", disbursedAmount: 7200, disbursedDate: "28 Jan 2024",
+    supportInterests: [
+      { rank: "Primary",   type: "Cash",      amountPerFarmer: 180, momoNumber: "0244-999-000", momoName: "WE Food Coalition" },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -125,289 +121,403 @@ const MOCK_REQUESTS: FarmerRequest[] = [
 interface ColDef {
   id: Stage;
   label: string;
-  color: string;
+  dotColor: string;
+  ctaLabel: string;
+  ctaStages: Stage[];
 }
 
 const COLUMNS: ColDef[] = [
-  { id: "synced",               label: "Synced Requests",              color: "#D97706" },
-  { id: "pending_approval",     label: "Pending Approval",             color: "#2563EB" },
-  { id: "rejected",             label: "Rejected",                     color: "#DC2626" },
-  { id: "agent_confirmation",   label: "Agent Confirmation",           color: "#16A34A" },
-  { id: "finance_disbursement", label: "Finance Review & Disbursement", color: "#7C3AED" },
-  { id: "disbursed",            label: "Disbursed",                    color: "#6B7280" },
+  { id: "synced",               label: "Synced Requests",              dotColor: "#F59E0B", ctaLabel: "Begin Review",         ctaStages: ["synced"] },
+  { id: "pending_approval",     label: "Pending Approval",             dotColor: "#3B82F6", ctaLabel: "Approve Application",  ctaStages: ["pending_approval"] },
+  { id: "rejected",             label: "Rejected",                     dotColor: "#EF4444", ctaLabel: "",                     ctaStages: [] },
+  { id: "agent_confirmation",   label: "Agent Confirmation",           dotColor: "#A855F7", ctaLabel: "Send Reminder",        ctaStages: ["agent_confirmation"] },
+  { id: "finance_disbursement", label: "Finance & Disbursement",       dotColor: "#F97316", ctaLabel: "Verify MoMo",          ctaStages: ["finance_disbursement"] },
+  { id: "disbursed",            label: "Disbursed",                    dotColor: "#16A34A", ctaLabel: "",                     ctaStages: [] },
 ];
 
 // ---------------------------------------------------------------------------
-// ScoreBar (mini, for cards)
+// Helpers
 // ---------------------------------------------------------------------------
-function ScoreBar({ score }: { score: number }) {
-  const pct = Math.max(0, Math.min(100, score));
-  return (
-    <div className="mt-2 mb-1">
-      <div className="relative h-1.5 rounded-full overflow-visible" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
-        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-zinc-500 shadow" style={{ left: `calc(${pct}% - 6px)` }} />
-      </div>
-      <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
-        <span>Poor</span><span>Fair</span><span>Good</span>
-      </div>
-    </div>
-  );
+function initials(name: string) {
+  return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
+
+const AVATAR_COLORS = ["#4F46E5", "#0891B2", "#D97706", "#16A34A", "#DC2626", "#7C3AED", "#0D9488"];
+function avatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 // ---------------------------------------------------------------------------
 // Column header
 // ---------------------------------------------------------------------------
-function ColumnHeader({ label, color, count }: { label: string; color: string; count: number }) {
+function ColumnHeader({ label, dotColor, count }: { label: string; dotColor: string; count: number }) {
   return (
-    <div className="flex items-center justify-between px-3 py-2 rounded-[10px] mb-3" style={{ backgroundColor: `${color}1A` }}>
-      <span className="text-[12px] font-bold" style={{ color }}>{label}</span>
-      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: color }}>{count}</span>
+    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl mb-2" style={{ background: "#F3F4F6" }}>
+      <div className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dotColor }} />
+        <span className="text-[13px] font-bold text-gray-800">{label}</span>
+      </div>
+      <span className="flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold text-white shrink-0" style={{ background: dotColor }}>
+        {count}
+      </span>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Support type badge helper
+// Support type pill with icon
 // ---------------------------------------------------------------------------
-function SupportBadge({ type }: { type: SupportType }) {
+function SupportPill({ type }: { type: SupportType }) {
+  const isCash = type === "Cash";
   return (
-    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-full border-0"
-      style={type === "Cash" ? { background: "#EFF6FF", color: "#2563EB" } : { background: "#F3E8FF", color: "#7C3AED" }}>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+      style={isCash
+        ? { background: "#ECFDF5", color: "#16A34A" }
+        : { background: "#FFF7ED", color: "#C2410C" }}>
+      {isCash ? (
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M5 8h2M9 8h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ) : (
+        <svg width="12" height="11" viewBox="0 0 16 14" fill="none">
+          <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+          <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4"/>
+          <circle cx="4.5" cy="10" r="1" fill="currentColor"/>
+          <circle cx="11.5" cy="10" r="1" fill="currentColor"/>
+        </svg>
+      )}
       {type}
-    </Badge>
+    </span>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Column 1 — Synced Requests card
+// Three-dot context menu
 // ---------------------------------------------------------------------------
-function SyncedCard({ r, onClick, onScore }: { r: FarmerRequest; onClick: () => void; onScore: (e: React.MouseEvent) => void }) {
-  const [hovered, setHovered] = useState(false);
+function CardMenu({
+  onView,
+  onEdit,
+  onReject,
+}: {
+  onView: () => void;
+  onEdit: () => void;
+  onReject: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <Card className="mb-3 cursor-pointer" style={{ boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.08)", transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{r.community}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            {r.supportInterests.map((si) => <SupportBadge key={si.rank} type={si.type} />)}
-          </div>
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Card options"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="3" r="1.2" fill="currentColor"/>
+          <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+          <circle cx="8" cy="13" r="1.2" fill="currentColor"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-50 w-44 rounded-lg bg-white shadow-lg border border-gray-100 py-1 overflow-hidden">
+          {[
+            { label: "View Details", onClick: () => { setOpen(false); onView(); }, red: false },
+            { label: "Edit Application", onClick: () => { setOpen(false); onEdit(); }, red: false },
+            { label: "Reject Application", onClick: () => { setOpen(false); onReject(); }, red: true },
+          ].map((item) => (
+            <button key={item.label} onClick={item.onClick}
+              className="w-full text-left px-4 py-2 text-[13px] font-medium transition-colors hover:bg-gray-50"
+              style={{ color: item.red ? "#DC2626" : "#374151" }}>
+              {item.label}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
-          <span>{r.agent.split(" ").slice(0, 2).join(" ")}</span>
-          <span>{r.farmers} farmers</span>
-        </div>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
-          <span className="text-[10px] text-muted-foreground">{r.date}</span>
-          <Button size="sm" className="h-6 px-3 text-[11px] font-semibold bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={onScore}>Score</Button>
-        </div>
-        <p className="text-[10px] font-mono text-muted-foreground/40 mt-1">{r.id}</p>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Column 2 — Pending Approval card
+// Amount display helper
 // ---------------------------------------------------------------------------
-function PendingApprovalCard({ r, onClick, onReview }: { r: FarmerRequest; onClick: () => void; onReview: (e: React.MouseEvent) => void }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <Card className="mb-3 cursor-pointer" style={{ boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.08)", border: r.onHold ? "1.5px dashed #D97706" : undefined, transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{r.community}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            {r.supportInterests.map((si) => (
-              <div key={si.rank} className="flex items-center gap-1">
-                <span className="text-[9px] text-muted-foreground">{si.rank}</span>
-                <SupportBadge type={si.type} />
-              </div>
-            ))}
-            {r.onHold && <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-full border-0" style={{ background: "#FEF3C7", color: "#D97706" }}>On Hold</Badge>}
-          </div>
-        </div>
-        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-          <span>{r.agent.split(" ").slice(0, 2).join(" ")}</span>
-          <span>{r.farmers} farmers</span>
-        </div>
-        {r.score !== null && <ScoreBar score={r.score} />}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
-          <span className="text-[10px] text-muted-foreground">{r.date}</span>
-          <Button size="sm" className="h-6 px-3 text-[11px] font-semibold"
-            style={r.onHold ? { background: "transparent", border: "1px solid #D97706", color: "#D97706" } : { background: "#16A34A", color: "white" }}
-            onClick={onReview}>
-            Review
-          </Button>
-        </div>
-        <p className="text-[10px] font-mono text-muted-foreground/40 mt-1">{r.id}</p>
-      </CardContent>
-    </Card>
-  );
+function cardAmount(r: FarmerRequest): string | null {
+  const primary = r.supportInterests.find((si) => si.rank === "Primary");
+  if (!primary) return null;
+  if (primary.type === "Cash" && primary.amountPerFarmer) {
+    return `GHS ${(primary.amountPerFarmer * r.farmers).toLocaleString()}`;
+  }
+  if (primary.type === "Ploughing" && primary.landSizePerFarmer) {
+    return `${(primary.landSizePerFarmer * r.farmers).toFixed(1)} ac`;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
-// Column 3 — Rejected card
+// Universal Kanban card
 // ---------------------------------------------------------------------------
-function RejectedCard({ r, onClick }: { r: FarmerRequest; onClick: () => void }) {
+function KanbanCard({
+  r,
+  ctaLabel,
+  onCta,
+  onView,
+}: {
+  r: FarmerRequest;
+  ctaLabel: string;
+  onCta: (e: React.MouseEvent) => void;
+  onView: () => void;
+}) {
   const [hovered, setHovered] = useState(false);
+  const primaryType = r.supportInterests[0]?.type ?? "Cash";
+  const amount = cardAmount(r);
+  const agentInitials = initials(r.agent);
+  const agentColor = avatarColor(r.agent);
+
   return (
-    <Card className="mb-3 cursor-pointer" style={{ opacity: 0.8, boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.10)" : "0 1px 4px rgba(0,0,0,0.06)", transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{r.community}</p>
+    <div
+      className="bg-white rounded-xl border border-gray-100 mb-3 cursor-pointer"
+      style={{
+        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.10)" : "0 1px 3px rgba(0,0,0,0.07)",
+        transition: "box-shadow 150ms ease",
+        borderStyle: r.onHold ? "dashed" : "solid",
+        borderColor: r.onHold ? "#F59E0B" : "#F3F4F6",
+      }}
+      onClick={onView}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="p-4">
+        {/* Row 1: name + menu */}
+        <div className="flex items-start justify-between gap-2 mb-0.5">
+          <p className="text-[15px] font-semibold text-gray-900 leading-snug truncate">{r.groupName}</p>
+          <CardMenu
+            onView={onView}
+            onEdit={() => {}}
+            onReject={() => {}}
+          />
+        </div>
+
+        {/* Row 2: subtitle */}
+        <p className="text-[12px] text-gray-400 mb-3 truncate">{r.community} &middot; {r.farmers} farmers</p>
+
+        {/* Row 3: pill + amount */}
+        <div className="flex items-center justify-between mb-3">
+          <SupportPill type={primaryType} />
+          {amount && <span className="text-[13px] font-semibold text-gray-900">{amount}</span>}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-100 mb-3" />
+
+        {/* Row 4: assignee + date */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+              style={{ background: agentColor }}>{agentInitials}</span>
+            <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            {r.supportInterests.map((si) => <SupportBadge key={si.rank} type={si.type} />)}
+          <div className="flex items-center gap-1 text-[11px] text-gray-400">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            <span>{r.date}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-          <span>{r.agent.split(" ").slice(0, 2).join(" ")}</span>
-        </div>
-        {r.score !== null && <ScoreBar score={r.score} />}
-        {r.rejectionComment && (
-          <div className="mt-2 rounded-lg px-2.5 py-2" style={{ background: "#FEF2F2" }}>
+
+        {/* CTA button */}
+        {ctaLabel && (
+          <button
+            className="w-full h-9 rounded-lg text-[13px] font-bold text-white transition-colors"
+            style={{ background: "#16A34A" }}
+            onClick={(e) => { e.stopPropagation(); onCta(e); }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#15803D")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#16A34A")}
+          >
+            {ctaLabel}
+          </button>
+        )}
+
+        {/* Rejection reason */}
+        {r.stage === "rejected" && r.rejectionComment && (
+          <div className="rounded-lg px-3 py-2 mt-2" style={{ background: "#FEF2F2" }}>
             <p className="text-[11px] text-red-600 leading-relaxed">{r.rejectionComment}</p>
           </div>
         )}
-        <p className="text-[10px] font-mono text-muted-foreground/40 mt-2">{r.id}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
-// ---------------------------------------------------------------------------
-// Column 4 — Agent Confirmation card
-// ---------------------------------------------------------------------------
-function AgentConfirmationCard({ r, onClick }: { r: FarmerRequest; onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const approvedInterest = r.supportInterests.find((si) => si.type === r.approvedSupportType);
-  return (
-    <Card className="mb-3 cursor-pointer" style={{ boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.08)", transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{r.community}</p>
-          </div>
-          {r.approvedSupportType && <SupportBadge type={r.approvedSupportType} />}
-        </div>
-        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-          <span>{r.agent.split(" ").slice(0, 2).join(" ")}</span>
-          <span>{r.farmers} farmers</span>
-        </div>
-        {r.approvedSupportType === "Cash" && r.approvedAmountPerFarmer && (
-          <div className="mt-2 text-[12px] font-semibold text-foreground">
-            GHS {(r.approvedAmountPerFarmer * r.farmers).toLocaleString()} total
-          </div>
+        {/* Transaction ID for disbursed */}
+        {r.stage === "disbursed" && r.transactionId && (
+          <p className="text-[11px] font-mono text-center mt-2" style={{ color: "#16A34A" }}>{r.transactionId}</p>
         )}
-        {r.approvedSupportType === "Ploughing" && r.approvedLandSizePerFarmer && (
-          <div className="mt-2 text-[12px] font-semibold text-foreground">
-            {(r.approvedLandSizePerFarmer * r.farmers).toFixed(1)} acres total
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scoring Modal (centered dialog)
+// ---------------------------------------------------------------------------
+type ScoreLabel = "Poor" | "Fair" | "Good" | "Excellent";
+const SCORE_TILES: { label: ScoreLabel; score: number; desc: string; border: string; bg: string; text: string }[] = [
+  { label: "Poor",      score: 25, desc: "Significant gaps in criteria",  border: "#FCA5A5", bg: "#FEF2F2", text: "#DC2626" },
+  { label: "Fair",      score: 50, desc: "Meets some requirements",       border: "#FCD34D", bg: "#FFFBEB", text: "#D97706" },
+  { label: "Good",      score: 75, desc: "Meets most criteria well",      border: "#93C5FD", bg: "#EFF6FF", text: "#2563EB" },
+  { label: "Excellent", score: 95, desc: "Exceeds all scoring criteria",  border: "#86EFAC", bg: "#F0FDF4", text: "#16A34A" },
+];
+
+const DOCS = [
+  "Meeting Minutes",
+  "Financial Records",
+  "Group Constitution",
+  "Savings Statement",
+];
+
+function ScoringModal({ card, onClose, onScored }: {
+  card: FarmerRequest;
+  onClose: () => void;
+  onScored: (id: string, score: number) => void;
+}) {
+  const [selected, setSelected] = useState<ScoreLabel | null>(null);
+
+  function handleConfirm() {
+    const tile = SCORE_TILES.find((t) => t.label === selected);
+    if (tile) onScored(card.id, tile.score);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+      <div className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ width: 760, maxHeight: "85vh" }}>
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-[17px] font-bold text-gray-900">Update Scores</h2>
+            <p className="text-[13px] text-gray-400 mt-0.5">{card.groupName} &middot; {card.community}</p>
           </div>
-        )}
-        <p className="mt-2 text-[11px] italic text-muted-foreground">Awaiting agent confirmation</p>
-        <p className="text-[10px] font-mono text-muted-foreground/40 mt-1">{r.id}</p>
-      </CardContent>
-    </Card>
-  );
-}
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </button>
+        </div>
 
-// ---------------------------------------------------------------------------
-// Column 5 — Finance Review & Disbursement card
-// ---------------------------------------------------------------------------
-function FinanceCard({ r, onClick, onDisburse }: { r: FarmerRequest; onClick: () => void; onDisburse: (e: React.MouseEvent) => void }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <Card className="mb-3 cursor-pointer" style={{ boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.08)", transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-          {r.approvedSupportType && <SupportBadge type={r.approvedSupportType} />}
-        </div>
-        <div className="space-y-1">
-          {r.momoNumber && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">MoMo</span>
-              <span className="font-semibold font-mono">{r.momoNumber}</span>
-            </div>
-          )}
-          {r.momoName && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Name</span>
-              <span className="font-semibold">{r.momoName}</span>
-            </div>
-          )}
-          {r.approvedSupportType === "Cash" && r.approvedAmountPerFarmer && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Amount</span>
-              <span className="font-bold text-foreground">GHS {(r.approvedAmountPerFarmer * r.farmers).toLocaleString()}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
-          <p className="text-[10px] font-mono text-muted-foreground/40">{r.id}</p>
-          <Button size="sm" className="h-6 px-3 text-[11px] font-semibold bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={onDisburse}>Disburse</Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+        {/* Body: two panels */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left panel — Supporting Documents */}
+          <div className="w-[300px] shrink-0 border-r border-gray-100 px-5 py-5 overflow-y-auto">
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">Supporting Documents</p>
+            <div className="space-y-3">
+              {/* Main upload card */}
+              <div className="rounded-xl border-2 border-dashed border-gray-200 p-4 flex flex-col items-center text-center">
+                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-2">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M10 12V4M7 7l3-3 3 3" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-[12px] font-semibold text-gray-700">Group Evidence File</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">No document uploaded</p>
+                <button className="mt-2 text-[12px] font-semibold underline" style={{ color: "#16A34A" }}>Upload document</button>
+              </div>
 
-// ---------------------------------------------------------------------------
-// Column 6 — Disbursed card
-// ---------------------------------------------------------------------------
-function DisbursedCard({ r, onClick }: { r: FarmerRequest; onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <Card className="mb-3 cursor-pointer" style={{ opacity: 0.8, boxShadow: hovered ? "0 4px 12px rgba(0,0,0,0.10)" : "0 1px 4px rgba(0,0,0,0.06)", transition: "box-shadow 150ms ease" }}
-      onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <p className="text-[13px] font-bold truncate">{r.groupName}</p>
-          {r.approvedSupportType && <SupportBadge type={r.approvedSupportType} />}
+              {/* List items */}
+              {DOCS.map((doc) => (
+                <div key={doc} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                      <svg width="13" height="13" viewBox="0 0 14 16" fill="none">
+                        <path d="M2 2a1 1 0 011-1h6l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2z" stroke="#9CA3AF" strokeWidth="1.3"/>
+                        <path d="M8 1v4h4" stroke="#9CA3AF" strokeWidth="1.3" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-medium text-gray-700 truncate max-w-[140px]">{doc}</p>
+                      <p className="text-[10px] text-gray-400">No document</p>
+                    </div>
+                  </div>
+                  <button className="text-[11px] font-semibold underline shrink-0" style={{ color: "#16A34A" }}>Upload</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right panel — Assign Score */}
+          <div className="flex-1 px-6 py-5 overflow-y-auto">
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">Assign Score</p>
+
+            {/* 2×2 score tiles */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {SCORE_TILES.map((tile) => (
+                <div
+                  key={tile.label}
+                  className="rounded-xl border-2 p-4 cursor-pointer transition-all"
+                  style={{
+                    borderColor: selected === tile.label ? tile.border : "#E5E7EB",
+                    background: selected === tile.label ? tile.bg : "#FAFAFA",
+                  }}
+                  onClick={() => setSelected(tile.label)}
+                >
+                  <div className="flex items-start justify-between mb-1">
+                    <span className="text-[22px] font-bold" style={{ color: tile.text }}>{tile.score}</span>
+                    {selected === tile.label && (
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: tile.text }}>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[14px] font-bold text-gray-900">{tile.label}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{tile.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* No score selected placeholder */}
+            {!selected && (
+              <div className="rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-center">
+                <p className="text-[12px] text-gray-400">No score selected yet.</p>
+              </div>
+            )}
+            {selected && (
+              <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] text-gray-400">Selected score</p>
+                  <p className="text-[15px] font-bold text-gray-900">{selected} &mdash; {SCORE_TILES.find((t) => t.label === selected)?.score}</p>
+                </div>
+                <button onClick={() => setSelected(null)} className="text-[11px] text-gray-400 hover:text-gray-600 underline">Clear</button>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="space-y-1">
-          {r.disbursedAmount && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Amount disbursed</span>
-              <span className="font-bold text-[#16A34A]">GHS {r.disbursedAmount.toLocaleString()}</span>
-            </div>
-          )}
-          {r.momoName && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Recipient</span>
-              <span className="font-semibold">{r.momoName}</span>
-            </div>
-          )}
-          {r.transactionId && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Tx ID</span>
-              <span className="font-mono text-[11px] text-[#16A34A]">{r.transactionId}</span>
-            </div>
-          )}
-          {r.disbursedDate && (
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="text-muted-foreground">Date</span>
-              <span className="text-muted-foreground">{r.disbursedDate}</span>
-            </div>
-          )}
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[12px] text-amber-600">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <span>Scores are final once submitted and cannot be changed.</span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="h-9 px-4 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button
+              disabled={!selected}
+              onClick={handleConfirm}
+              className="h-9 px-5 rounded-lg text-[13px] font-bold text-white transition-colors"
+              style={{ background: selected ? "#16A34A" : "#D1D5DB", cursor: selected ? "pointer" : "not-allowed" }}
+            >
+              Confirm Scores
+            </button>
+          </div>
         </div>
-        <p className="text-[10px] font-mono text-muted-foreground/40 mt-2">{r.id}</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -416,10 +526,10 @@ function DisbursedCard({ r, onClick }: { r: FarmerRequest; onClick: () => void }
 // ---------------------------------------------------------------------------
 export default function KanbanScreen() {
   const [requests, setRequests] = useState<FarmerRequest[]>(MOCK_REQUESTS);
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<"all" | SupportType>("all");
+  const [search, setSearch]     = useState("");
   const [selectedCard, setSelectedCard] = useState<FarmerRequest | null>(null);
-  const [reviewCard, setReviewCard]     = useState<FarmerRequest | null>(null);
+  const [reviewCard,   setReviewCard]   = useState<FarmerRequest | null>(null);
+  const [scoreCard,    setScoreCard]    = useState<FarmerRequest | null>(null);
   const [disburseCard, setDisburseCard] = useState<FarmerRequest | null>(null);
   const [toasts, setToasts]             = useState<ToastMessage[]>([]);
 
@@ -433,11 +543,8 @@ export default function KanbanScreen() {
 
   function handleApproved(id: string, approvedType: SupportType, amountPerFarmer?: number, landSizePerFarmer?: number) {
     setRequests((prev) => prev.map((r) => r.id !== id ? r : {
-      ...r,
-      stage: "agent_confirmation" as Stage,
-      approvedSupportType: approvedType,
-      approvedAmountPerFarmer: amountPerFarmer,
-      approvedLandSizePerFarmer: landSizePerFarmer,
+      ...r, stage: "agent_confirmation" as Stage, approvedSupportType: approvedType,
+      approvedAmountPerFarmer: amountPerFarmer, approvedLandSizePerFarmer: landSizePerFarmer,
     }));
     setReviewCard(null);
     showToast("Request moved to Agent Confirmation");
@@ -455,12 +562,15 @@ export default function KanbanScreen() {
     showToast("Request moved to Rejected");
   }
 
+  function handleScored(id: string, score: number) {
+    setRequests((prev) => prev.map((r) => r.id !== id ? r : { ...r, score, stage: "pending_approval" as Stage }));
+    setScoreCard(null);
+    showToast("Score submitted — moved to Pending Approval");
+  }
+
   function handleDisbursed(id: string, txId: string, amount: number) {
     setRequests((prev) => prev.map((r) => r.id !== id ? r : {
-      ...r,
-      stage: "disbursed" as Stage,
-      transactionId: txId,
-      disbursedAmount: amount,
+      ...r, stage: "disbursed" as Stage, transactionId: txId, disbursedAmount: amount,
       disbursedDate: new Date().toLocaleDateString("en-GH", { day: "2-digit", month: "short", year: "numeric" }),
     }));
     setDisburseCard(null);
@@ -468,93 +578,49 @@ export default function KanbanScreen() {
   }
 
   const filtered = useMemo(() => {
-    return requests.filter((r) => {
-      const matchesSearch = search === "" ||
-        r.groupName.toLowerCase().includes(search.toLowerCase()) ||
-        r.id.toLowerCase().includes(search.toLowerCase());
-      const matchesType = filterType === "all" ||
-        r.supportInterests.some((si) => si.type === filterType);
-      return matchesSearch && matchesType;
-    });
-  }, [search, filterType, requests]);
+    if (!search) return requests;
+    const q = search.toLowerCase();
+    return requests.filter((r) =>
+      r.groupName.toLowerCase().includes(q) || r.id.toLowerCase().includes(q)
+    );
+  }, [search, requests]);
 
-  function renderCard(r: FarmerRequest, col: ColDef) {
-    switch (col.id) {
-      case "synced":
-        return <SyncedCard key={r.id} r={r} onClick={() => setSelectedCard(r)}
-          onScore={(e) => { e.stopPropagation(); setSelectedCard(null); /* scoring modal placeholder */ }} />;
-      case "pending_approval":
-        return <PendingApprovalCard key={r.id} r={r} onClick={() => setSelectedCard(r)}
-          onReview={(e) => { e.stopPropagation(); setSelectedCard(null); setReviewCard(r); }} />;
-      case "rejected":
-        return <RejectedCard key={r.id} r={r} onClick={() => setSelectedCard(r)} />;
-      case "agent_confirmation":
-        return <AgentConfirmationCard key={r.id} r={r} onClick={() => setSelectedCard(r)} />;
-      case "finance_disbursement":
-        return <FinanceCard key={r.id} r={r} onClick={() => setSelectedCard(r)}
-          onDisburse={(e) => { e.stopPropagation(); setSelectedCard(null); setDisburseCard(r); }} />;
-      case "disbursed":
-        return <DisbursedCard key={r.id} r={r} onClick={() => setSelectedCard(r)} />;
-    }
+  function ctaAction(r: FarmerRequest, stage: Stage) {
+    if (stage === "synced")               { setScoreCard(r); }
+    if (stage === "pending_approval")     { setReviewCard(r); }
+    if (stage === "finance_disbursement") { setDisburseCard(r); }
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 px-6 bg-white border-b border-border" style={{ height: 56, flexShrink: 0 }}>
-        <div className="relative flex-1 max-w-xs">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <Input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by group name or reference..." className="pl-8 text-[13px] h-9" />
-        </div>
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
-          <SelectTrigger className="w-[140px] h-9 text-[13px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Cash">Cash</SelectItem>
-            <SelectItem value="Ploughing">Ploughing</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex-1" />
-        <div className="flex items-center rounded-lg border border-border overflow-hidden bg-white">
-          <Button variant="ghost" size="sm" className="rounded-none h-9 px-3 text-[12px] font-semibold bg-[#F0FDF4] text-[#16A34A] border-r border-border hover:bg-[#DCFCE7]">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="mr-1.5">
-              <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="10" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="1" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="10" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-            Kanban
-          </Button>
-          <Button variant="ghost" size="sm" className="rounded-none h-9 px-3 text-[12px] text-muted-foreground cursor-not-allowed opacity-50">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="mr-1.5">
-              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            Table
-          </Button>
-        </div>
-      </div>
+      <Header totalCount={requests.length} search={search} onSearch={setSearch} />
 
       {/* Kanban board */}
-      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}>
-        <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: 16, height: "100%", minWidth: "max-content" }}>
+      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
+        <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
           {COLUMNS.map((col) => {
             const cards = filtered.filter((r) => r.stage === col.id);
             return (
-              <div key={col.id} style={{ width: 280, minWidth: 280, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+              <div key={col.id} style={{ width: 288, minWidth: 288, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
                 <div style={{ flexShrink: 0 }}>
-                  <ColumnHeader label={col.label} color={col.color} count={cards.length} />
+                  <ColumnHeader label={col.label} dotColor={col.dotColor} count={cards.length} />
                 </div>
                 <ScrollArea className="flex-1 min-h-0">
                   <div style={{ paddingBottom: 16 }}>
                     {cards.length === 0 ? (
                       <div className="flex items-center justify-center h-20">
-                        <span className="text-[12px] text-muted-foreground/50">No requests</span>
+                        <span className="text-[12px] text-gray-300">No requests</span>
                       </div>
                     ) : (
-                      cards.map((r) => renderCard(r, col))
+                      cards.map((r) => (
+                        <KanbanCard
+                          key={r.id}
+                          r={r}
+                          ctaLabel={col.ctaLabel}
+                          onCta={() => ctaAction(r, col.id)}
+                          onView={() => setSelectedCard(r)}
+                        />
+                      ))
                     )}
                   </div>
                 </ScrollArea>
@@ -564,11 +630,12 @@ export default function KanbanScreen() {
         </div>
       </div>
 
+      {/* Modals + panels */}
       {selectedCard && (
         <SlideOverPanel
           card={selectedCard}
           onClose={() => setSelectedCard(null)}
-          onScore={(card) => { setSelectedCard(null); }}
+          onScore={(card) => { setSelectedCard(null); setScoreCard(card); }}
           onReview={(card) => { setSelectedCard(null); setReviewCard(card); }}
           onDisburse={(card) => { setSelectedCard(null); setDisburseCard(card); }}
         />
@@ -580,6 +647,13 @@ export default function KanbanScreen() {
           onApproved={handleApproved}
           onHeld={handleHeld}
           onRejected={handleRejected}
+        />
+      )}
+      {scoreCard && (
+        <ScoringModal
+          card={scoreCard}
+          onClose={() => setScoreCard(null)}
+          onScored={handleScored}
         />
       )}
       {disburseCard && (
