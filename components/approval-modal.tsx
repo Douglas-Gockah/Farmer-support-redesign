@@ -1,10 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import type { FarmerRequest } from "@/components/slide-over-panel";
 
 // ---------------------------------------------------------------------------
-// Toast
+// Toast (inline)
 // ---------------------------------------------------------------------------
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   useEffect(() => {
@@ -14,7 +33,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
   return (
     <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 bg-gray-900 text-white text-[13px] font-medium px-5 py-3 rounded-xl shadow-xl"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 bg-zinc-900 text-white text-[13px] font-medium px-5 py-3 rounded-xl shadow-xl"
       style={{ animation: "fadeUp 200ms ease-out" }}
     >
       <span className="w-5 h-5 rounded-full bg-[#16A34A] flex items-center justify-center shrink-0">
@@ -33,10 +52,12 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 // ---------------------------------------------------------------------------
 function CashModal({
   card,
+  open,
   onClose,
   onApprove,
 }: {
   card: FarmerRequest;
+  open: boolean;
   onClose: () => void;
   onApprove: () => void;
 }) {
@@ -50,20 +71,11 @@ function CashModal({
   const totalQty = qtyPerFarmer * card.farmers;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.4)" }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl w-full max-w-[540px] max-h-[90vh] overflow-y-auto"
-        style={{ padding: 24 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader className="mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[18px]">
+            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center shrink-0">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <circle cx="7" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
                 <circle cx="13" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
@@ -71,34 +83,27 @@ function CashModal({
               </svg>
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-gray-900">{card.groupName}</h2>
+              <DialogTitle className="text-[15px] font-bold">{card.groupName}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] text-gray-400">Cash support</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>
+                <span className="text-[11px] text-muted-foreground">Cash support</span>
+                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#FEF3C7", color: "#D97706" }}>
                   Pending
-                </span>
+                </Badge>
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 text-[18px] leading-none transition-colors"
-            aria-label="Close"
-          >
-            &times;
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Summary row */}
         <div className="grid grid-cols-3 gap-3 mb-3">
           {[
-            { label: "Farmers", value: String(card.farmers) },
-            { label: "Amount / Farmer", value: `GHS ${amountPerFarmer.toFixed(2)}` },
-            { label: "Total Amount", value: `GHS ${totalAmount.toFixed(2)}` },
+            { label: "Farmers",          value: String(card.farmers) },
+            { label: "Amount / Farmer",  value: `GHS ${amountPerFarmer.toFixed(2)}` },
+            { label: "Total Amount",     value: `GHS ${totalAmount.toFixed(2)}` },
           ].map((item) => (
-            <div key={item.label} className="bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-              <p className="text-[18px] font-bold text-gray-900">{item.value}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{item.label}</p>
+            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5 text-center">
+              <p className="text-[18px] font-bold text-foreground">{item.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{item.label}</p>
             </div>
           ))}
         </div>
@@ -107,114 +112,97 @@ function CashModal({
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[
             { label: "MoMo Number", value: "0244-XXX-XXX" },
-            { label: "MoMo Name", value: card.agent },
+            { label: "MoMo Name",   value: card.agent },
           ].map((item) => (
-            <div key={item.label} className="bg-gray-50 rounded-xl px-3 py-2.5">
-              <p className="text-[11px] text-gray-400">{item.label}</p>
-              <p className="text-[13px] font-semibold text-gray-800 mt-0.5">{item.value}</p>
+            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5">
+              <p className="text-[11px] text-muted-foreground">{item.label}</p>
+              <p className="text-[13px] font-semibold text-foreground mt-0.5">{item.value}</p>
             </div>
           ))}
         </div>
 
-        <hr className="border-gray-100 mb-4" />
+        <Separator className="mb-4" />
 
-        {/* Approve request section */}
-        <p className="text-[13px] font-bold text-gray-800 mb-3">Approve request</p>
+        <p className="text-[13px] font-bold text-foreground mb-3">Approve request</p>
 
         {/* Details box */}
-        <div className="border border-gray-200 rounded-lg p-3 mb-3">
+        <div className="border border-border rounded-lg p-3 mb-3">
           <div className="flex items-center justify-between gap-4">
-            {/* Amount per farmer */}
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Amount per farmer</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Amount per farmer</p>
               <div className="flex items-center gap-1">
-                <span className="text-[12px] text-gray-500 font-medium">GHS</span>
+                <span className="text-[12px] text-muted-foreground font-medium">GHS</span>
                 {amountEditing ? (
-                  <input
+                  <Input
                     type="number"
-                    className="w-20 border border-gray-300 rounded px-2 py-1 text-[13px] font-bold text-gray-900 focus:outline-none focus:ring-1 focus:ring-green-400"
+                    className="w-20 h-8 text-[13px] font-bold"
                     value={amountPerFarmer}
                     onChange={(e) => setAmountPerFarmer(Number(e.target.value))}
                     autoFocus
                   />
                 ) : (
-                  <span className="text-[15px] font-bold text-gray-900">{amountPerFarmer.toFixed(2)}</span>
+                  <span className="text-[15px] font-bold text-foreground">{amountPerFarmer.toFixed(2)}</span>
                 )}
               </div>
             </div>
-            {/* Total amount */}
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Total amount</p>
-              <p className="text-[15px] font-bold text-gray-900">GHS {totalAmount.toFixed(2)}</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Total amount</p>
+              <p className="text-[15px] font-bold text-foreground">GHS {totalAmount.toFixed(2)}</p>
             </div>
-            {/* Edit link */}
-            <button
-              className="text-[12px] font-semibold shrink-0"
-              style={{ color: "#16A34A" }}
-              onClick={() => setAmountEditing(!amountEditing)}
-            >
+            <Button variant="ghost" size="sm" className="text-[12px] font-semibold text-[#16A34A] hover:text-[#15803D] shrink-0 px-2" onClick={() => setAmountEditing(!amountEditing)}>
               {amountEditing ? "Done" : "Edit"}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Expected quantity row */}
         <div className="flex items-end gap-4 mb-5">
           <div className="flex-1">
-            <p className="text-[11px] text-gray-400 mb-1">Expected quantity per farmer</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Expected quantity per farmer</p>
             <div className="flex items-center gap-1">
-              <input
+              <Input
                 type="number"
-                className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-[13px] font-bold text-gray-900 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-400"
+                className="w-20 h-8 text-[13px] font-bold"
                 value={qtyPerFarmer}
                 onChange={(e) => setQtyPerFarmer(Number(e.target.value))}
               />
-              <span className="text-[12px] text-gray-400">KG</span>
+              <span className="text-[12px] text-muted-foreground">KG</span>
             </div>
           </div>
           <div className="flex-1">
-            <p className="text-[11px] text-gray-400 mb-1">Expected total quantity</p>
-            <p className="text-[14px] font-bold text-gray-900">{totalQty} KG</p>
+            <p className="text-[11px] text-muted-foreground mb-1">Expected total quantity</p>
+            <p className="text-[14px] font-bold text-foreground">{totalQty} KG</p>
           </div>
         </div>
 
-        {/* Confirmation checkbox */}
-        <label className="flex items-start gap-2.5 cursor-pointer mb-5 p-3 rounded-xl bg-gray-50">
-          <input
-            type="checkbox"
+        {/* Confirmation */}
+        <div className="flex items-start gap-2.5 mb-5 p-3 rounded-xl bg-muted/50">
+          <Checkbox
+            id="confirm-cash"
             checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            className="mt-0.5 accent-[#16A34A] w-4 h-4 shrink-0"
+            onCheckedChange={(v) => setConfirmed(Boolean(v))}
+            className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
           />
-          <span className="text-[12px] text-gray-600 leading-relaxed">
+          <Label htmlFor="confirm-cash" className="text-[12px] text-muted-foreground leading-relaxed cursor-pointer">
             I have reviewed the details of this request and confirm my decision to proceed with approval.
-          </span>
-        </label>
+          </Label>
+        </div>
 
         {/* CTAs */}
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border-2 text-[13px] font-semibold transition-colors"
-            style={{ borderColor: "#EF4444", color: "#EF4444" }}
-          >
+          <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onClose}>
             Reject
-          </button>
-          <button
+          </Button>
+          <Button
             disabled={!confirmed}
             onClick={onApprove}
-            className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
-            style={{
-              background: confirmed ? "#16A34A" : "#E5E7EB",
-              color: confirmed ? "#fff" : "#9CA3AF",
-              cursor: confirmed ? "pointer" : "not-allowed",
-            }}
+            className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white"
           >
             Approve request
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -223,10 +211,12 @@ function CashModal({
 // ---------------------------------------------------------------------------
 function PloughingModal({
   card,
+  open,
   onClose,
   onApprove,
 }: {
   card: FarmerRequest;
+  open: boolean;
   onClose: () => void;
   onApprove: () => void;
 }) {
@@ -240,20 +230,11 @@ function PloughingModal({
   const totalAmount = amountPerFarmer * card.farmers;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.4)" }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl w-full max-w-[540px] max-h-[90vh] overflow-y-auto"
-        style={{ padding: 24 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader className="mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center shrink-0">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <circle cx="7" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
                 <circle cx="13" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
@@ -261,87 +242,71 @@ function PloughingModal({
               </svg>
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-gray-900">{card.groupName}</h2>
+              <DialogTitle className="text-[15px] font-bold">{card.groupName}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] text-gray-400">Ploughing support</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#16A34A" }}>
-                  Full payment
-                </span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>
-                  Pending
-                </span>
+                <span className="text-[11px] text-muted-foreground">Ploughing support</span>
+                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#DCFCE7", color: "#16A34A" }}>Full payment</Badge>
+                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#FEF3C7", color: "#D97706" }}>Pending</Badge>
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 text-[18px] leading-none transition-colors"
-            aria-label="Close"
-          >
-            &times;
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Summary row */}
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: "Farmers", value: String(card.farmers) },
+            { label: "Farmers",     value: String(card.farmers) },
             { label: "Land / Farmer", value: `${landPerFarmer.toFixed(2)} ac` },
-            { label: "Total Land", value: `${totalLand} ac` },
+            { label: "Total Land",  value: `${totalLand} ac` },
           ].map((item) => (
-            <div key={item.label} className="bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-              <p className="text-[18px] font-bold text-gray-900">{item.value}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{item.label}</p>
+            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5 text-center">
+              <p className="text-[18px] font-bold text-foreground">{item.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{item.label}</p>
             </div>
           ))}
         </div>
 
-        <hr className="border-gray-100 mb-4" />
-
-        <p className="text-[13px] font-bold text-gray-800 mb-3">Approve request</p>
+        <Separator className="mb-4" />
+        <p className="text-[13px] font-bold text-foreground mb-3">Approve request</p>
 
         {/* Details box */}
-        <div className="border border-gray-200 rounded-lg p-3 mb-3 space-y-3">
-          {/* Land size */}
+        <div className="border border-border rounded-lg p-3 mb-3 space-y-3">
           <div className="flex items-end gap-4">
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Land size per farmer</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Land size per farmer</p>
               <div className="flex items-center gap-1">
-                <input
+                <Input
                   type="number"
                   step="0.1"
-                  className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-[13px] font-bold text-gray-900 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-400"
+                  className="w-20 h-8 text-[13px] font-bold"
                   value={landPerFarmer}
                   onChange={(e) => setLandPerFarmer(Number(e.target.value))}
                 />
-                <span className="text-[12px] text-gray-400">acres</span>
+                <span className="text-[12px] text-muted-foreground">acres</span>
               </div>
             </div>
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Total land size</p>
-              <p className="text-[14px] font-bold text-gray-900">{totalLand} acres</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Total land size</p>
+              <p className="text-[14px] font-bold text-foreground">{totalLand} acres</p>
             </div>
           </div>
-
-          <hr className="border-gray-100" />
-
-          {/* Amount */}
+          <Separator />
           <div className="flex items-end gap-4">
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Amount per farmer</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Amount per farmer</p>
               <div className="flex items-center gap-1">
-                <span className="text-[12px] text-gray-500 font-medium">GHS</span>
-                <input
+                <span className="text-[12px] text-muted-foreground font-medium">GHS</span>
+                <Input
                   type="number"
-                  className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-[13px] font-bold text-gray-900 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-400"
+                  className="w-20 h-8 text-[13px] font-bold"
                   value={amountPerFarmer}
                   onChange={(e) => setAmountPerFarmer(Number(e.target.value))}
                 />
               </div>
             </div>
             <div className="flex-1">
-              <p className="text-[11px] text-gray-400 mb-1">Total amount</p>
-              <p className="text-[14px] font-bold text-gray-900">GHS {totalAmount.toFixed(2)}</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Total amount</p>
+              <p className="text-[14px] font-bold text-foreground">GHS {totalAmount.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -349,71 +314,60 @@ function PloughingModal({
         {/* Dropdowns */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div>
-            <p className="text-[11px] text-gray-400 mb-1">Assign service provider</p>
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-400"
-            >
-              <option>FieldTech Ghana</option>
-              <option>AgriMech Ltd</option>
-            </select>
+            <p className="text-[11px] text-muted-foreground mb-1">Assign service provider</p>
+            <Select value={provider} onValueChange={setProvider}>
+              <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FieldTech Ghana">FieldTech Ghana</SelectItem>
+                <SelectItem value="AgriMech Ltd">AgriMech Ltd</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 mb-1">Payment arrangement</p>
-            <select
-              value={payment}
-              onChange={(e) => setPayment(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-400"
-            >
-              <option>Full payment</option>
-              <option>50% upfront</option>
-            </select>
+            <p className="text-[11px] text-muted-foreground mb-1">Payment arrangement</p>
+            <Select value={payment} onValueChange={setPayment}>
+              <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Full payment">Full payment</SelectItem>
+                <SelectItem value="50% upfront">50% upfront</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Confirmation checkbox */}
-        <label className="flex items-start gap-2.5 cursor-pointer mb-5 p-3 rounded-xl bg-gray-50">
-          <input
-            type="checkbox"
+        {/* Confirmation */}
+        <div className="flex items-start gap-2.5 mb-5 p-3 rounded-xl bg-muted/50">
+          <Checkbox
+            id="confirm-plough"
             checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            className="mt-0.5 accent-[#16A34A] w-4 h-4 shrink-0"
+            onCheckedChange={(v) => setConfirmed(Boolean(v))}
+            className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
           />
-          <span className="text-[12px] text-gray-600 leading-relaxed">
+          <Label htmlFor="confirm-plough" className="text-[12px] text-muted-foreground leading-relaxed cursor-pointer">
             I have reviewed the details of this request and confirm my decision to proceed with approval.
-          </span>
-        </label>
+          </Label>
+        </div>
 
         {/* CTAs */}
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border-2 text-[13px] font-semibold transition-colors"
-            style={{ borderColor: "#EF4444", color: "#EF4444" }}
-          >
+          <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onClose}>
             Reject
-          </button>
-          <button
+          </Button>
+          <Button
             disabled={!confirmed}
             onClick={onApprove}
-            className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
-            style={{
-              background: confirmed ? "#16A34A" : "#E5E7EB",
-              color: confirmed ? "#fff" : "#9CA3AF",
-              cursor: confirmed ? "pointer" : "not-allowed",
-            }}
+            className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white"
           >
             Approve request
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Public export: ApprovalModal (picks Cash or Ploughing based on card type)
+// Public export
 // ---------------------------------------------------------------------------
 export default function ApprovalModal({
   card,
@@ -434,15 +388,12 @@ export default function ApprovalModal({
   return (
     <>
       {card.supportType === "Cash" ? (
-        <CashModal card={card} onClose={onClose} onApprove={handleApprove} />
+        <CashModal card={card} open onClose={onClose} onApprove={handleApprove} />
       ) : (
-        <PloughingModal card={card} onClose={onClose} onApprove={handleApprove} />
+        <PloughingModal card={card} open onClose={onClose} onApprove={handleApprove} />
       )}
       {showToast && (
-        <Toast
-          message={`${card.groupName} approved successfully`}
-          onDone={() => { setShowToast(false); onClose(); }}
-        />
+        <Toast message={`${card.groupName} approved successfully`} onDone={() => { setShowToast(false); onClose(); }} />
       )}
     </>
   );
