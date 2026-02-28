@@ -1,5 +1,3 @@
-"use client";
-
 import Header from "@/components/header";
 import KanbanScreen from "@/components/kanban-screen";
 
