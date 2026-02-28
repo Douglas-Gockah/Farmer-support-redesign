@@ -252,8 +252,150 @@ function CardMenu({
 }
 
 // ---------------------------------------------------------------------------
-// Score bar (used on pending_approval cards)
+// ImageCarousel — module-level to avoid remount on parent re-render
 // ---------------------------------------------------------------------------
+function ImageCarousel({ index, setIndex, total = 2 }: {
+  index: number;
+  setIndex: (i: number) => void;
+  total?: number;
+}) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex items-center gap-3 w-full">
+        <button
+          className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 shrink-0 disabled:opacity-30 transition-colors"
+          onClick={() => setIndex(Math.max(0, index - 1))}
+          disabled={index === 0}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+        <div
+          className="flex-1 rounded-xl flex flex-col items-center justify-center"
+          style={{ height: 220, background: "#F8FAFC", border: "1.5px solid #E2E8F0" }}
+        >
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="mb-2">
+            <rect x="3" y="7" width="34" height="26" rx="4" stroke="#CBD5E1" strokeWidth="1.8"/>
+            <circle cx="13" cy="17" r="3.5" stroke="#CBD5E1" strokeWidth="1.5"/>
+            <path d="M3 27l9-7 7 6 6-5 12 9" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <p className="text-[12px] font-medium text-gray-400">Document {index + 1} of {total}</p>
+        </div>
+        <button
+          className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 shrink-0 disabled:opacity-30 transition-colors"
+          onClick={() => setIndex(Math.min(total - 1, index + 1))}
+          disabled={index === total - 1}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      </div>
+      <div className="flex gap-1.5 mt-3">
+        {Array.from({ length: total }).map((_, i) => (
+          <button
+            key={i}
+            className="w-2 h-2 rounded-full transition-colors"
+            style={{ background: i === index ? "#16A34A" : "#CBD5E1" }}
+            onClick={() => setIndex(i)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ScoreSlider — slider + synced number input, range 1–4
+// ---------------------------------------------------------------------------
+function ScoreSlider({ label, value, onChange }: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const initialized = value >= 1 && value <= 4;
+
+  function clamp(n: number) { return Math.min(4, Math.max(1, n)); }
+
+  function handleInput(raw: string) {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n)) onChange(clamp(n));
+  }
+
+  const trackFill = initialized ? ((value - 1) / 3) * 100 : 0;
+
+  return (
+    <div className="mt-5 pt-4 border-t border-gray-100">
+      <p className="text-[13px] font-semibold text-gray-700 mb-4">{label}</p>
+
+      <div className="flex items-center gap-4">
+        {/* Slider */}
+        <div className="flex-1 relative">
+          {/* Tick labels */}
+          <div className="flex justify-between text-[11px] font-medium text-gray-400 mb-2">
+            {[1, 2, 3, 4].map((n) => (
+              <span key={n} className="w-6 text-center">{n}</span>
+            ))}
+          </div>
+          {/* Track + thumb */}
+          <div className="relative h-2 rounded-full bg-gray-200">
+            <div
+              className="absolute left-0 top-0 h-2 rounded-full transition-all"
+              style={{ width: `${trackFill}%`, background: "#16A34A" }}
+            />
+            <input
+              type="range"
+              min={1}
+              max={4}
+              step={1}
+              value={initialized ? value : 1}
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              style={{ margin: 0 }}
+            />
+            {/* Custom thumb */}
+            {initialized && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-[2.5px] shadow-sm pointer-events-none"
+                style={{
+                  borderColor: "#16A34A",
+                  left: `calc(${trackFill}% - 10px)`,
+                  transition: "left 80ms ease",
+                }}
+              />
+            )}
+          </div>
+          {/* Labels below */}
+          <div className="flex justify-between text-[10px] text-gray-400 mt-1.5 px-0.5">
+            <span>Poor</span>
+            <span>Fair</span>
+            <span>Good</span>
+            <span>Excellent</span>
+          </div>
+        </div>
+
+        {/* Number input */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <input
+            type="number"
+            min={1}
+            max={4}
+            value={initialized ? value : ""}
+            placeholder="–"
+            onChange={(e) => handleInput(e.target.value)}
+            className="w-14 h-14 rounded-xl text-center text-[22px] font-bold outline-none transition-colors"
+            style={{
+              border: `2px solid ${initialized ? "#16A34A" : "#E2E8F0"}`,
+              color: initialized ? "#16A34A" : "#9CA3AF",
+              background: initialized ? "#F0FDF4" : "#F8FAFC",
+              MozAppearance: "textfield",
+            }}
+          />
+          <span className="text-[10px] text-gray-400 font-medium">Score</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function ScoreBar({ score }: { score: number }) {
   const pct = Math.max(0, Math.min(100, score));
   return (
@@ -491,109 +633,27 @@ function ScoringModal({ card, onClose, onScored }: {
   const [financeScore, setFinanceScore] = useState(0);
   const [meetingImg,   setMeetingImg]   = useState(0);
   const [financeImg,   setFinanceImg]   = useState(0);
-  const [confirmed, setConfirmed]       = useState(false);
+  const [confirmed,    setConfirmed]    = useState(false);
 
-  const meetingMoved = meetingScore >= 1 && meetingScore <= 4;
-  const canConfirm   = confirmed && meetingMoved;
+  const meetingValid = meetingScore >= 1 && meetingScore <= 4;
+  const canConfirm   = confirmed && meetingValid;
 
   function handleConfirm() {
     if (!canConfirm) return;
-    // map 1→25, 2→50, 3→75, 4→100
-    const mapped = meetingScore * 25;
-    onScored(card.id, mapped);
-  }
-
-  // Image carousel placeholder component
-  function ImageCarousel({ index, setIndex, total = 2 }: { index: number; setIndex: (i: number) => void; total?: number }) {
-    return (
-      <div className="flex flex-col items-center">
-        <div className="flex items-center gap-3 w-full">
-          {/* Prev */}
-          <button
-            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 shrink-0 disabled:opacity-30"
-            onClick={() => setIndex(Math.max(0, index - 1))}
-            disabled={index === 0}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          {/* Placeholder image */}
-          <div
-            className="flex-1 rounded-xl flex flex-col items-center justify-center"
-            style={{ height: 240, background: "#F1F5F9", border: "1.5px solid #E2E8F0" }}
-          >
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="mb-2">
-              <rect x="2" y="6" width="32" height="24" rx="4" stroke="#94A3B8" strokeWidth="1.8"/>
-              <circle cx="12" cy="15" r="3" stroke="#94A3B8" strokeWidth="1.5"/>
-              <path d="M2 24l8-6 6 5 5-4 13 9" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <p className="text-[12px] font-medium text-gray-400">Document {index + 1} of {total}</p>
-          </div>
-          {/* Next */}
-          <button
-            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 shrink-0 disabled:opacity-30"
-            onClick={() => setIndex(Math.min(total - 1, index + 1))}
-            disabled={index === total - 1}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-        </div>
-        {/* Dots */}
-        <div className="flex gap-1.5 mt-3">
-          {Array.from({ length: total }).map((_, i) => (
-            <button
-              key={i}
-              className="w-2 h-2 rounded-full transition-colors"
-              style={{ background: i === index ? "#16A34A" : "#CBD5E1" }}
-              onClick={() => setIndex(i)}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Score slider component
-  function ScoreSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-    return (
-      <div className="mt-4">
-        <p className="text-[13px] font-semibold text-gray-700 mb-2">Assign score (1–4)</p>
-        <input
-          type="range"
-          min={1}
-          max={4}
-          step={1}
-          value={value === 0 ? 1 : value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-          style={{ accentColor: "#16A34A" }}
-        />
-        <div className="flex justify-between text-[10px] text-gray-400 mt-1 mb-3">
-          <span>1</span><span>2</span><span>3</span><span>4</span>
-        </div>
-        {/* Value display */}
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-xl border-2 flex items-center justify-center text-[20px] font-bold shrink-0"
-            style={{ borderColor: "#16A34A", color: "#16A34A", background: "#F0FDF4" }}
-          >
-            {value === 0 ? "–" : value}
-          </div>
-          <p className="text-[11px] text-gray-400 italic">Slide to adjust score</p>
-        </div>
-      </div>
-    );
+    // Map 1→25, 2→50, 3→75, 4→100
+    onScored(card.id, meetingScore * 25);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
       <div
         className="bg-white rounded-2xl shadow-2xl flex flex-col"
-        style={{ width: 720, maxHeight: "90vh", overflow: "hidden" }}
+        style={{ width: 680, maxHeight: "92vh", overflow: "hidden" }}
       >
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100 shrink-0">
           <div>
-            <h2 className="text-[19px] font-bold text-gray-900">Update Scores</h2>
+            <h2 className="text-[18px] font-bold text-gray-900">Update Scores</h2>
             <p className="text-[13px] font-medium text-gray-500 mt-0.5">{card.groupName} &middot; {card.community}</p>
           </div>
           <button
@@ -609,99 +669,103 @@ function ScoringModal({ card, onClose, onScored }: {
           className="flex items-start gap-3 px-6 py-3 shrink-0"
           style={{ background: "#FFFBEB", borderBottom: "1px solid #FDE68A" }}
         >
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5">
             <path d="M10 3L18 17H2L10 3Z" stroke="#D97706" strokeWidth="1.6" strokeLinejoin="round"/>
             <path d="M10 8v4M10 13.5v.5" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round"/>
           </svg>
-          <p className="text-[13px] font-medium" style={{ color: "#92400E" }}>
-            Scores cannot be changed after confirmation. Please review records carefully before assigning scores.
+          <p className="text-[12px] font-medium" style={{ color: "#92400E" }}>
+            Scores cannot be changed after confirmation. Review all records carefully before assigning scores.
           </p>
         </div>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
-          {/* Section 1 — Meeting Minutes Records */}
+          {/* Section 1 — Meeting Minutes */}
           <div className="rounded-xl border border-gray-200 p-5">
-            <p className="text-[16px] font-bold text-gray-900 mb-0.5">Meeting Minutes Records</p>
-            <p className="text-[12px] font-medium text-gray-500 mb-4">Update the required scores to process the support request.</p>
+            <p className="text-[15px] font-bold text-gray-900 mb-0.5">Meeting Minutes Records</p>
+            <p className="text-[12px] font-medium text-gray-500 mb-4">
+              Review the uploaded documents and assign a score between 1 and 4.
+            </p>
             <ImageCarousel index={meetingImg} setIndex={setMeetingImg} total={2} />
-            <ScoreSlider value={meetingScore} onChange={setMeetingScore} />
+            <ScoreSlider label="Score for Meeting Minutes (1 = Poor, 4 = Excellent)" value={meetingScore} onChange={setMeetingScore} />
           </div>
 
-          {/* Section 2 — Financial Contribution Records */}
+          {/* Section 2 — Financial Contribution */}
           <div className="rounded-xl border border-gray-200 p-5">
-            <p className="text-[16px] font-bold text-gray-900 mb-0.5">Financial Contribution Records</p>
-            <p className="text-[12px] font-medium text-gray-500 mb-4">Update the required scores to process the support request.</p>
+            <p className="text-[15px] font-bold text-gray-900 mb-0.5">Financial Contribution Records</p>
+            <p className="text-[12px] font-medium text-gray-500 mb-4">
+              Review the uploaded documents and assign a score between 1 and 4.
+            </p>
 
             {card.hasFinancialRecords ? (
               <>
                 <ImageCarousel index={financeImg} setIndex={setFinanceImg} total={2} />
-                <ScoreSlider value={financeScore} onChange={setFinanceScore} />
+                <ScoreSlider label="Score for Financial Contribution (1 = Poor, 4 = Excellent)" value={financeScore} onChange={setFinanceScore} />
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                  style={{ background: "#F0FDF4" }}
-                >
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "#F0FDF4" }}>
+                  <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
                     <rect x="4" y="2" width="20" height="24" rx="3" stroke="#16A34A" strokeWidth="1.6"/>
                     <path d="M9 9h10M9 13h10M9 17h6" stroke="#16A34A" strokeWidth="1.6" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <p className="text-[14px] font-semibold text-gray-700 max-w-[340px] mb-2">
-                  There are no financial contribution records for this group to be updated at this time
+                <p className="text-[13px] font-semibold text-gray-700 max-w-[320px] mb-1.5">
+                  No financial contribution records available
                 </p>
-                <p className="text-[12px] text-gray-400 max-w-[340px]">
-                  When financial contribution records are available for update, they will be displayed here
+                <p className="text-[12px] text-gray-400 max-w-[300px]">
+                  When records are available for this group they will appear here.
                 </p>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Sticky footer */}
-        <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-4">
-          {/* Checkbox */}
-          <label className="flex items-start gap-2.5 cursor-pointer flex-1">
+          {/* Confirmation checkbox — inside scroll area */}
+          <div
+            className="rounded-xl p-4 flex items-start gap-3"
+            style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}
+          >
             <input
+              id="score-confirm"
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               className="mt-0.5 w-4 h-4 rounded cursor-pointer shrink-0"
               style={{ accentColor: "#16A34A" }}
             />
-            <span className="text-[12px] font-medium text-gray-600 leading-relaxed">
-              I confirm the scores are carefully selected and I agree that the scores cannot be changed once confirmed.
-            </span>
-          </label>
-          {/* Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={onClose}
-              className="h-9 px-4 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!canConfirm}
-              onClick={handleConfirm}
-              className="h-9 px-5 rounded-lg text-[13px] font-bold text-white transition-colors"
-              style={{
-                background: canConfirm ? "#16A34A" : "#D1D5DB",
-                cursor: canConfirm ? "pointer" : "not-allowed",
-              }}
-            >
-              Confirm Scores
-            </button>
+            <label htmlFor="score-confirm" className="text-[13px] font-medium text-gray-700 leading-relaxed cursor-pointer">
+              I have carefully reviewed the evidence records and confirm that the scores assigned are accurate.
+              I understand that scores <strong>cannot be changed</strong> once confirmed.
+            </label>
           </div>
+
+        </div>
+
+        {/* Footer — buttons only */}
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="h-9 px-5 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!canConfirm}
+            onClick={handleConfirm}
+            className="h-9 px-6 rounded-lg text-[13px] font-bold text-white transition-colors"
+            style={{
+              background: canConfirm ? "#16A34A" : "#D1D5DB",
+              cursor: canConfirm ? "pointer" : "not-allowed",
+            }}
+          >
+            Confirm Scores
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
