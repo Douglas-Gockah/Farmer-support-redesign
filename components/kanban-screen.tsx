@@ -875,6 +875,18 @@ export default function KanbanScreen() {
     showToast("Funds disbursed successfully");
   }
 
+  const [datePickerOpen,   setDatePickerOpen]   = useState(false);
+  const [regionsOpen,      setRegionsOpen]      = useState(false);
+  const [districtsOpen,    setDistrictsOpen]    = useState(false);
+  const [communityOpen,    setCommunityOpen]    = useState(false);
+  const [agentOpen,        setAgentOpen]        = useState(false);
+  const [selectedRegion,   setSelectedRegion]   = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedCommunity,setSelectedCommunity]= useState<string | null>(null);
+  const [selectedAgent,    setSelectedAgent]    = useState<string | null>(null);
+  const [regionSearch,     setRegionSearch]     = useState("");
+  const [districtSearch,   setDistrictSearch]   = useState("");
+
   const filtered = useMemo(() => {
     return requests.filter((r) => {
       if (search) {
@@ -891,18 +903,6 @@ export default function KanbanScreen() {
     if (stage === "pending_approval")     { setReviewCard(r); }
     if (stage === "finance_disbursement") { setDisburseCard(r); }
   }
-
-  const [datePickerOpen,   setDatePickerOpen]   = useState(false);
-  const [regionsOpen,      setRegionsOpen]      = useState(false);
-  const [districtsOpen,    setDistrictsOpen]    = useState(false);
-  const [communityOpen,    setCommunityOpen]    = useState(false);
-  const [agentOpen,        setAgentOpen]        = useState(false);
-  const [selectedRegion,   setSelectedRegion]   = useState<string | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
-  const [selectedCommunity,setSelectedCommunity]= useState<string | null>(null);
-  const [selectedAgent,    setSelectedAgent]    = useState<string | null>(null);
-  const [regionSearch,     setRegionSearch]     = useState("");
-  const [districtSearch,   setDistrictSearch]   = useState("");
   const [communitySearch,  setCommunitySearch]  = useState("");
   const [datePreset,       setDatePreset]       = useState<string | null>(null);
   const [calMonth,         setCalMonth]         = useState(() => new Date());
