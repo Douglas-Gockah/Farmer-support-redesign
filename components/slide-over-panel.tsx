@@ -151,6 +151,7 @@ export default function SlideOverPanel({
         style={{
           width: 420,
           height: "100vh",
+          overflowY: "auto",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.10)",
           animation: "slideIn 200ms ease-out forwards",
         }}

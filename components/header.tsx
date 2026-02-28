@@ -1,29 +1,15 @@
 "use client";
 
-interface HeaderProps {
-  activeScreen: "dashboard" | "kanban";
-}
-
-const screenConfig = {
-  dashboard: {
-    title: "Dashboard",
-    breadcrumb: "TreeSyt / Dashboard",
-  },
-  kanban: {
-    title: "Farmer Support",
-    breadcrumb: "TreeSyt / Farmer Support",
-  },
-};
-
-export default function Header({ activeScreen }: HeaderProps) {
-  const { title, breadcrumb } = screenConfig[activeScreen];
-
+export default function Header() {
   return (
-    <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#E5E7EB] h-16">
+    <header
+      className="flex items-center justify-between px-6 bg-white border-b border-[#E5E7EB]"
+      style={{ height: 64, flexShrink: 0 }}
+    >
       {/* Left: page title + breadcrumb */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-[18px] font-bold leading-tight text-gray-900">{title}</h1>
-        <p className="text-[12px] text-gray-400 leading-none">{breadcrumb}</p>
+        <h1 className="text-[18px] font-bold leading-tight text-gray-900">Farmer Support</h1>
+        <p className="text-[12px] text-gray-400 leading-none">TreeSyt / Farmer Support</p>
       </div>
 
       {/* Right: user info */}

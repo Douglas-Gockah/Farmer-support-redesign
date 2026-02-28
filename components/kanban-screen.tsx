@@ -253,9 +253,12 @@ export default function KanbanScreen() {
   }, [search, filterType, requests]);
 
   return (
-    <div className="flex flex-col h-full -m-6">
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 px-6 py-[10px] bg-white border-b border-border">
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      {/* Filter bar — fixed height */}
+      <div
+        className="flex items-center gap-3 px-6 bg-white border-b border-border"
+        style={{ height: 56, flexShrink: 0 }}
+      >
         {/* Search */}
         <div className="relative flex-1 max-w-xs">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -309,35 +312,58 @@ export default function KanbanScreen() {
         </div>
       </div>
 
-      {/* Kanban board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-4 px-6 py-5 h-full" style={{ minWidth: "max-content" }}>
+      {/* Kanban board — takes all remaining vertical space, scrolls horizontally */}
+      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 12,
+            padding: 16,
+            height: "100%",
+            minWidth: "max-content",
+          }}
+        >
           {COLUMNS.map((col) => {
             const cards = filtered.filter((r) => r.stage === col.id);
             return (
-              <div key={col.id} className="flex flex-col" style={{ width: 260, minWidth: 260, flexShrink: 0 }}>
-                <div style={{ position: "sticky", top: 0, zIndex: 1 }}>
+              <div
+                key={col.id}
+                style={{
+                  width: 280,
+                  minWidth: 280,
+                  flexShrink: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                }}
+              >
+                {/* Column header — fixed height, never shrinks */}
+                <div style={{ flexShrink: 0 }}>
                   <ColumnHeader label={col.label} color={col.color} count={cards.length} />
                 </div>
-                <ScrollArea className="flex-1">
-                  {cards.length === 0 ? (
-                    <div className="flex items-center justify-center h-20">
-                      <span className="text-[12px] text-muted-foreground/50">No requests</span>
-                    </div>
-                  ) : (
-                    cards.map((r) => (
-                      <KanbanCard
-                        key={r.id}
-                        request={r}
-                        actionLabel={col.actionLabel}
-                        actionActive={col.actionActive}
-                        onClick={() => setSelectedCard(r)}
-                        onApprove={(e) => { e.stopPropagation(); setApproveCard(r); }}
-                        onScore={(e) => { e.stopPropagation(); setScoreCard(r); }}
-                        onDisburse={(e) => { e.stopPropagation(); setDisburseCard(r); }}
-                      />
-                    ))
-                  )}
+                {/* Card list — scrolls vertically */}
+                <ScrollArea style={{ flex: 1 }}>
+                  <div style={{ paddingBottom: 16 }}>
+                    {cards.length === 0 ? (
+                      <div className="flex items-center justify-center h-20">
+                        <span className="text-[12px] text-muted-foreground/50">No requests</span>
+                      </div>
+                    ) : (
+                      cards.map((r) => (
+                        <KanbanCard
+                          key={r.id}
+                          request={r}
+                          actionLabel={col.actionLabel}
+                          actionActive={col.actionActive}
+                          onClick={() => setSelectedCard(r)}
+                          onApprove={(e) => { e.stopPropagation(); setApproveCard(r); }}
+                          onScore={(e) => { e.stopPropagation(); setScoreCard(r); }}
+                          onDisburse={(e) => { e.stopPropagation(); setDisburseCard(r); }}
+                        />
+                      ))
+                    )}
+                  </div>
                 </ScrollArea>
               </div>
             );
