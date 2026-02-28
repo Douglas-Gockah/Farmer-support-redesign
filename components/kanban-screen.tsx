@@ -887,6 +887,10 @@ export default function KanbanScreen() {
   const [regionSearch,     setRegionSearch]     = useState("");
   const [districtSearch,   setDistrictSearch]   = useState("");
 
+  const [communitySearch,  setCommunitySearch]  = useState("");
+  const [datePreset,       setDatePreset]       = useState<string | null>(null);
+  const [calMonth,         setCalMonth]         = useState(() => new Date());
+
   const filtered = useMemo(() => {
     return requests.filter((r) => {
       if (search) {
@@ -903,9 +907,6 @@ export default function KanbanScreen() {
     if (stage === "pending_approval")     { setReviewCard(r); }
     if (stage === "finance_disbursement") { setDisburseCard(r); }
   }
-  const [communitySearch,  setCommunitySearch]  = useState("");
-  const [datePreset,       setDatePreset]       = useState<string | null>(null);
-  const [calMonth,         setCalMonth]         = useState(() => new Date());
 
   // Date picker helpers
   const today = new Date();
