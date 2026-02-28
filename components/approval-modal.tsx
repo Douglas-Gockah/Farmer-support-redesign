@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -20,381 +21,457 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import type { FarmerRequest } from "@/components/slide-over-panel";
+import type { FarmerRequest, SupportInterest, SupportType } from "@/components/slide-over-panel";
 
 // ---------------------------------------------------------------------------
-// Toast (inline)
+// ScoreBar
 // ---------------------------------------------------------------------------
-function Toast({ message, onDone }: { message: string; onDone: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3000);
-    return () => clearTimeout(t);
-  }, [onDone]);
-
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.max(0, Math.min(100, score));
   return (
-    <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 bg-zinc-900 text-white text-[13px] font-medium px-5 py-3 rounded-xl shadow-xl"
-      style={{ animation: "fadeUp 200ms ease-out" }}
-    >
-      <span className="w-5 h-5 rounded-full bg-[#16A34A] flex items-center justify-center shrink-0">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </span>
-      {message}
-      <style>{`@keyframes fadeUp { from { opacity:0; transform: translate(-50%, 8px); } to { opacity:1; transform: translate(-50%, 0); } }`}</style>
+    <div className="w-full">
+      <div className="relative h-2 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
+        <div className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-zinc-500 shadow" style={{ left: `calc(${pct}% - 7px)` }} />
+      </div>
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+        <span>Poor</span><span>Fair</span><span>Good</span>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Cash Support Modal
+// SupportOptionCard — selectable card for each support interest
 // ---------------------------------------------------------------------------
-function CashModal({
-  card,
-  open,
-  onClose,
-  onApprove,
+function SupportOptionCard({
+  interest,
+  farmers,
+  selected,
+  onSelect,
 }: {
-  card: FarmerRequest;
-  open: boolean;
-  onClose: () => void;
-  onApprove: () => void;
+  interest: SupportInterest;
+  farmers: number;
+  selected: boolean;
+  onSelect: () => void;
 }) {
-  const AMOUNT_PER_FARMER = 120;
-  const [amountEditing, setAmountEditing] = useState(false);
-  const [amountPerFarmer, setAmountPerFarmer] = useState(AMOUNT_PER_FARMER);
-  const [qtyPerFarmer, setQtyPerFarmer] = useState(50);
-  const [confirmed, setConfirmed] = useState(false);
-
-  const totalAmount = amountPerFarmer * card.farmers;
-  const totalQty = qtyPerFarmer * card.farmers;
+  const isCash = interest.type === "Cash";
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader className="mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="7" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
-                <circle cx="13" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
-                <path d="M1 17c0-3.5 2.5-5.5 6-5.5m6 0c3.5 0 6 2 6 5.5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+    <div
+      className="relative rounded-xl border-2 p-4 cursor-pointer transition-all"
+      style={{
+        borderColor: selected ? "#16A34A" : "var(--border)",
+        background: selected ? "#F0FDF4" : "var(--muted)/0.2",
+        opacity: selected ? 1 : 0.6,
+      }}
+      onClick={onSelect}
+    >
+      {/* Rank pill + checkmark */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+          {interest.rank}
+        </span>
+        <div
+          className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+          style={{ borderColor: selected ? "#16A34A" : "var(--border)", background: selected ? "#16A34A" : "transparent" }}
+        >
+          {selected && (
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* Type label */}
+      <p className="text-[14px] font-bold text-foreground mb-3">
+        {isCash ? "Cash Support" : "Ploughing Support"}
+      </p>
+
+      {/* Details grid */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <div>
+          <p className="text-[10px] text-muted-foreground">Farmers</p>
+          <p className="text-[13px] font-semibold">{farmers}</p>
+        </div>
+        {isCash ? (
+          <>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Amount / farmer</p>
+              <p className="text-[13px] font-semibold">GHS {interest.amountPerFarmer?.toFixed(2)}</p>
             </div>
             <div>
-              <DialogTitle className="text-[15px] font-bold">{card.groupName}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] text-muted-foreground">Cash support</span>
-                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#FEF3C7", color: "#D97706" }}>
-                  Pending
-                </Badge>
-              </div>
+              <p className="text-[10px] text-muted-foreground">Total amount</p>
+              <p className="text-[13px] font-semibold">GHS {((interest.amountPerFarmer ?? 0) * farmers).toFixed(2)}</p>
             </div>
-          </div>
-        </DialogHeader>
-
-        {/* Summary row */}
-        <div className="grid grid-cols-3 gap-3 mb-3">
-          {[
-            { label: "Farmers",          value: String(card.farmers) },
-            { label: "Amount / Farmer",  value: `GHS ${amountPerFarmer.toFixed(2)}` },
-            { label: "Total Amount",     value: `GHS ${totalAmount.toFixed(2)}` },
-          ].map((item) => (
-            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5 text-center">
-              <p className="text-[18px] font-bold text-foreground">{item.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{item.label}</p>
+            <div>
+              <p className="text-[10px] text-muted-foreground">MoMo number</p>
+              <p className="text-[13px] font-semibold font-mono">{interest.momoNumber}</p>
             </div>
-          ))}
-        </div>
-
-        {/* MoMo row */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {[
-            { label: "MoMo Number", value: "0244-XXX-XXX" },
-            { label: "MoMo Name",   value: card.agent },
-          ].map((item) => (
-            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5">
-              <p className="text-[11px] text-muted-foreground">{item.label}</p>
-              <p className="text-[13px] font-semibold text-foreground mt-0.5">{item.value}</p>
+            <div className="col-span-2">
+              <p className="text-[10px] text-muted-foreground">MoMo name</p>
+              <p className="text-[13px] font-semibold">{interest.momoName}</p>
             </div>
-          ))}
-        </div>
-
-        <Separator className="mb-4" />
-
-        <p className="text-[13px] font-bold text-foreground mb-3">Approve request</p>
-
-        {/* Details box */}
-        <div className="border border-border rounded-lg p-3 mb-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Amount per farmer</p>
-              <div className="flex items-center gap-1">
-                <span className="text-[12px] text-muted-foreground font-medium">GHS</span>
-                {amountEditing ? (
-                  <Input
-                    type="number"
-                    className="w-20 h-8 text-[13px] font-bold"
-                    value={amountPerFarmer}
-                    onChange={(e) => setAmountPerFarmer(Number(e.target.value))}
-                    autoFocus
-                  />
-                ) : (
-                  <span className="text-[15px] font-bold text-foreground">{amountPerFarmer.toFixed(2)}</span>
-                )}
-              </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Land / farmer</p>
+              <p className="text-[13px] font-semibold">{interest.landSizePerFarmer} ac</p>
             </div>
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Total amount</p>
-              <p className="text-[15px] font-bold text-foreground">GHS {totalAmount.toFixed(2)}</p>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Total land</p>
+              <p className="text-[13px] font-semibold">{((interest.landSizePerFarmer ?? 0) * farmers).toFixed(1)} ac</p>
             </div>
-            <Button variant="ghost" size="sm" className="text-[12px] font-semibold text-[#16A34A] hover:text-[#15803D] shrink-0 px-2" onClick={() => setAmountEditing(!amountEditing)}>
-              {amountEditing ? "Done" : "Edit"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Expected quantity row */}
-        <div className="flex items-end gap-4 mb-5">
-          <div className="flex-1">
-            <p className="text-[11px] text-muted-foreground mb-1">Expected quantity per farmer</p>
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                className="w-20 h-8 text-[13px] font-bold"
-                value={qtyPerFarmer}
-                onChange={(e) => setQtyPerFarmer(Number(e.target.value))}
-              />
-              <span className="text-[12px] text-muted-foreground">KG</span>
-            </div>
-          </div>
-          <div className="flex-1">
-            <p className="text-[11px] text-muted-foreground mb-1">Expected total quantity</p>
-            <p className="text-[14px] font-bold text-foreground">{totalQty} KG</p>
-          </div>
-        </div>
-
-        {/* Confirmation */}
-        <div className="flex items-start gap-2.5 mb-5 p-3 rounded-xl bg-muted/50">
-          <Checkbox
-            id="confirm-cash"
-            checked={confirmed}
-            onCheckedChange={(v) => setConfirmed(Boolean(v))}
-            className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
-          />
-          <Label htmlFor="confirm-cash" className="text-[12px] text-muted-foreground leading-relaxed cursor-pointer">
-            I have reviewed the details of this request and confirm my decision to proceed with approval.
-          </Label>
-        </div>
-
-        {/* CTAs */}
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onClose}>
-            Reject
-          </Button>
-          <Button
-            disabled={!confirmed}
-            onClick={onApprove}
-            className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white"
-          >
-            Approve request
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Ploughing Support Modal
+// Cash approval detail fields
 // ---------------------------------------------------------------------------
-function PloughingModal({
-  card,
-  open,
-  onClose,
-  onApprove,
+function CashApprovalFields({
+  interest,
+  farmers,
+  amountPerFarmer,
+  setAmountPerFarmer,
+  qtyPerFarmer,
+  setQtyPerFarmer,
 }: {
-  card: FarmerRequest;
-  open: boolean;
-  onClose: () => void;
-  onApprove: () => void;
+  interest: SupportInterest;
+  farmers: number;
+  amountPerFarmer: number;
+  setAmountPerFarmer: (v: number) => void;
+  qtyPerFarmer: number;
+  setQtyPerFarmer: (v: number) => void;
 }) {
-  const [landPerFarmer, setLandPerFarmer] = useState(1.5);
-  const [amountPerFarmer, setAmountPerFarmer] = useState(200);
-  const [provider, setProvider] = useState("FieldTech Ghana");
-  const [payment, setPayment] = useState("Full payment");
-  const [confirmed, setConfirmed] = useState(false);
-
-  const totalLand = (landPerFarmer * card.farmers).toFixed(2);
-  const totalAmount = amountPerFarmer * card.farmers;
-
+  const totalAmount = amountPerFarmer * farmers;
+  const totalQty = qtyPerFarmer * farmers;
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader className="mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="7" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
-                <circle cx="13" cy="6" r="3" stroke="#16A34A" strokeWidth="1.5"/>
-                <path d="M1 17c0-3.5 2.5-5.5 6-5.5m6 0c3.5 0 6 2 6 5.5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div>
-              <DialogTitle className="text-[15px] font-bold">{card.groupName}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] text-muted-foreground">Ploughing support</span>
-                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#DCFCE7", color: "#16A34A" }}>Full payment</Badge>
-                <Badge variant="outline" className="text-[10px] border-0 px-2 py-0.5" style={{ background: "#FEF3C7", color: "#D97706" }}>Pending</Badge>
-              </div>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Summary row */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {[
-            { label: "Farmers",     value: String(card.farmers) },
-            { label: "Land / Farmer", value: `${landPerFarmer.toFixed(2)} ac` },
-            { label: "Total Land",  value: `${totalLand} ac` },
-          ].map((item) => (
-            <div key={item.label} className="bg-muted/50 rounded-xl px-3 py-2.5 text-center">
-              <p className="text-[18px] font-bold text-foreground">{item.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{item.label}</p>
-            </div>
-          ))}
+    <div className="rounded-xl border border-border p-4 space-y-4">
+      <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">Approval Details — Cash</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Amount per farmer (GHS)</Label>
+          <Input type="number" value={amountPerFarmer} onChange={(e) => setAmountPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
         </div>
-
-        <Separator className="mb-4" />
-        <p className="text-[13px] font-bold text-foreground mb-3">Approve request</p>
-
-        {/* Details box */}
-        <div className="border border-border rounded-lg p-3 mb-3 space-y-3">
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Land size per farmer</p>
-              <div className="flex items-center gap-1">
-                <Input
-                  type="number"
-                  step="0.1"
-                  className="w-20 h-8 text-[13px] font-bold"
-                  value={landPerFarmer}
-                  onChange={(e) => setLandPerFarmer(Number(e.target.value))}
-                />
-                <span className="text-[12px] text-muted-foreground">acres</span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Total land size</p>
-              <p className="text-[14px] font-bold text-foreground">{totalLand} acres</p>
-            </div>
-          </div>
-          <Separator />
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Amount per farmer</p>
-              <div className="flex items-center gap-1">
-                <span className="text-[12px] text-muted-foreground font-medium">GHS</span>
-                <Input
-                  type="number"
-                  className="w-20 h-8 text-[13px] font-bold"
-                  value={amountPerFarmer}
-                  onChange={(e) => setAmountPerFarmer(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="flex-1">
-              <p className="text-[11px] text-muted-foreground mb-1">Total amount</p>
-              <p className="text-[14px] font-bold text-foreground">GHS {totalAmount.toFixed(2)}</p>
-            </div>
-          </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Total amount</Label>
+          <div className="h-9 flex items-center px-3 rounded-md bg-muted text-[13px] font-bold">GHS {totalAmount.toFixed(2)}</div>
         </div>
-
-        {/* Dropdowns */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div>
-            <p className="text-[11px] text-muted-foreground mb-1">Assign service provider</p>
-            <Select value={provider} onValueChange={setProvider}>
-              <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FieldTech Ghana">FieldTech Ghana</SelectItem>
-                <SelectItem value="AgriMech Ltd">AgriMech Ltd</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <p className="text-[11px] text-muted-foreground mb-1">Payment arrangement</p>
-            <Select value={payment} onValueChange={setPayment}>
-              <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Full payment">Full payment</SelectItem>
-                <SelectItem value="50% upfront">50% upfront</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Expected qty per farmer (KG)</Label>
+          <Input type="number" value={qtyPerFarmer} onChange={(e) => setQtyPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
         </div>
-
-        {/* Confirmation */}
-        <div className="flex items-start gap-2.5 mb-5 p-3 rounded-xl bg-muted/50">
-          <Checkbox
-            id="confirm-plough"
-            checked={confirmed}
-            onCheckedChange={(v) => setConfirmed(Boolean(v))}
-            className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
-          />
-          <Label htmlFor="confirm-plough" className="text-[12px] text-muted-foreground leading-relaxed cursor-pointer">
-            I have reviewed the details of this request and confirm my decision to proceed with approval.
-          </Label>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Expected total qty</Label>
+          <div className="h-9 flex items-center px-3 rounded-md bg-muted text-[13px] font-bold">{totalQty} KG</div>
         </div>
-
-        {/* CTAs */}
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onClose}>
-            Reject
-          </Button>
-          <Button
-            disabled={!confirmed}
-            onClick={onApprove}
-            className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white"
-          >
-            Approve request
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Public export
+// Ploughing approval detail fields
+// ---------------------------------------------------------------------------
+function PloughingApprovalFields({
+  farmers,
+  landPerFarmer,
+  setLandPerFarmer,
+  amountPerFarmer,
+  setAmountPerFarmer,
+  provider,
+  setProvider,
+  payment,
+  setPayment,
+}: {
+  farmers: number;
+  landPerFarmer: number;
+  setLandPerFarmer: (v: number) => void;
+  amountPerFarmer: number;
+  setAmountPerFarmer: (v: number) => void;
+  provider: string;
+  setProvider: (v: string) => void;
+  payment: string;
+  setPayment: (v: string) => void;
+}) {
+  const totalLand = (landPerFarmer * farmers).toFixed(2);
+  const totalAmount = amountPerFarmer * farmers;
+  return (
+    <div className="rounded-xl border border-border p-4 space-y-4">
+      <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">Approval Details — Ploughing</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Land per farmer (acres)</Label>
+          <Input type="number" step="0.1" value={landPerFarmer} onChange={(e) => setLandPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Total land size</Label>
+          <div className="h-9 flex items-center px-3 rounded-md bg-muted text-[13px] font-bold">{totalLand} ac</div>
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Amount per farmer (GHS)</Label>
+          <Input type="number" value={amountPerFarmer} onChange={(e) => setAmountPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Total amount</Label>
+          <div className="h-9 flex items-center px-3 rounded-md bg-muted text-[13px] font-bold">GHS {totalAmount.toFixed(2)}</div>
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Service provider</Label>
+          <Select value={provider} onValueChange={setProvider}>
+            <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="FieldTech Ghana">FieldTech Ghana</SelectItem>
+              <SelectItem value="AgriMech Ltd">AgriMech Ltd</SelectItem>
+              <SelectItem value="GreenField Services">GreenField Services</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground mb-1 block">Payment arrangement</Label>
+          <Select value={payment} onValueChange={setPayment}>
+            <SelectTrigger className="h-9 text-[13px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Full payment">Full payment</SelectItem>
+              <SelectItem value="50% upfront">50% upfront</SelectItem>
+              <SelectItem value="30% upfront">30% upfront</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main ApprovalModal
 // ---------------------------------------------------------------------------
 export default function ApprovalModal({
   card,
   onClose,
-  onApprove,
+  onApproved,
+  onHeld,
+  onRejected,
 }: {
   card: FarmerRequest;
   onClose: () => void;
-  onApprove: (id: string) => void;
+  onApproved: (id: string, type: SupportType, amountPerFarmer?: number, landSizePerFarmer?: number) => void;
+  onHeld: (id: string, comment: string) => void;
+  onRejected: (id: string, comment: string) => void;
 }) {
-  const [showToast, setShowToast] = useState(false);
+  // Which support interest card is selected
+  const primaryInterest   = card.supportInterests.find((si) => si.rank === "Primary")!;
+  const secondaryInterest = card.supportInterests.find((si) => si.rank === "Secondary")!;
+  const [selectedType, setSelectedType] = useState<SupportType>(primaryInterest.type);
 
-  function handleApprove() {
-    onApprove(card.id);
-    setShowToast(true);
+  // Cash approval fields
+  const selectedCashInterest = card.supportInterests.find((si) => si.type === "Cash");
+  const [cashAmount,    setCashAmount]    = useState(selectedCashInterest?.amountPerFarmer ?? 100);
+  const [cashQty,       setCashQty]       = useState(50);
+
+  // Ploughing approval fields
+  const selectedPloughInterest = card.supportInterests.find((si) => si.type === "Ploughing");
+  const [ploughLand,    setPloughLand]    = useState(selectedPloughInterest?.landSizePerFarmer ?? 1.5);
+  const [ploughAmount,  setPloughAmount]  = useState(200);
+  const [provider,      setProvider]      = useState("FieldTech Ghana");
+  const [payment,       setPayment]       = useState("Full payment");
+
+  // Decision
+  type Decision = "approve" | "hold" | "reject";
+  const [decision, setDecision]           = useState<Decision>("approve");
+  const [approveConfirmed, setApproveConfirmed] = useState(false);
+  const [holdComment,  setHoldComment]    = useState(card.holdComment || "");
+  const [rejectComment, setRejectComment] = useState("");
+
+  const selectedInterest = card.supportInterests.find((si) => si.type === selectedType)!;
+
+  function handleConfirm() {
+    if (decision === "approve") {
+      if (selectedType === "Cash") {
+        onApproved(card.id, "Cash", cashAmount, undefined);
+      } else {
+        onApproved(card.id, "Ploughing", undefined, ploughLand);
+      }
+    } else if (decision === "hold") {
+      onHeld(card.id, holdComment);
+    } else {
+      onRejected(card.id, rejectComment);
+    }
   }
 
+  const canConfirm =
+    decision === "approve" ? approveConfirmed :
+    decision === "hold"    ? holdComment.trim().length > 0 :
+    rejectComment.trim().length > 0;
+
+  const confirmLabel =
+    decision === "approve" ? "Approve Request" :
+    decision === "hold"    ? "Confirm Hold"    :
+    "Confirm Rejection";
+
+  const confirmStyle: React.CSSProperties =
+    decision === "approve" ? { background: "#16A34A", color: "white" } :
+    decision === "hold"    ? { background: "transparent", border: "1.5px solid #D97706", color: "#D97706" } :
+    { background: "transparent", border: "1.5px solid #DC2626", color: "#DC2626" };
+
   return (
-    <>
-      {card.supportType === "Cash" ? (
-        <CashModal card={card} open onClose={onClose} onApprove={handleApprove} />
-      ) : (
-        <PloughingModal card={card} open onClose={onClose} onApprove={handleApprove} />
-      )}
-      {showToast && (
-        <Toast message={`${card.groupName} approved successfully`} onDone={() => { setShowToast(false); onClose(); }} />
-      )}
-    </>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="p-0 gap-0 flex flex-col" style={{ maxWidth: 600, maxHeight: "85vh", overflow: "hidden" }}>
+        {/* Header */}
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <DialogTitle className="text-[16px] font-bold leading-snug">{card.groupName}</DialogTitle>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                {card.community}
+                <span className="font-mono text-[10px] text-muted-foreground/50 ml-2">{card.id}</span>
+              </p>
+            </div>
+            {card.score !== null && (
+              <Badge variant="outline" className="text-[13px] font-bold px-3 py-1 rounded-full border-0 shrink-0"
+                style={{ background: "#DCFCE7", color: "#16A34A" }}>
+                {card.score}%
+              </Badge>
+            )}
+          </div>
+          {card.score !== null && (
+            <div className="mt-3">
+              <ScoreBar score={card.score} />
+            </div>
+          )}
+          {card.onHold && card.holdComment && (
+            <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
+              <p className="text-[11px] font-semibold text-amber-700 mb-0.5">On hold — previous comment</p>
+              <p className="text-[12px] text-amber-600">{card.holdComment}</p>
+            </div>
+          )}
+        </DialogHeader>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+          {/* Support Request option cards */}
+          <section>
+            <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Support Requests</p>
+            <div className="space-y-3">
+              {card.supportInterests.map((si) => (
+                <SupportOptionCard
+                  key={si.rank}
+                  interest={si}
+                  farmers={card.farmers}
+                  selected={selectedType === si.type}
+                  onSelect={() => setSelectedType(si.type)}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Approval detail fields for the selected type */}
+          {selectedType === "Cash" && selectedCashInterest && (
+            <CashApprovalFields
+              interest={selectedCashInterest}
+              farmers={card.farmers}
+              amountPerFarmer={cashAmount}
+              setAmountPerFarmer={setCashAmount}
+              qtyPerFarmer={cashQty}
+              setQtyPerFarmer={setCashQty}
+            />
+          )}
+          {selectedType === "Ploughing" && selectedPloughInterest && (
+            <PloughingApprovalFields
+              farmers={card.farmers}
+              landPerFarmer={ploughLand}
+              setLandPerFarmer={setPloughLand}
+              amountPerFarmer={ploughAmount}
+              setAmountPerFarmer={setPloughAmount}
+              provider={provider}
+              setProvider={setProvider}
+              payment={payment}
+              setPayment={setPayment}
+            />
+          )}
+
+          <Separator />
+
+          {/* Decision section */}
+          <section>
+            <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Decision</p>
+
+            {/* Segmented control */}
+            <div className="flex rounded-xl border border-border overflow-hidden mb-4">
+              {(["approve", "hold", "reject"] as Decision[]).map((d) => {
+                const isActive = decision === d;
+                const label = d === "approve" ? "Approve" : d === "hold" ? "Put on Hold" : "Reject";
+                const activeStyle: React.CSSProperties =
+                  d === "approve" ? { background: "#F0FDF4", color: "#16A34A" } :
+                  d === "hold"    ? { background: "#FFFBEB", color: "#D97706" } :
+                  { background: "#FEF2F2", color: "#DC2626" };
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setDecision(d)}
+                    className="flex-1 py-2.5 text-[13px] font-semibold transition-colors border-r last:border-r-0 border-border"
+                    style={isActive ? activeStyle : { background: "transparent", color: "var(--muted-foreground)" }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Decision-specific inputs */}
+            {decision === "approve" && (
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/50">
+                <Checkbox
+                  id="confirm-approve"
+                  checked={approveConfirmed}
+                  onCheckedChange={(v) => setApproveConfirmed(Boolean(v))}
+                  className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
+                />
+                <Label htmlFor="confirm-approve" className="text-[12px] text-muted-foreground leading-relaxed cursor-pointer">
+                  I have reviewed and confirm this approval.
+                </Label>
+              </div>
+            )}
+            {decision === "hold" && (
+              <Textarea
+                placeholder="Add a reason for placing this on hold..."
+                value={holdComment}
+                onChange={(e) => setHoldComment(e.target.value)}
+                className="text-[13px] min-h-[80px] resize-none"
+              />
+            )}
+            {decision === "reject" && (
+              <Textarea
+                placeholder="You must provide a reason for rejection..."
+                value={rejectComment}
+                onChange={(e) => setRejectComment(e.target.value)}
+                className="text-[13px] min-h-[80px] resize-none"
+              />
+            )}
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border shrink-0">
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+            <Button
+              className="flex-1 font-semibold"
+              disabled={!canConfirm}
+              onClick={handleConfirm}
+              style={canConfirm ? confirmStyle : {}}
+            >
+              {confirmLabel}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
