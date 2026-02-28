@@ -1,68 +1,62 @@
 "use client";
 
-export default function Header({
-  totalCount,
-  search,
-  onSearch,
-}: {
-  totalCount?: number;
-  search?: string;
-  onSearch?: (v: string) => void;
-}) {
+// ---------------------------------------------------------------------------
+// Top App Bar — full-width, no sidebar
+// ---------------------------------------------------------------------------
+export default function Header() {
   return (
     <header
-      className="flex items-center justify-between px-6 bg-white border-b border-[#E5E7EB]"
-      style={{ height: 64, flexShrink: 0, gap: 16 }}
+      className="flex items-center justify-between bg-white border-b border-gray-200 px-6"
+      style={{ height: 64, flexShrink: 0 }}
     >
-      {/* Left: page title + count badge */}
-      <div className="flex items-center gap-3 shrink-0">
-        <h1 className="text-[18px] font-bold text-gray-900 leading-tight">Applications Board</h1>
-        {totalCount !== undefined && (
-          <span className="px-2.5 py-0.5 rounded-full text-[12px] font-semibold" style={{ background: "#F3F4F6", color: "#374151" }}>
-            {totalCount} total
-          </span>
-        )}
-      </div>
+      {/* Left: module title */}
+      <h1 className="text-[22px] font-bold text-gray-900 tracking-tight select-none">
+        Farmer support
+      </h1>
 
-      {/* Right: search + filter + avatar */}
-      <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Right: language selector + profile */}
+      <div className="flex items-center gap-5">
+        {/* Language selector */}
+        <button
+          className="flex items-center gap-1.5 text-[13px] font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          disabled
+          aria-label="Language selector"
+        >
+          {/* Globe icon */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
+            <ellipse cx="8" cy="8" rx="2.5" ry="6.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M1.5 6h13M1.5 10h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
           </svg>
-          <input
-            type="text"
-            value={search ?? ""}
-            onChange={(e) => onSearch?.(e.target.value)}
-            placeholder="Search applications..."
-            className="pl-9 pr-4 h-9 w-64 rounded-lg border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] bg-white"
-          />
-        </div>
-
-        {/* Filter button */}
-        <button className="flex items-center gap-2 h-9 px-3.5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors bg-white">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <span>English</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          Filter
         </button>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-7 bg-gray-200" aria-hidden="true" />
 
-        {/* User */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center rounded-full text-white font-semibold text-[13px] select-none shrink-0"
-            style={{ width: 34, height: 34, background: "#16A34A" }} aria-label="User avatar">
+        {/* User profile */}
+        <button
+          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+          disabled
+          aria-label="User profile"
+        >
+          <div
+            className="flex items-center justify-center rounded-full text-white font-bold text-[13px] select-none shrink-0"
+            style={{ width: 36, height: 36, background: "#16A34A" }}
+          >
             DG
           </div>
-          <div className="flex flex-col">
-            <span className="text-[13px] font-semibold text-gray-900 leading-tight">Douglas Gockah</span>
-            <span className="text-[11px] text-gray-400 leading-none">Gockanfo</span>
+          <div className="flex flex-col items-start">
+            <span className="text-[14px] font-bold text-gray-900 leading-tight">Douglas Gockah</span>
+            <span className="text-[12px] text-gray-400 leading-tight">Sommalife</span>
           </div>
-        </div>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 4.5l3 3 3-3" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
     </header>
   );

@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Header from "@/components/header";
 import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage, SupportType } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
@@ -836,9 +835,334 @@ export default function KanbanScreen() {
     if (stage === "finance_disbursement") { setDisburseCard(r); }
   }
 
+  const [datePickerOpen,   setDatePickerOpen]   = useState(false);
+  const [regionsOpen,      setRegionsOpen]      = useState(false);
+  const [districtsOpen,    setDistrictsOpen]    = useState(false);
+  const [supportTypeOpen,  setSupportTypeOpen]  = useState(false);
+  const [agentOpen,        setAgentOpen]        = useState(false);
+  const [selectedRegion,   setSelectedRegion]   = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedSupport,  setSelectedSupport]  = useState<string | null>(null);
+  const [selectedAgent,    setSelectedAgent]    = useState<string | null>(null);
+  const [regionSearch,     setRegionSearch]     = useState("");
+  const [districtSearch,   setDistrictSearch]   = useState("");
+  const [datePreset,       setDatePreset]       = useState<string | null>(null);
+  const [calMonth,         setCalMonth]         = useState(() => new Date());
+
+  // Date picker helpers
+  const today = new Date();
+  const DATE_PRESETS = ["Today", "Yesterday", "This Week", "Last Week", "This Month", "Last Month", "This Year", "Last Year"];
+  function presetDates(preset: string): [Date, Date] {
+    const d = new Date(today); d.setHours(0,0,0,0);
+    if (preset === "Today")      return [d, d];
+    if (preset === "Yesterday")  { const y = new Date(d); y.setDate(d.getDate()-1); return [y,y]; }
+    if (preset === "This Week")  { const s = new Date(d); s.setDate(d.getDate()-d.getDay()); return [s,d]; }
+    if (preset === "Last Week")  { const s = new Date(d); s.setDate(d.getDate()-d.getDay()-7); const e = new Date(s); e.setDate(s.getDate()+6); return [s,e]; }
+    if (preset === "This Month") { const s = new Date(d.getFullYear(),d.getMonth(),1); return [s,d]; }
+    if (preset === "Last Month") { const s = new Date(d.getFullYear(),d.getMonth()-1,1); const e = new Date(d.getFullYear(),d.getMonth(),0); return [s,e]; }
+    if (preset === "This Year")  { return [new Date(d.getFullYear(),0,1), d]; }
+    if (preset === "Last Year")  { return [new Date(d.getFullYear()-1,0,1), new Date(d.getFullYear()-1,11,31)]; }
+    return [d, d];
+  }
+  const [dateStart, dateEnd] = datePreset ? presetDates(datePreset) : [null, null];
+  function fmtDate(d: Date | null) {
+    if (!d) return "—";
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  // Calendar grid
+  function calDays(month: Date): (Date | null)[] {
+    const first = new Date(month.getFullYear(), month.getMonth(), 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(month.getFullYear(), month.getMonth()+1, 0).getDate();
+    const cells: (Date | null)[] = [];
+    for (let i = 0; i < startDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(month.getFullYear(), month.getMonth(), d));
+    return cells;
+  }
+  function isSameDay(a: Date, b: Date) {
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }
+  function inRange(d: Date) {
+    if (!dateStart || !dateEnd) return false;
+    return d >= dateStart && d <= dateEnd;
+  }
+
+  const GHANA_REGIONS = ["Ahafo","Ashanti","Bono","Bono East","Central","Eastern","Greater Accra","North East","Northern","Oti","Savannah","Upper East","Upper West","Volta","Western","Western North"];
+  const SUPPORT_TYPES = ["Cash","Ploughing"];
+  const AGENTS = [...new Set(requests.map(r => r.agent))];
+
+  const filteredRegions  = GHANA_REGIONS.filter(r => r.toLowerCase().includes(regionSearch.toLowerCase()));
+  const filteredDistricts = ["Tamale Metro","Sawla-Tuna-Kalba","Bole","Wa East"].filter(d => d.toLowerCase().includes(districtSearch.toLowerCase()));
+
+  // Close popovers on outside click
+  const dateRef     = useRef<HTMLDivElement>(null);
+  const regionsRef  = useRef<HTMLDivElement>(null);
+  const distRef     = useRef<HTMLDivElement>(null);
+  const suppRef     = useRef<HTMLDivElement>(null);
+  const agentRef    = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (dateRef.current    && !dateRef.current.contains(e.target as Node))    setDatePickerOpen(false);
+      if (regionsRef.current && !regionsRef.current.contains(e.target as Node)) setRegionsOpen(false);
+      if (distRef.current    && !distRef.current.contains(e.target as Node))    setDistrictsOpen(false);
+      if (suppRef.current    && !suppRef.current.contains(e.target as Node))    setSupportTypeOpen(false);
+      if (agentRef.current   && !agentRef.current.contains(e.target as Node))   setAgentOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <Header totalCount={requests.length} search={search} onSearch={setSearch} />
+
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200" style={{ background: "#F9FAFB", flexShrink: 0 }}>
+        <span className="text-[13px] text-gray-400 font-medium">Farmer support</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M5 3l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span className="text-[13px] font-bold text-gray-800">Requesting groups</span>
+      </div>
+
+      {/* Search row */}
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200" style={{ flexShrink: 0 }}>
+        {/* Search input */}
+        <div className="relative" style={{ width: 320 }}>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search for group name or reference..."
+            className="w-full pl-9 pr-4 h-9 rounded-lg border border-gray-200 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/25 focus:border-[#16A34A] bg-white"
+          />
+        </div>
+        {/* Export button */}
+        <button
+          className="flex items-center gap-2 h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors"
+          style={{ borderColor: "#16A34A", color: "#16A34A", background: "white" }}
+          disabled
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Export data
+        </button>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex items-center flex-wrap gap-2 px-6 py-2 bg-white border-b border-gray-200" style={{ flexShrink: 0 }}>
+
+        {/* 1. All Time date picker */}
+        <div ref={dateRef} className="relative">
+          <button
+            onClick={() => { setDatePickerOpen(o => !o); setRegionsOpen(false); setDistrictsOpen(false); setSupportTypeOpen(false); setAgentOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold text-gray-600 bg-white hover:border-gray-400 transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            {datePreset ?? "All Time"}
+          </button>
+
+          {datePickerOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 flex" style={{ width: 520 }}>
+              {/* Left: presets */}
+              <div className="w-44 border-r border-gray-100 py-2 shrink-0">
+                {DATE_PRESETS.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => { setDatePreset(p); setCalMonth(new Date()); }}
+                    className="w-full text-left px-4 py-2 text-[13px] font-medium transition-colors hover:bg-gray-50"
+                    style={{ color: datePreset === p ? "#16A34A" : "#374151", fontWeight: datePreset === p ? 700 : 500 }}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <div className="border-t border-gray-100 mt-2 pt-2 px-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="number" defaultValue={1} min={1} className="w-12 h-7 rounded border border-gray-200 text-center text-[12px] focus:outline-none focus:ring-1 focus:ring-[#16A34A]"/>
+                    <span className="text-[11px] text-gray-500 font-medium">Days up to today</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="number" defaultValue={1} min={1} className="w-12 h-7 rounded border border-gray-200 text-center text-[12px] focus:outline-none focus:ring-1 focus:ring-[#16A34A]"/>
+                    <span className="text-[11px] text-gray-500 font-medium">Days starting today</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: calendar */}
+              <div className="flex-1 p-4">
+                {/* Date inputs */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex-1 h-8 rounded border border-gray-200 flex items-center px-3 text-[12px] font-medium text-gray-700">{fmtDate(dateStart)}</div>
+                  <div className="w-3 h-px bg-gray-300"/>
+                  <div className="flex-1 h-8 rounded border border-gray-200 flex items-center px-3 text-[12px] font-medium text-gray-700">{fmtDate(dateEnd)}</div>
+                </div>
+                {/* Month nav */}
+                <div className="flex items-center justify-between mb-3">
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth()-1, 1))} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 text-gray-500">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                  <span className="text-[13px] font-bold text-gray-800">
+                    {calMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+                  </span>
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth()+1, 1))} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 text-gray-500">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                </div>
+                {/* Day headers */}
+                <div className="grid grid-cols-7 mb-1">
+                  {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+                    <div key={d} className="text-center text-[10px] font-bold text-gray-400 py-1">{d}</div>
+                  ))}
+                </div>
+                {/* Day cells */}
+                <div className="grid grid-cols-7 gap-y-0.5">
+                  {calDays(calMonth).map((d, i) => {
+                    if (!d) return <div key={`e-${i}`}/>;
+                    const isToday  = isSameDay(d, today);
+                    const isStart  = dateStart && isSameDay(d, dateStart);
+                    const isEnd    = dateEnd   && isSameDay(d, dateEnd);
+                    const inRng    = inRange(d);
+                    return (
+                      <button key={d.toISOString()} onClick={() => {}}
+                        className="h-7 w-full rounded-full text-[12px] font-medium flex items-center justify-center transition-colors"
+                        style={{
+                          background: (isStart || isEnd) ? "#16A34A" : inRng ? "#DCFCE7" : isToday ? "#F0FDF4" : "transparent",
+                          color: (isStart || isEnd) ? "white" : inRng ? "#15803D" : "#374151",
+                          fontWeight: isToday ? 700 : 400,
+                        }}
+                      >
+                        {d.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2. All Regions */}
+        <div ref={regionsRef} className="relative">
+          <button
+            onClick={() => { setRegionsOpen(o => !o); setDatePickerOpen(false); setDistrictsOpen(false); setSupportTypeOpen(false); setAgentOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold text-gray-600 bg-white hover:border-gray-400 transition-colors"
+          >
+            {selectedRegion ?? "All Regions"}
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          {regionsOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 220 }}>
+              <div className="relative px-3 mb-2">
+                <svg className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <input value={regionSearch} onChange={e => setRegionSearch(e.target.value)} placeholder="Search for region" className="w-full pl-7 pr-3 h-8 rounded-lg border border-gray-200 text-[12px] focus:outline-none focus:ring-1 focus:ring-[#16A34A]"/>
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {filteredRegions.map(r => (
+                  <button key={r} onClick={() => { setSelectedRegion(r); setSelectedDistrict(null); setRegionsOpen(false); setRegionSearch(""); }}
+                    className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
+                    style={{ color: selectedRegion === r ? "#16A34A" : "#374151", fontWeight: selectedRegion === r ? 700 : 400 }}
+                  >{r}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. All Districts */}
+        <div ref={distRef} className="relative">
+          <button
+            onClick={() => { setDistrictsOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setSupportTypeOpen(false); setAgentOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold bg-white hover:border-gray-400 transition-colors"
+            style={{ color: selectedDistrict ? "#374151" : "#9CA3AF" }}
+          >
+            {selectedDistrict ?? "All Districts"}
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          {districtsOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 220 }}>
+              <div className="relative px-3 mb-2">
+                <svg className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)} placeholder="Search for district" className="w-full pl-7 pr-3 h-8 rounded-lg border border-gray-200 text-[12px] focus:outline-none focus:ring-1 focus:ring-[#16A34A]"/>
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {filteredDistricts.map(d => (
+                  <button key={d} onClick={() => { setSelectedDistrict(d); setDistrictsOpen(false); setDistrictSearch(""); }}
+                    className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
+                    style={{ color: selectedDistrict === d ? "#16A34A" : "#374151", fontWeight: selectedDistrict === d ? 700 : 400 }}
+                  >{d}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 4. Support Type */}
+        <div ref={suppRef} className="relative">
+          <button
+            onClick={() => { setSupportTypeOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setAgentOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold bg-white hover:border-gray-400 transition-colors"
+            style={{ color: selectedSupport ? "#374151" : "#9CA3AF" }}
+          >
+            {selectedSupport ?? "Support Type"}
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          {supportTypeOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 160 }}>
+              {SUPPORT_TYPES.map(s => (
+                <button key={s} onClick={() => { setSelectedSupport(s); setSupportTypeOpen(false); }}
+                  className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
+                  style={{ color: selectedSupport === s ? "#16A34A" : "#374151", fontWeight: selectedSupport === s ? 700 : 400 }}
+                >{s}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 5. Agent */}
+        <div ref={agentRef} className="relative">
+          <button
+            onClick={() => { setAgentOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setSupportTypeOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold bg-white hover:border-gray-400 transition-colors"
+            style={{ color: selectedAgent ? "#374151" : "#9CA3AF" }}
+          >
+            {selectedAgent ?? "Agent"}
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          {agentOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 200 }}>
+              <div className="max-h-52 overflow-y-auto">
+                {AGENTS.map(a => (
+                  <button key={a} onClick={() => { setSelectedAgent(a); setAgentOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
+                    style={{ color: selectedAgent === a ? "#16A34A" : "#374151", fontWeight: selectedAgent === a ? 700 : 400 }}
+                  >{a}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Clear filters — shown when any filter is active */}
+        {(datePreset || selectedRegion || selectedDistrict || selectedSupport || selectedAgent) && (
+          <button
+            onClick={() => { setDatePreset(null); setSelectedRegion(null); setSelectedDistrict(null); setSelectedSupport(null); setSelectedAgent(null); }}
+            className="flex items-center gap-1 h-8 px-3 rounded-full text-[12px] font-semibold transition-colors"
+            style={{ color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {/* Kanban board */}
       <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
