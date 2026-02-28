@@ -822,12 +822,15 @@ export default function KanbanScreen() {
   }
 
   const filtered = useMemo(() => {
-    if (!search) return requests;
-    const q = search.toLowerCase();
-    return requests.filter((r) =>
-      r.groupName.toLowerCase().includes(q) || r.id.toLowerCase().includes(q)
-    );
-  }, [search, requests]);
+    return requests.filter((r) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!r.groupName.toLowerCase().includes(q) && !r.id.toLowerCase().includes(q)) return false;
+      }
+      if (selectedCommunity && r.community !== selectedCommunity) return false;
+      return true;
+    });
+  }, [search, selectedCommunity, requests]);
 
   function ctaAction(r: FarmerRequest, stage: Stage) {
     if (stage === "synced")               { setScoreCard(r); }
@@ -838,14 +841,15 @@ export default function KanbanScreen() {
   const [datePickerOpen,   setDatePickerOpen]   = useState(false);
   const [regionsOpen,      setRegionsOpen]      = useState(false);
   const [districtsOpen,    setDistrictsOpen]    = useState(false);
-  const [supportTypeOpen,  setSupportTypeOpen]  = useState(false);
+  const [communityOpen,    setCommunityOpen]    = useState(false);
   const [agentOpen,        setAgentOpen]        = useState(false);
   const [selectedRegion,   setSelectedRegion]   = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
-  const [selectedSupport,  setSelectedSupport]  = useState<string | null>(null);
+  const [selectedCommunity,setSelectedCommunity]= useState<string | null>(null);
   const [selectedAgent,    setSelectedAgent]    = useState<string | null>(null);
   const [regionSearch,     setRegionSearch]     = useState("");
   const [districtSearch,   setDistrictSearch]   = useState("");
+  const [communitySearch,  setCommunitySearch]  = useState("");
   const [datePreset,       setDatePreset]       = useState<string | null>(null);
   const [calMonth,         setCalMonth]         = useState(() => new Date());
 
@@ -889,25 +893,26 @@ export default function KanbanScreen() {
   }
 
   const GHANA_REGIONS = ["Ahafo","Ashanti","Bono","Bono East","Central","Eastern","Greater Accra","North East","Northern","Oti","Savannah","Upper East","Upper West","Volta","Western","Western North"];
-  const SUPPORT_TYPES = ["Cash","Ploughing"];
+  const COMMUNITIES = ["Tamale Metro","Sawla-Tuna-Kalba","Bole","Wa East","Sagon","Lala","Tonbu","Cheyohi","Nkoranza","Buipe","Tamale","Wa","Samini","Nkoranza North"];
   const AGENTS = [...new Set(requests.map(r => r.agent))];
 
-  const filteredRegions  = GHANA_REGIONS.filter(r => r.toLowerCase().includes(regionSearch.toLowerCase()));
-  const filteredDistricts = ["Tamale Metro","Sawla-Tuna-Kalba","Bole","Wa East"].filter(d => d.toLowerCase().includes(districtSearch.toLowerCase()));
+  const filteredRegions     = GHANA_REGIONS.filter(r => r.toLowerCase().includes(regionSearch.toLowerCase()));
+  const filteredDistricts   = ["Tamale Metro","Sawla-Tuna-Kalba","Bole","Wa East"].filter(d => d.toLowerCase().includes(districtSearch.toLowerCase()));
+  const filteredCommunities = COMMUNITIES.filter(c => c.toLowerCase().includes(communitySearch.toLowerCase()));
 
   // Close popovers on outside click
-  const dateRef     = useRef<HTMLDivElement>(null);
-  const regionsRef  = useRef<HTMLDivElement>(null);
-  const distRef     = useRef<HTMLDivElement>(null);
-  const suppRef     = useRef<HTMLDivElement>(null);
-  const agentRef    = useRef<HTMLDivElement>(null);
+  const dateRef      = useRef<HTMLDivElement>(null);
+  const regionsRef   = useRef<HTMLDivElement>(null);
+  const distRef      = useRef<HTMLDivElement>(null);
+  const communityRef = useRef<HTMLDivElement>(null);
+  const agentRef     = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (dateRef.current    && !dateRef.current.contains(e.target as Node))    setDatePickerOpen(false);
-      if (regionsRef.current && !regionsRef.current.contains(e.target as Node)) setRegionsOpen(false);
-      if (distRef.current    && !distRef.current.contains(e.target as Node))    setDistrictsOpen(false);
-      if (suppRef.current    && !suppRef.current.contains(e.target as Node))    setSupportTypeOpen(false);
-      if (agentRef.current   && !agentRef.current.contains(e.target as Node))   setAgentOpen(false);
+      if (dateRef.current      && !dateRef.current.contains(e.target as Node))      setDatePickerOpen(false);
+      if (regionsRef.current   && !regionsRef.current.contains(e.target as Node))   setRegionsOpen(false);
+      if (distRef.current      && !distRef.current.contains(e.target as Node))      setDistrictsOpen(false);
+      if (communityRef.current && !communityRef.current.contains(e.target as Node)) setCommunityOpen(false);
+      if (agentRef.current     && !agentRef.current.contains(e.target as Node))     setAgentOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -1105,24 +1110,41 @@ export default function KanbanScreen() {
           )}
         </div>
 
-        {/* 4. Support Type */}
-        <div ref={suppRef} className="relative">
+        {/* 4. Communities */}
+        <div ref={communityRef} className="relative">
           <button
-            onClick={() => { setSupportTypeOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setAgentOpen(false); }}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold bg-white hover:border-gray-400 transition-colors"
-            style={{ color: selectedSupport ? "#374151" : "#9CA3AF" }}
+            onClick={() => { setCommunityOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setAgentOpen(false); }}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full border text-[12px] font-semibold bg-white transition-colors"
+            style={{
+              borderColor: selectedCommunity ? "#16A34A" : "#D1D5DB",
+              color: selectedCommunity ? "#15803D" : "#6B7280",
+            }}
           >
-            {selectedSupport ?? "Support Type"}
+            {selectedCommunity ?? "All Communities"}
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-          {supportTypeOpen && (
-            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 160 }}>
-              {SUPPORT_TYPES.map(s => (
-                <button key={s} onClick={() => { setSelectedSupport(s); setSupportTypeOpen(false); }}
-                  className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
-                  style={{ color: selectedSupport === s ? "#16A34A" : "#374151", fontWeight: selectedSupport === s ? 700 : 400 }}
-                >{s}</button>
-              ))}
+          {communityOpen && (
+            <div className="absolute top-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 py-2" style={{ width: 220 }}>
+              <div className="relative px-3 mb-2">
+                <svg className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <input
+                  value={communitySearch}
+                  onChange={e => setCommunitySearch(e.target.value)}
+                  placeholder="Search for community..."
+                  className="w-full pl-7 pr-3 h-8 rounded-lg border border-gray-200 text-[12px] focus:outline-none focus:ring-1 focus:ring-[#16A34A]"
+                />
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {filteredCommunities.map(c => (
+                  <button key={c} onClick={() => { setSelectedCommunity(c); setCommunityOpen(false); setCommunitySearch(""); }}
+                    className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-50 transition-colors"
+                    style={{ color: selectedCommunity === c ? "#16A34A" : "#374151", fontWeight: selectedCommunity === c ? 700 : 400 }}
+                  >{c}</button>
+                ))}
+                {filteredCommunities.length === 0 && (
+                  <p className="px-4 py-3 text-[12px] text-gray-400">No communities match your search.</p>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -1130,7 +1152,7 @@ export default function KanbanScreen() {
         {/* 5. Agent */}
         <div ref={agentRef} className="relative">
           <button
-            onClick={() => { setAgentOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setSupportTypeOpen(false); }}
+            onClick={() => { setAgentOpen(o => !o); setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false); setCommunityOpen(false); }}
             className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold bg-white hover:border-gray-400 transition-colors"
             style={{ color: selectedAgent ? "#374151" : "#9CA3AF" }}
           >
@@ -1152,9 +1174,9 @@ export default function KanbanScreen() {
         </div>
 
         {/* Clear filters — shown when any filter is active */}
-        {(datePreset || selectedRegion || selectedDistrict || selectedSupport || selectedAgent) && (
+        {(datePreset || selectedRegion || selectedDistrict || selectedCommunity || selectedAgent) && (
           <button
-            onClick={() => { setDatePreset(null); setSelectedRegion(null); setSelectedDistrict(null); setSelectedSupport(null); setSelectedAgent(null); }}
+            onClick={() => { setDatePreset(null); setSelectedRegion(null); setSelectedDistrict(null); setSelectedCommunity(null); setSelectedAgent(null); }}
             className="flex items-center gap-1 h-8 px-3 rounded-full text-[12px] font-semibold transition-colors"
             style={{ color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}
           >
