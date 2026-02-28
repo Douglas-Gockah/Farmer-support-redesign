@@ -49,6 +49,7 @@ export interface FarmerRequest {
   transactionId?: string;
   disbursedAmount?: number;
   disbursedDate?: string;
+  hasFinancialRecords?: boolean;
 }
 
 // ---------------------------------------------------------------------------

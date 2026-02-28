@@ -26,6 +26,7 @@ const MOCK_REQUESTS: FarmerRequest[] = [
     id: "FS-2024-002", date: "15 Jan 2024", agent: "Ama Owusu", community: "Sawla-Tuna-Kalba",
     groupName: "Northern Fields Cooperative", score: null, stage: "synced", farmers: 18,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
+    hasFinancialRecords: true,
     supportInterests: [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 2.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 100, momoNumber: "0200-123-456", momoName: "Northern Coop" },
@@ -486,128 +487,211 @@ function ScoringModal({ card, onClose, onScored }: {
   onClose: () => void;
   onScored: (id: string, score: number) => void;
 }) {
-  const [selected, setSelected] = useState<ScoreLabel | null>(null);
+  const [meetingScore, setMeetingScore] = useState(0);
+  const [financeScore, setFinanceScore] = useState(0);
+  const [meetingImg,   setMeetingImg]   = useState(0);
+  const [financeImg,   setFinanceImg]   = useState(0);
+  const [confirmed, setConfirmed]       = useState(false);
+
+  const meetingMoved = meetingScore >= 1 && meetingScore <= 4;
+  const canConfirm   = confirmed && meetingMoved;
 
   function handleConfirm() {
-    const tile = SCORE_TILES.find((t) => t.label === selected);
-    if (tile) onScored(card.id, tile.score);
+    if (!canConfirm) return;
+    // map 1→25, 2→50, 3→75, 4→100
+    const mapped = meetingScore * 25;
+    onScored(card.id, mapped);
+  }
+
+  // Image carousel placeholder component
+  function ImageCarousel({ index, setIndex, total = 2 }: { index: number; setIndex: (i: number) => void; total?: number }) {
+    return (
+      <div className="flex flex-col items-center">
+        <div className="flex items-center gap-3 w-full">
+          {/* Prev */}
+          <button
+            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 shrink-0 disabled:opacity-30"
+            onClick={() => setIndex(Math.max(0, index - 1))}
+            disabled={index === 0}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          {/* Placeholder image */}
+          <div
+            className="flex-1 rounded-xl flex flex-col items-center justify-center"
+            style={{ height: 240, background: "#F1F5F9", border: "1.5px solid #E2E8F0" }}
+          >
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="mb-2">
+              <rect x="2" y="6" width="32" height="24" rx="4" stroke="#94A3B8" strokeWidth="1.8"/>
+              <circle cx="12" cy="15" r="3" stroke="#94A3B8" strokeWidth="1.5"/>
+              <path d="M2 24l8-6 6 5 5-4 13 9" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p className="text-[12px] font-medium text-gray-400">Document {index + 1} of {total}</p>
+          </div>
+          {/* Next */}
+          <button
+            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 shrink-0 disabled:opacity-30"
+            onClick={() => setIndex(Math.min(total - 1, index + 1))}
+            disabled={index === total - 1}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
+        {/* Dots */}
+        <div className="flex gap-1.5 mt-3">
+          {Array.from({ length: total }).map((_, i) => (
+            <button
+              key={i}
+              className="w-2 h-2 rounded-full transition-colors"
+              style={{ background: i === index ? "#16A34A" : "#CBD5E1" }}
+              onClick={() => setIndex(i)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Score slider component
+  function ScoreSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+    return (
+      <div className="mt-4">
+        <p className="text-[13px] font-semibold text-gray-700 mb-2">Assign score (1–4)</p>
+        <input
+          type="range"
+          min={1}
+          max={4}
+          step={1}
+          value={value === 0 ? 1 : value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+          style={{ accentColor: "#16A34A" }}
+        />
+        <div className="flex justify-between text-[10px] text-gray-400 mt-1 mb-3">
+          <span>1</span><span>2</span><span>3</span><span>4</span>
+        </div>
+        {/* Value display */}
+        <div className="flex items-center gap-3">
+          <div
+            className="w-12 h-12 rounded-xl border-2 flex items-center justify-center text-[20px] font-bold shrink-0"
+            style={{ borderColor: "#16A34A", color: "#16A34A", background: "#F0FDF4" }}
+          >
+            {value === 0 ? "–" : value}
+          </div>
+          <p className="text-[11px] text-gray-400 italic">Slide to adjust score</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
-      <div className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ width: 760, maxHeight: "85vh" }}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: 720, maxHeight: "90vh", overflow: "hidden" }}
+      >
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100 shrink-0">
           <div>
-            <h2 className="text-[17px] font-bold text-gray-900">Update Scores</h2>
-            <p className="text-[13px] text-gray-400 mt-0.5">{card.groupName} &middot; {card.community}</p>
+            <h2 className="text-[19px] font-bold text-gray-900">Update Scores</h2>
+            <p className="text-[13px] font-medium text-gray-500 mt-0.5">{card.groupName} &middot; {card.community}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors mt-0.5"
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
           </button>
         </div>
 
-        {/* Body: two panels */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left panel — Supporting Documents */}
-          <div className="w-[300px] shrink-0 border-r border-gray-100 px-5 py-5 overflow-y-auto">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">Supporting Documents</p>
-            <div className="space-y-3">
-              {/* Main upload card */}
-              <div className="rounded-xl border-2 border-dashed border-gray-200 p-4 flex flex-col items-center text-center">
-                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-2">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M10 12V4M7 7l3-3 3 3" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <p className="text-[12px] font-semibold text-gray-700">Group Evidence File</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">No document uploaded</p>
-                <button className="mt-2 text-[12px] font-semibold underline" style={{ color: "#16A34A" }}>Upload document</button>
-              </div>
+        {/* Warning banner */}
+        <div
+          className="flex items-start gap-3 px-6 py-3 shrink-0"
+          style={{ background: "#FFFBEB", borderBottom: "1px solid #FDE68A" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5">
+            <path d="M10 3L18 17H2L10 3Z" stroke="#D97706" strokeWidth="1.6" strokeLinejoin="round"/>
+            <path d="M10 8v4M10 13.5v.5" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+          <p className="text-[13px] font-medium" style={{ color: "#92400E" }}>
+            Scores cannot be changed after confirmation. Please review records carefully before assigning scores.
+          </p>
+        </div>
 
-              {/* List items */}
-              {DOCS.map((doc) => (
-                <div key={doc} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                      <svg width="13" height="13" viewBox="0 0 14 16" fill="none">
-                        <path d="M2 2a1 1 0 011-1h6l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2z" stroke="#9CA3AF" strokeWidth="1.3"/>
-                        <path d="M8 1v4h4" stroke="#9CA3AF" strokeWidth="1.3" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-gray-700 truncate max-w-[140px]">{doc}</p>
-                      <p className="text-[10px] text-gray-400">No document</p>
-                    </div>
-                  </div>
-                  <button className="text-[11px] font-semibold underline shrink-0" style={{ color: "#16A34A" }}>Upload</button>
-                </div>
-              ))}
-            </div>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+          {/* Section 1 — Meeting Minutes Records */}
+          <div className="rounded-xl border border-gray-200 p-5">
+            <p className="text-[16px] font-bold text-gray-900 mb-0.5">Meeting Minutes Records</p>
+            <p className="text-[12px] font-medium text-gray-500 mb-4">Update the required scores to process the support request.</p>
+            <ImageCarousel index={meetingImg} setIndex={setMeetingImg} total={2} />
+            <ScoreSlider value={meetingScore} onChange={setMeetingScore} />
           </div>
 
-          {/* Right panel — Assign Score */}
-          <div className="flex-1 px-6 py-5 overflow-y-auto">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">Assign Score</p>
+          {/* Section 2 — Financial Contribution Records */}
+          <div className="rounded-xl border border-gray-200 p-5">
+            <p className="text-[16px] font-bold text-gray-900 mb-0.5">Financial Contribution Records</p>
+            <p className="text-[12px] font-medium text-gray-500 mb-4">Update the required scores to process the support request.</p>
 
-            {/* 2×2 score tiles */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {SCORE_TILES.map((tile) => (
+            {card.hasFinancialRecords ? (
+              <>
+                <ImageCarousel index={financeImg} setIndex={setFinanceImg} total={2} />
+                <ScoreSlider value={financeScore} onChange={setFinanceScore} />
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
                 <div
-                  key={tile.label}
-                  className="rounded-xl border-2 p-4 cursor-pointer transition-all"
-                  style={{
-                    borderColor: selected === tile.label ? tile.border : "#E5E7EB",
-                    background: selected === tile.label ? tile.bg : "#FAFAFA",
-                  }}
-                  onClick={() => setSelected(tile.label)}
+                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+                  style={{ background: "#F0FDF4" }}
                 >
-                  <div className="flex items-start justify-between mb-1">
-                    <span className="text-[22px] font-bold" style={{ color: tile.text }}>{tile.score}</span>
-                    {selected === tile.label && (
-                      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: tile.text }}>
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[14px] font-bold text-gray-900">{tile.label}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{tile.desc}</p>
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <rect x="4" y="2" width="20" height="24" rx="3" stroke="#16A34A" strokeWidth="1.6"/>
+                    <path d="M9 9h10M9 13h10M9 17h6" stroke="#16A34A" strokeWidth="1.6" strokeLinecap="round"/>
+                  </svg>
                 </div>
-              ))}
-            </div>
-
-            {/* No score selected placeholder */}
-            {!selected && (
-              <div className="rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-center">
-                <p className="text-[12px] text-gray-400">No score selected yet.</p>
-              </div>
-            )}
-            {selected && (
-              <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] text-gray-400">Selected score</p>
-                  <p className="text-[15px] font-bold text-gray-900">{selected} &mdash; {SCORE_TILES.find((t) => t.label === selected)?.score}</p>
-                </div>
-                <button onClick={() => setSelected(null)} className="text-[11px] text-gray-400 hover:text-gray-600 underline">Clear</button>
+                <p className="text-[14px] font-semibold text-gray-700 max-w-[340px] mb-2">
+                  There are no financial contribution records for this group to be updated at this time
+                </p>
+                <p className="text-[12px] text-gray-400 max-w-[340px]">
+                  When financial contribution records are available for update, they will be displayed here
+                </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[12px] text-amber-600">
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Scores are final once submitted and cannot be changed.</span>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="h-9 px-4 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+        {/* Sticky footer */}
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-4">
+          {/* Checkbox */}
+          <label className="flex items-start gap-2.5 cursor-pointer flex-1">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded cursor-pointer shrink-0"
+              style={{ accentColor: "#16A34A" }}
+            />
+            <span className="text-[12px] font-medium text-gray-600 leading-relaxed">
+              I confirm the scores are carefully selected and I agree that the scores cannot be changed once confirmed.
+            </span>
+          </label>
+          {/* Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
-              disabled={!selected}
+              onClick={onClose}
+              className="h-9 px-4 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!canConfirm}
               onClick={handleConfirm}
               className="h-9 px-5 rounded-lg text-[13px] font-bold text-white transition-colors"
-              style={{ background: selected ? "#16A34A" : "#D1D5DB", cursor: selected ? "pointer" : "not-allowed" }}
+              style={{
+                background: canConfirm ? "#16A34A" : "#D1D5DB",
+                cursor: canConfirm ? "pointer" : "not-allowed",
+              }}
             >
               Confirm Scores
             </button>
