@@ -302,10 +302,10 @@ function KanbanCard({
     <div
       className="bg-white rounded-xl border mb-3 cursor-pointer"
       style={{
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.10)" : "0 1px 3px rgba(0,0,0,0.07)",
+        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.13)" : "0 1px 4px rgba(0,0,0,0.09)",
         transition: "box-shadow 150ms ease",
         borderStyle: r.onHold ? "dashed" : "solid",
-        borderColor: r.onHold ? "#F59E0B" : "#F3F4F6",
+        borderColor: r.onHold ? "#F59E0B" : "#D1D5DB",
         opacity: (isRejected || isDisbursed) ? 0.8 : 1,
       }}
       onClick={onView}
@@ -313,14 +313,13 @@ function KanbanCard({
       onMouseLeave={() => setHovered(false)}
     >
       <div className="p-4">
-        {/* Row 1: name + menu */}
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <p className="text-[15px] font-semibold text-gray-900 leading-snug truncate">{r.groupName}</p>
-          <CardMenu onView={onView} onEdit={() => {}} onReject={() => {}} />
+        {/* Row 1: name only */}
+        <div className="mb-0.5">
+          <p className="text-[15px] font-semibold text-gray-900 leading-snug">{r.groupName}</p>
         </div>
 
         {/* Row 2: subtitle */}
-        <p className="text-[12px] text-gray-400 mb-3 truncate">{r.community} &middot; {r.farmers} farmers</p>
+        <p className="text-[12px] font-medium text-gray-500 mb-3 truncate">{r.community} &middot; {r.farmers} farmers</p>
 
         {/* Score bar — only on pending_approval */}
         {isPending && r.score !== null && <ScoreBar score={r.score} />}
@@ -380,7 +379,7 @@ function KanbanCard({
 
         {/* Agent confirmation waiting text */}
         {isAgentConf && (
-          <p className="text-[11px] italic text-gray-400 mb-3">Awaiting agent confirmation</p>
+          <p className="text-[11px] font-medium italic text-gray-500 mb-3">Awaiting agent confirmation</p>
         )}
 
         {/* Row: assignee + date (all stages except agent_conf and disbursed which use their own layout) */}
@@ -389,9 +388,9 @@ function KanbanCard({
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                 style={{ background: agentColor }}>{agentInitials}</span>
-              <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
+              <span className="text-[12px] font-medium text-gray-600 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-gray-400">
+            <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -407,9 +406,9 @@ function KanbanCard({
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                 style={{ background: agentColor }}>{agentInitials}</span>
-              <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
+              <span className="text-[12px] font-medium text-gray-600 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-gray-400">
+            <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -421,7 +420,7 @@ function KanbanCard({
 
         {/* Reference code — all stages */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-mono text-gray-300">{r.id}</span>
+          <span className="text-[11px] font-semibold font-mono text-gray-500 tracking-wide">{r.id}</span>
           {isDisbursed && r.transactionId && (
             <span className="text-[10px] font-mono" style={{ color: "#16A34A" }}>{r.transactionId}</span>
           )}
