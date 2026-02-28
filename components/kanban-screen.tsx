@@ -5,6 +5,7 @@ import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
 import { HoldModal, ScoringModal } from "@/components/hold-scoring-modals";
+import DisbursementModal from "@/components/disbursement-modal";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -159,6 +160,7 @@ function KanbanCard({
   onClick,
   onApprove,
   onScore,
+  onDisburse,
 }: {
   request: FarmerRequest;
   actionLabel: string;
@@ -166,6 +168,7 @@ function KanbanCard({
   onClick: () => void;
   onApprove?: (e: React.MouseEvent) => void;
   onScore?: (e: React.MouseEvent) => void;
+  onDisburse?: (e: React.MouseEvent) => void;
 }) {
   const agentShort = request.agent.split(" ").slice(0, 2).join(" ");
 
@@ -241,6 +244,7 @@ function KanbanCard({
             e.stopPropagation();
             if (actionLabel === "Approve" && onApprove) onApprove(e);
             if (actionLabel === "Score" && onScore) onScore(e);
+            if (actionLabel === "Disburse" && onDisburse) onDisburse(e);
           }}
         >
           {actionLabel}
@@ -286,6 +290,7 @@ export default function KanbanScreen() {
   const [approveCard, setApproveCard] = useState<FarmerRequest | null>(null);
   const [holdCard, setHoldCard] = useState<FarmerRequest | null>(null);
   const [scoreCard, setScoreCard] = useState<FarmerRequest | null>(null);
+  const [disburseCard, setDisburseCard] = useState<FarmerRequest | null>(null);
 
   function handleApprove(id: string) {
     setRequests((prev) =>
@@ -313,6 +318,16 @@ export default function KanbanScreen() {
       prev?.id === id ? { ...prev, stage: "scoring_complete" as Stage, score } : prev
     );
     setScoreCard(null);
+  }
+
+  function handleDisbursed(id: string) {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, stage: "funds_disbursed" as Stage } : r))
+    );
+    setSelectedCard((prev) =>
+      prev?.id === id ? { ...prev, stage: "funds_disbursed" as Stage } : prev
+    );
+    setDisburseCard(null);
   }
 
   const filtered = useMemo(() => {
@@ -406,6 +421,7 @@ export default function KanbanScreen() {
                         onClick={() => setSelectedCard(r)}
                         onApprove={(e) => { e.stopPropagation(); setApproveCard(r); }}
                         onScore={(e) => { e.stopPropagation(); setScoreCard(r); }}
+                        onDisburse={(e) => { e.stopPropagation(); setDisburseCard(r); }}
                       />
                     ))
                   )}
@@ -424,6 +440,7 @@ export default function KanbanScreen() {
           onApprove={(card) => setApproveCard(card)}
           onHold={(card) => setHoldCard(card)}
           onScore={(card) => setScoreCard(card)}
+          onDisburse={(card) => setDisburseCard(card)}
         />
       )}
 
@@ -451,6 +468,15 @@ export default function KanbanScreen() {
           card={scoreCard}
           onClose={() => setScoreCard(null)}
           onConfirm={handleScore}
+        />
+      )}
+
+      {/* Disbursement modal */}
+      {disburseCard && (
+        <DisbursementModal
+          card={disburseCard}
+          onClose={() => setDisburseCard(null)}
+          onDisbursed={handleDisbursed}
         />
       )}
     </div>

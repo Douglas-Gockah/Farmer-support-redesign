@@ -124,12 +124,14 @@ export default function SlideOverPanel({
   onApprove,
   onHold,
   onScore,
+  onDisburse,
 }: {
   card: FarmerRequest;
   onClose: () => void;
   onApprove?: (card: FarmerRequest) => void;
   onHold?: (card: FarmerRequest) => void;
   onScore?: (card: FarmerRequest) => void;
+  onDisburse?: (card: FarmerRequest) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"overview" | "score_details">("overview");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -350,7 +352,10 @@ export default function SlideOverPanel({
             </div>
           )}
           {card.stage === "agent_confirmed" && (
-            <button className="w-full py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors">
+            <button
+              className="w-full py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors"
+              onClick={() => onDisburse && onDisburse(card)}
+            >
               Disburse Funds
             </button>
           )}
