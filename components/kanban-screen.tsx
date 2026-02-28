@@ -127,12 +127,12 @@ interface ColDef {
 }
 
 const COLUMNS: ColDef[] = [
-  { id: "synced",               label: "Synced Requests",              dotColor: "#F59E0B", ctaLabel: "Begin Review",         ctaStages: ["synced"] },
-  { id: "pending_approval",     label: "Pending Approval",             dotColor: "#3B82F6", ctaLabel: "Approve Application",  ctaStages: ["pending_approval"] },
-  { id: "rejected",             label: "Rejected",                     dotColor: "#EF4444", ctaLabel: "",                     ctaStages: [] },
-  { id: "agent_confirmation",   label: "Agent Confirmation",           dotColor: "#A855F7", ctaLabel: "Send Reminder",        ctaStages: ["agent_confirmation"] },
-  { id: "finance_disbursement", label: "Finance & Disbursement",       dotColor: "#F97316", ctaLabel: "Verify MoMo",          ctaStages: ["finance_disbursement"] },
-  { id: "disbursed",            label: "Disbursed",                    dotColor: "#16A34A", ctaLabel: "",                     ctaStages: [] },
+  { id: "synced",               label: "Synced Requests",        dotColor: "#D97706", ctaLabel: "Score",    ctaStages: ["synced"] },
+  { id: "pending_approval",     label: "Pending Approval",       dotColor: "#2563EB", ctaLabel: "Review",   ctaStages: ["pending_approval"] },
+  { id: "rejected",             label: "Rejected",               dotColor: "#DC2626", ctaLabel: "",         ctaStages: [] },
+  { id: "agent_confirmation",   label: "Agent Confirmation",     dotColor: "#16A34A", ctaLabel: "",         ctaStages: [] },
+  { id: "finance_disbursement", label: "Finance & Disbursement", dotColor: "#7C3AED", ctaLabel: "Disburse", ctaStages: ["finance_disbursement"] },
+  { id: "disbursed",            label: "Disbursed",              dotColor: "#6B7280", ctaLabel: "",         ctaStages: [] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -251,18 +251,21 @@ function CardMenu({
 }
 
 // ---------------------------------------------------------------------------
-// Amount display helper
+// Score bar (used on pending_approval cards)
 // ---------------------------------------------------------------------------
-function cardAmount(r: FarmerRequest): string | null {
-  const primary = r.supportInterests.find((si) => si.rank === "Primary");
-  if (!primary) return null;
-  if (primary.type === "Cash" && primary.amountPerFarmer) {
-    return `GHS ${(primary.amountPerFarmer * r.farmers).toLocaleString()}`;
-  }
-  if (primary.type === "Ploughing" && primary.landSizePerFarmer) {
-    return `${(primary.landSizePerFarmer * r.farmers).toFixed(1)} ac`;
-  }
-  return null;
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.max(0, Math.min(100, score));
+  return (
+    <div className="w-full mb-3">
+      <div className="relative h-1.5 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
+        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-gray-500 shadow-sm"
+          style={{ left: `calc(${pct}% - 6px)` }} />
+      </div>
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>Poor</span><span>Fair</span><span>Good</span>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -280,19 +283,30 @@ function KanbanCard({
   onView: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const primaryType = r.supportInterests[0]?.type ?? "Cash";
-  const amount = cardAmount(r);
   const agentInitials = initials(r.agent);
   const agentColor = avatarColor(r.agent);
 
+  const isRejected = r.stage === "rejected";
+  const isDisbursed = r.stage === "disbursed";
+  const isAgentConf = r.stage === "agent_confirmation";
+  const isPending = r.stage === "pending_approval";
+  const isFinance = r.stage === "finance_disbursement";
+  const isSynced = r.stage === "synced";
+
+  // CTA button style — amber outlined for on-hold, green otherwise
+  const ctaStyle: React.CSSProperties = r.onHold
+    ? { background: "transparent", border: "1.5px solid #D97706", color: "#D97706" }
+    : { background: "#16A34A", color: "white", border: "none" };
+
   return (
     <div
-      className="bg-white rounded-xl border border-gray-100 mb-3 cursor-pointer"
+      className="bg-white rounded-xl border mb-3 cursor-pointer"
       style={{
         boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.10)" : "0 1px 3px rgba(0,0,0,0.07)",
         transition: "box-shadow 150ms ease",
         borderStyle: r.onHold ? "dashed" : "solid",
         borderColor: r.onHold ? "#F59E0B" : "#F3F4F6",
+        opacity: (isRejected || isDisbursed) ? 0.8 : 1,
       }}
       onClick={onView}
       onMouseEnter={() => setHovered(true)}
@@ -302,64 +316,148 @@ function KanbanCard({
         {/* Row 1: name + menu */}
         <div className="flex items-start justify-between gap-2 mb-0.5">
           <p className="text-[15px] font-semibold text-gray-900 leading-snug truncate">{r.groupName}</p>
-          <CardMenu
-            onView={onView}
-            onEdit={() => {}}
-            onReject={() => {}}
-          />
+          <CardMenu onView={onView} onEdit={() => {}} onReject={() => {}} />
         </div>
 
         {/* Row 2: subtitle */}
         <p className="text-[12px] text-gray-400 mb-3 truncate">{r.community} &middot; {r.farmers} farmers</p>
 
-        {/* Row 3: pill + amount */}
-        <div className="flex items-center justify-between mb-3">
-          <SupportPill type={primaryType} />
-          {amount && <span className="text-[13px] font-semibold text-gray-900">{amount}</span>}
-        </div>
+        {/* Score bar — only on pending_approval */}
+        {isPending && r.score !== null && <ScoreBar score={r.score} />}
+
+        {/* Support type badges */}
+        {(isSynced || isPending || isRejected) && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {r.supportInterests.map((si) => (
+              <div key={si.rank} className="flex items-center gap-1">
+                {isPending && (
+                  <span className="text-[10px] font-semibold text-gray-400">{si.rank === "Primary" ? "1°" : "2°"}</span>
+                )}
+                <SupportPill type={si.type} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Agent confirmation: approved type only + amount/land */}
+        {isAgentConf && (
+          <div className="flex items-center justify-between mb-3">
+            {r.approvedSupportType && <SupportPill type={r.approvedSupportType} />}
+            <span className="text-[13px] font-semibold text-gray-700">
+              {r.approvedSupportType === "Cash"
+                ? `GHS ${((r.approvedAmountPerFarmer ?? 0) * r.farmers).toLocaleString()}`
+                : r.approvedLandSizePerFarmer
+                  ? `${(r.approvedLandSizePerFarmer * r.farmers).toFixed(1)} ac`
+                  : null}
+            </span>
+          </div>
+        )}
+
+        {/* Finance: MoMo info */}
+        {isFinance && (
+          <div className="rounded-lg px-3 py-2 mb-3" style={{ background: "#F3F4F6" }}>
+            <p className="text-[10px] text-gray-400 mb-0.5">MoMo</p>
+            <p className="text-[13px] font-semibold font-mono text-gray-800">{r.momoNumber ?? "—"}</p>
+            <p className="text-[11px] text-gray-500">{r.momoName ?? "—"}</p>
+          </div>
+        )}
+
+        {/* Disbursed: amount + recipient */}
+        {isDisbursed && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[12px] text-gray-400">Disbursed</span>
+              <span className="text-[14px] font-bold text-gray-900">
+                GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-500 truncate">{r.momoName ?? r.groupName}</p>
+          </div>
+        )}
 
         {/* Divider */}
         <div className="border-t border-gray-100 mb-3" />
 
-        {/* Row 4: assignee + date */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-              style={{ background: agentColor }}>{agentInitials}</span>
-            <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-gray-400">
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-              <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            <span>{r.date}</span>
-          </div>
-        </div>
-
-        {/* CTA button */}
-        {ctaLabel && (
-          <button
-            className="w-full h-9 rounded-lg text-[13px] font-bold text-white transition-colors"
-            style={{ background: "#16A34A" }}
-            onClick={(e) => { e.stopPropagation(); onCta(e); }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#15803D")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#16A34A")}
-          >
-            {ctaLabel}
-          </button>
+        {/* Agent confirmation waiting text */}
+        {isAgentConf && (
+          <p className="text-[11px] italic text-gray-400 mb-3">Awaiting agent confirmation</p>
         )}
 
+        {/* Row: assignee + date (all stages except agent_conf and disbursed which use their own layout) */}
+        {!isAgentConf && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                style={{ background: agentColor }}>{agentInitials}</span>
+              <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] text-gray-400">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              <span>{r.date}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Agent conf: agent + date in same row */}
+        {isAgentConf && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                style={{ background: agentColor }}>{agentInitials}</span>
+              <span className="text-[12px] text-gray-500 truncate max-w-[100px]">{r.agent.split(" ")[0]}</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] text-gray-400">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              <span>{r.date}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Reference code — all stages */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-mono text-gray-300">{r.id}</span>
+          {isDisbursed && r.transactionId && (
+            <span className="text-[10px] font-mono" style={{ color: "#16A34A" }}>{r.transactionId}</span>
+          )}
+          {isDisbursed && r.disbursedDate && (
+            <span className="text-[10px] text-gray-400">{r.disbursedDate}</span>
+          )}
+        </div>
+
         {/* Rejection reason */}
-        {r.stage === "rejected" && r.rejectionComment && (
-          <div className="rounded-lg px-3 py-2 mt-2" style={{ background: "#FEF2F2" }}>
+        {isRejected && r.rejectionComment && (
+          <div className="rounded-lg px-3 py-2 mb-3" style={{ background: "#FEF2F2" }}>
             <p className="text-[11px] text-red-600 leading-relaxed">{r.rejectionComment}</p>
           </div>
         )}
 
-        {/* Transaction ID for disbursed */}
-        {r.stage === "disbursed" && r.transactionId && (
-          <p className="text-[11px] font-mono text-center mt-2" style={{ color: "#16A34A" }}>{r.transactionId}</p>
+        {/* On-hold badge */}
+        {r.onHold && (
+          <div className="mb-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: "#FFFBEB", color: "#D97706" }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M6 5v6M10 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            On Hold
+          </div>
+        )}
+
+        {/* CTA button */}
+        {ctaLabel && (
+          <button
+            className="w-full h-9 rounded-lg text-[13px] font-bold transition-colors"
+            style={ctaStyle}
+            onClick={(e) => { e.stopPropagation(); onCta(e); }}
+          >
+            {ctaLabel}
+          </button>
         )}
       </div>
     </div>
