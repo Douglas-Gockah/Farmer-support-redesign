@@ -67,16 +67,22 @@ export default function Sidebar({ activeScreen, onNavigate }: SidebarProps) {
             <button
               key={screen}
               onClick={() => onNavigate(screen)}
-              title={label}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
-              className={`w-full flex items-center justify-center rounded-lg p-2.5 transition-colors cursor-pointer ${
+              className={`relative w-full flex items-center justify-center rounded-lg p-2.5 transition-colors cursor-pointer group ${
                 isActive
                   ? "bg-[#F0FDF4] text-[#16A34A]"
                   : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               }`}
             >
               {icon}
+              {/* Tooltip */}
+              <span
+                className="pointer-events-none absolute left-full ml-2.5 px-2.5 py-1 rounded-md text-[12px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: "#1F2937", color: "#fff", zIndex: 100 }}
+              >
+                {label}
+              </span>
             </button>
           );
         })}

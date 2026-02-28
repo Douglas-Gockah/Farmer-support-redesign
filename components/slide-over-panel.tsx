@@ -208,13 +208,27 @@ export default function SlideOverPanel({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="px-4 py-2.5 text-[13px] font-semibold transition-colors relative"
+                className="px-4 py-2.5 text-[13px] font-semibold relative"
                 style={{
                   color: activeTab === tab ? "#16A34A" : "#6B7280",
-                  borderBottom: activeTab === tab ? "2px solid #16A34A" : "2px solid transparent",
+                  transition: "color 200ms ease",
                 }}
               >
                 {tab === "overview" ? "Overview" : "Score Details"}
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    background: "#16A34A",
+                    borderRadius: "2px 2px 0 0",
+                    transform: activeTab === tab ? "scaleX(1)" : "scaleX(0)",
+                    transition: "transform 200ms ease",
+                    transformOrigin: "left center",
+                  }}
+                />
               </button>
             ))}
           </div>

@@ -6,6 +6,7 @@ import type { FarmerRequest, Stage } from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
 import { HoldModal, ScoringModal } from "@/components/hold-scoring-modals";
 import DisbursementModal from "@/components/disbursement-modal";
+import { ToastContainer, ToastMessage } from "@/components/toast-notification";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -171,15 +172,21 @@ function KanbanCard({
   onDisburse?: (e: React.MouseEvent) => void;
 }) {
   const agentShort = request.agent.split(" ").slice(0, 2).join(" ");
+  const [hovered, setHovered] = useState(false);
 
   return (
     <div
-      className="bg-white rounded-xl p-[14px] mb-3 cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white rounded-xl p-[14px] mb-3 cursor-pointer"
       style={{
-        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+        boxShadow: hovered
+          ? "0 4px 12px rgba(0,0,0,0.12)"
+          : "0 1px 4px rgba(0,0,0,0.08)",
         border: request.onHold ? "1.5px dashed #D97706" : "1px solid #F3F4F6",
+        transition: "box-shadow 150ms ease",
       }}
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -291,6 +298,16 @@ export default function KanbanScreen() {
   const [holdCard, setHoldCard] = useState<FarmerRequest | null>(null);
   const [scoreCard, setScoreCard] = useState<FarmerRequest | null>(null);
   const [disburseCard, setDisburseCard] = useState<FarmerRequest | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  function showToast(message: string) {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message }]);
+  }
+
+  function removeToast(id: number) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
 
   function handleApprove(id: string) {
     setRequests((prev) =>
@@ -298,6 +315,7 @@ export default function KanbanScreen() {
     );
     setSelectedCard((prev) => (prev?.id === id ? { ...prev, stage: "approved" as Stage } : prev));
     setApproveCard(null);
+    showToast("Request moved to Approved");
   }
 
   function handleHold(id: string) {
@@ -306,6 +324,7 @@ export default function KanbanScreen() {
     );
     setSelectedCard((prev) => (prev?.id === id ? { ...prev, onHold: true } : prev));
     setHoldCard(null);
+    showToast("Request placed on hold");
   }
 
   function handleScore(id: string, score: number) {
@@ -318,6 +337,7 @@ export default function KanbanScreen() {
       prev?.id === id ? { ...prev, stage: "scoring_complete" as Stage, score } : prev
     );
     setScoreCard(null);
+    showToast("Request moved to Scoring Complete");
   }
 
   function handleDisbursed(id: string) {
@@ -328,6 +348,7 @@ export default function KanbanScreen() {
       prev?.id === id ? { ...prev, stage: "funds_disbursed" as Stage } : prev
     );
     setDisburseCard(null);
+    showToast("Request moved to Funds Disbursed");
   }
 
   const filtered = useMemo(() => {
@@ -405,11 +426,14 @@ export default function KanbanScreen() {
                 className="flex flex-col"
                 style={{ width: 260, minWidth: 260, flexShrink: 0 }}
               >
-                <ColumnHeader label={col.label} color={col.color} count={cards.length} />
+                {/* Sticky column header */}
+                <div style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <ColumnHeader label={col.label} color={col.color} count={cards.length} />
+                </div>
                 <div className="flex-1 overflow-y-auto pr-0.5">
                   {cards.length === 0 ? (
-                    <div className="flex items-center justify-center h-20 rounded-xl border border-dashed border-gray-200">
-                      <span className="text-[11px] text-gray-300">No requests</span>
+                    <div className="flex items-center justify-center h-20">
+                      <span className="text-[12px] text-gray-300">No requests</span>
                     </div>
                   ) : (
                     cards.map((r) => (
@@ -479,6 +503,9 @@ export default function KanbanScreen() {
           onDisbursed={handleDisbursed}
         />
       )}
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
