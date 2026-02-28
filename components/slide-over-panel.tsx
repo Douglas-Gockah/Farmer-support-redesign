@@ -121,9 +121,11 @@ function CriterionRow({
 export default function SlideOverPanel({
   card,
   onClose,
+  onApprove,
 }: {
   card: FarmerRequest;
   onClose: () => void;
+  onApprove?: (card: FarmerRequest) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"overview" | "score_details">("overview");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -326,7 +328,10 @@ export default function SlideOverPanel({
           )}
           {card.stage === "pending_approval" && (
             <div className="flex gap-3">
-              <button className="flex-1 py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors">
+              <button
+                className="flex-1 py-2.5 rounded-lg bg-[#16A34A] text-white text-[13px] font-semibold hover:bg-[#15803D] transition-colors"
+                onClick={() => onApprove && onApprove(card)}
+              >
                 Approve Request
               </button>
               <button className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-[13px] font-semibold hover:bg-gray-50 transition-colors">

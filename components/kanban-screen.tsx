@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import SlideOverPanel from "@/components/slide-over-panel";
 import type { FarmerRequest, Stage } from "@/components/slide-over-panel";
+import ApprovalModal from "@/components/approval-modal";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -155,11 +156,13 @@ function KanbanCard({
   actionLabel,
   actionActive,
   onClick,
+  onApprove,
 }: {
   request: FarmerRequest;
   actionLabel: string;
   actionActive: boolean;
   onClick: () => void;
+  onApprove?: (e: React.MouseEvent) => void;
 }) {
   const agentShort = request.agent.split(" ").slice(0, 2).join(" ");
 
@@ -231,7 +234,10 @@ function KanbanCard({
               ? { background: "#16A34A", color: "#fff" }
               : { background: "#F3F4F6", color: "#6B7280" }
           }
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (actionLabel === "Approve" && onApprove) onApprove(e);
+          }}
         >
           {actionLabel}
         </button>
@@ -269,12 +275,23 @@ function ColumnHeader({ label, color, count }: { label: string; color: string; c
 // Main component
 // ---------------------------------------------------------------------------
 export default function KanbanScreen() {
+  const [requests, setRequests] = useState<FarmerRequest[]>(MOCK_REQUESTS);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"All Types" | "Cash" | "Ploughing">("All Types");
   const [selectedCard, setSelectedCard] = useState<FarmerRequest | null>(null);
+  const [approveCard, setApproveCard] = useState<FarmerRequest | null>(null);
+
+  function handleApprove(id: string) {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, stage: "approved" as Stage } : r))
+    );
+    // Also update selectedCard if it's the same one
+    setSelectedCard((prev) => (prev?.id === id ? { ...prev, stage: "approved" as Stage } : prev));
+    setApproveCard(null);
+  }
 
   const filtered = useMemo(() => {
-    return MOCK_REQUESTS.filter((r) => {
+    return requests.filter((r) => {
       const matchesSearch =
         search === "" ||
         r.groupName.toLowerCase().includes(search.toLowerCase()) ||
@@ -282,7 +299,7 @@ export default function KanbanScreen() {
       const matchesType = filterType === "All Types" || r.supportType === filterType;
       return matchesSearch && matchesType;
     });
-  }, [search, filterType]);
+  }, [search, filterType, requests]);
 
   return (
     <div className="flex flex-col h-full -m-6">
@@ -362,6 +379,7 @@ export default function KanbanScreen() {
                         actionLabel={col.actionLabel}
                         actionActive={col.actionActive}
                         onClick={() => setSelectedCard(r)}
+                        onApprove={(e) => { e.stopPropagation(); setApproveCard(r); }}
                       />
                     ))
                   )}
@@ -374,7 +392,20 @@ export default function KanbanScreen() {
 
       {/* Slide-over panel */}
       {selectedCard && (
-        <SlideOverPanel card={selectedCard} onClose={() => setSelectedCard(null)} />
+        <SlideOverPanel
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onApprove={(card) => setApproveCard(card)}
+        />
+      )}
+
+      {/* Approval modal */}
+      {approveCard && (
+        <ApprovalModal
+          card={approveCard}
+          onClose={() => setApproveCard(null)}
+          onApprove={handleApprove}
+        />
       )}
     </div>
   );
