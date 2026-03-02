@@ -90,8 +90,14 @@ export default function KanbanScreen() {
                           r={r}
                           ctaLabel={col.ctaLabel}
                           onCta={() => ctaAction(r, col.id)}
-                          // Synced cards: body click goes straight to scoring modal (no extra click needed)
-                          onView={() => col.id === "synced" ? setScoreCard(r) : setSelectedCard(r)}
+                          // Action stage cards skip the slide-over and open their modal directly
+                          onView={() => {
+                            if (col.id === "synced")               return setScoreCard(r);
+                            if (col.id === "pending_approval")     return setReviewCard(r);
+                            if (col.id === "agent_confirmation")   return setManagerCard(r);
+                            if (col.id === "finance_disbursement") return setDisburseCard(r);
+                            setSelectedCard(r); // rejected, disbursed — slide-over (read-only)
+                          }}
                         />
                       ))
                     )}
