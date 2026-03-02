@@ -24,6 +24,15 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     ],
   },
   {
+    id: "FS-2024-013", date: "08 Feb 2024", agent: "Kofi Mensah", community: "Nkoranza",
+    groupName: "Nkoranza Double Yield Group", score: 72, stage: "pending_approval", farmers: 18,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
+    wantsDouble: true,
+    supportInterests: [
+      { rank: "Primary", type: "Cash", amountPerFarmer: 120, momoNumber: "0244-321-654", momoName: "Nkoranza DY Group" },
+    ],
+  },
+  {
     id: "FS-2024-003", date: "18 Jan 2024", agent: "Yaw Darko", community: "Bole",
     groupName: "Bole Farmers Alliance", score: 62, stage: "pending_approval", farmers: 14,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,

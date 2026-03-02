@@ -155,7 +155,7 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
 }
 
 // ---------------------------------------------------------------------------
-// SupportOptionCard — selectable, with inline editable amount
+// SupportOptionCard — selectable, with inline editable amount + double toggle
 // ---------------------------------------------------------------------------
 function SupportOptionCard({
   interest,
@@ -164,6 +164,8 @@ function SupportOptionCard({
   onSelect,
   editableAmount,
   onAmountSave,
+  isDouble,
+  onToggleDouble,
 }: {
   interest: SupportInterest;
   farmers: number;
@@ -171,13 +173,16 @@ function SupportOptionCard({
   onSelect: () => void;
   editableAmount: number;
   onAmountSave: (amount: number, comment: string) => void;
+  isDouble?: boolean;
+  onToggleDouble?: () => void;
 }) {
   const isCash = interest.type === "Cash";
-  const [editing,      setEditing]      = useState(false);
-  const [editValue,    setEditValue]    = useState(String(editableAmount));
-  const [editComment,  setEditComment]  = useState("");
+  const [editing,     setEditing]     = useState(false);
+  const [editValue,   setEditValue]   = useState(String(editableAmount));
+  const [editComment, setEditComment] = useState("");
 
-  const displayAmount = isCash ? editableAmount : (interest.landSizePerFarmer ?? 0);
+  // The effective displayed amount — doubled when opted
+  const effectiveAmount = isCash && isDouble ? editableAmount * 2 : editableAmount;
 
   function handleSave(e: React.MouseEvent) {
     e.stopPropagation();
@@ -239,14 +244,17 @@ function SupportOptionCard({
         {/* Amount / farmer — editable for cash */}
         {isCash ? (
           <div className="min-w-[110px]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-1.5 mb-0.5">
+            <div className="flex items-center gap-1.5 mb-1">
               <p className="text-[10px] text-gray-400">Amount / farmer</p>
               {!editing && selected && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setEditing(true); }}
-                  className="text-[10px] font-semibold underline"
-                  style={{ color: "#16A34A" }}
+                  onClick={(e) => { e.stopPropagation(); setEditing(true); setEditValue(String(editableAmount)); }}
+                  className="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-bold transition-colors hover:brightness-95"
+                  style={{ background: "#DCFCE7", color: "#16A34A" }}
                 >
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                    <path d="M7.5 1L9 2.5 3.5 8H2V6.5L7.5 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                   Edit
                 </button>
               )}
@@ -288,7 +296,12 @@ function SupportOptionCard({
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] font-semibold text-gray-900">GHS {editableAmount.toFixed(2)}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[13px] font-semibold text-gray-900">GHS {effectiveAmount.toFixed(2)}</p>
+                {isDouble && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#16A34A" }}>×2</span>
+                )}
+              </div>
             )}
           </div>
         ) : (
@@ -304,39 +317,105 @@ function SupportOptionCard({
             <p className="text-[10px] text-gray-400 mb-0.5">{isCash ? "Total amount" : "Total land"}</p>
             <p className="text-[13px] font-semibold text-gray-900">
               {isCash
-                ? `GHS ${(editableAmount * farmers).toFixed(2)}`
+                ? `GHS ${(effectiveAmount * farmers).toFixed(2)}`
                 : `${((interest.landSizePerFarmer ?? 0) * farmers).toFixed(1)} ac`}
             </p>
           </div>
         )}
       </div>
+
+      {/* Double amount toggle — Cash only, selected, not editing */}
+      {isCash && selected && !editing && (
+        <div
+          className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2.5 cursor-pointer rounded-lg"
+          onClick={(e) => { e.stopPropagation(); onToggleDouble?.(); }}
+        >
+          <div
+            className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0"
+            style={{
+              borderColor: isDouble ? "#16A34A" : "#D1D5DB",
+              background:  isDouble ? "#16A34A" : "transparent",
+            }}
+          >
+            {isDouble && (
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                <path d="M2 5l2.5 2.5 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="text-[12px] font-semibold text-gray-900">Double amount opted</p>
+            <p className="text-[11px] text-gray-400">Farmer receives ×2 and commits to 2 bags at recovery</p>
+          </div>
+          {isDouble && (
+            <span
+              className="text-[10px] font-bold shrink-0 px-2 py-0.5 rounded-full"
+              style={{ background: "#DCFCE7", color: "#16A34A" }}
+            >
+              Active
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Cash additional fields — qty only (amount is now editable inline in the card)
+// Cash additional fields — qty reflects double opt when active
 // ---------------------------------------------------------------------------
 function CashQtyFields({
   farmers,
   qtyPerFarmer,
   setQtyPerFarmer,
+  isDouble = false,
 }: {
   farmers: number;
   qtyPerFarmer: number;
   setQtyPerFarmer: (v: number) => void;
+  isDouble?: boolean;
 }) {
+  const effectiveQtyPerFarmer = isDouble ? qtyPerFarmer * 2 : qtyPerFarmer;
+  const totalQty              = effectiveQtyPerFarmer * farmers;
+
   return (
     <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Additional Details — Cash</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Additional Details — Cash</p>
+        {isDouble && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "#DCFCE7", color: "#16A34A" }}
+          >
+            ×2 — double bags at recovery
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Expected qty per farmer (KG)</Label>
-          <Input type="number" value={qtyPerFarmer} onChange={(e) => setQtyPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
+          <Input
+            type="number"
+            value={qtyPerFarmer}
+            onChange={(e) => setQtyPerFarmer(Number(e.target.value))}
+            className="h-9 text-[13px] font-bold"
+          />
+          {isDouble && (
+            <p className="text-[10px] text-gray-400 mt-1">
+              Effective: <span className="font-bold text-gray-700">{effectiveQtyPerFarmer} KG/farmer</span>
+            </p>
+          )}
         </div>
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Expected total qty</Label>
-          <div className="h-9 flex items-center px-3 rounded-md bg-gray-50 border border-gray-200 text-[13px] font-bold">{qtyPerFarmer * farmers} KG</div>
+          <div className="h-9 flex items-center px-3 rounded-md bg-gray-50 border border-gray-200 text-[13px] font-bold">
+            {totalQty} KG
+          </div>
+          {isDouble && (
+            <p className="text-[10px] text-gray-400 mt-1">
+              <span className="text-gray-500">{qtyPerFarmer * farmers} KG</span> × 2 doubled
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -424,6 +503,7 @@ export default function ApprovalModal({
   const selectedCashInterest   = card.supportInterests.find((si) => si.type === "Cash");
   const selectedPloughInterest = card.supportInterests.find((si) => si.type === "Ploughing");
   const [cashAmount,   setCashAmount]   = useState(selectedCashInterest?.amountPerFarmer ?? 100);
+  const [cashDouble,   setCashDouble]   = useState(card.wantsDouble ?? false);
   const [cashQty,      setCashQty]      = useState(50);
   const [ploughLand,   setPloughLand]   = useState(selectedPloughInterest?.landSizePerFarmer ?? 1.5);
   const [provider,     setProvider]     = useState("FieldTech Ghana");
@@ -435,10 +515,12 @@ export default function ApprovalModal({
   const [holdComment,      setHoldComment]      = useState(card.holdComment || "");
   const [rejectComment,    setRejectComment]    = useState("");
 
+  const effectiveCashAmount = cashDouble ? cashAmount * 2 : cashAmount;
+
   function handleConfirm() {
     if (decision === "approve") {
       if (selectedType === "Cash") {
-        onApproved(card.id, "Cash", cashAmount, undefined);
+        onApproved(card.id, "Cash", effectiveCashAmount, undefined);
       } else {
         onApproved(card.id, "Ploughing", undefined, ploughLand);
       }
@@ -528,6 +610,8 @@ export default function ApprovalModal({
                         if (si.type === "Cash") setCashAmount(amount);
                         else setPloughLand(amount);
                       }}
+                      isDouble={si.type === "Cash" ? cashDouble : false}
+                      onToggleDouble={si.type === "Cash" ? () => setCashDouble(!cashDouble) : undefined}
                     />
                   ))}
                 </div>
@@ -539,6 +623,7 @@ export default function ApprovalModal({
                   farmers={card.farmers}
                   qtyPerFarmer={cashQty}
                   setQtyPerFarmer={setCashQty}
+                  isDouble={cashDouble}
                 />
               )}
               {selectedType === "Ploughing" && selectedPloughInterest && (
