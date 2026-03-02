@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // Kanban column definitions and static lookup data
 // ---------------------------------------------------------------------------
-import type { ColDef } from "./types";
+import type { ColDef, GenericColDef } from "./types";
 
+// Flow 1 — Requests & Disbursement
 export const COLUMNS: ColDef[] = [
   { id: "synced",               label: "Synced Requests",        dotColor: "#D97706", ctaLabel: "Score",    ctaStages: ["synced"] },
   { id: "pending_approval",     label: "Pending Approval",       dotColor: "#2563EB", ctaLabel: "Review",   ctaStages: ["pending_approval"] },
@@ -10,7 +11,24 @@ export const COLUMNS: ColDef[] = [
   { id: "agent_confirmation",   label: "Manager Confirmation",   dotColor: "#16A34A", ctaLabel: "Confirm",  ctaStages: ["agent_confirmation"] },
   { id: "finance_disbursement", label: "Pending Disbursement",   dotColor: "#7C3AED", ctaLabel: "Disburse", ctaStages: ["finance_disbursement"] },
   { id: "disbursed",            label: "Disbursed",              dotColor: "#6B7280", ctaLabel: "",         ctaStages: [] },
-  { id: "opted_out",            label: "Cash Opt-Outs",          dotColor: "#F59E0B", ctaLabel: "",         ctaStages: [] },
+];
+
+// Flow 2 — Support Fulfilment
+export const FULFILLMENT_COLUMNS: GenericColDef[] = [
+  { id: "pending_fulfillment", label: "Pending Fulfilment",  dotColor: "#7C3AED" },
+  { id: "partially_fulfilled", label: "Partially Fulfilled", dotColor: "#F59E0B" },
+  { id: "fully_fulfilled",     label: "Fully Fulfilled",     dotColor: "#16A34A" },
+  { id: "opted_out",           label: "Cash Opt-Outs",       dotColor: "#F59E0B" },
+];
+
+// Flow 3 — Recoveries
+export const RECOVERIES_COLUMNS: GenericColDef[] = [
+  { id: "rec_pending_review",   label: "Pending Review",      dotColor: "#6B7280" },
+  { id: "rec_approved",         label: "Approved",            dotColor: "#16A34A" },
+  { id: "rec_rejected",         label: "Rejected",            dotColor: "#DC2626" },
+  { id: "rec_pending_recovery", label: "Pending Recovery",    dotColor: "#7C3AED" },
+  { id: "rec_partial",          label: "Partially Recovered", dotColor: "#F59E0B" },
+  { id: "rec_full",             label: "Fully Recovered",     dotColor: "#059669" },
 ];
 
 export const AVATAR_COLORS = [

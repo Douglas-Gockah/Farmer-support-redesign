@@ -13,8 +13,8 @@ interface KanbanCardProps {
 }
 
 export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
-  const [hovered,      setHovered]      = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [hovered,     setHovered]     = useState(false);
+  const [farmerFiles, setFarmerFiles] = useState<Record<string, string>>({});
   const agentInitials = initials(r.agent);
   const agentColor    = avatarColor(r.agent);
 
@@ -125,27 +125,55 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
           </div>
         )}
 
-        {/* Opted-out: farmer list */}
+        {/* Opted-out: per-farmer upload rows */}
         {isOptedOut && r.optedOutFarmers && r.optedOutFarmers.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
               Opted out — {r.optedOutFarmers.length} farmer{r.optedOutFarmers.length !== 1 ? "s" : ""}
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {r.optedOutFarmers.slice(0, 3).map((name) => (
-                <span
-                  key={name}
-                  className="text-[11px] font-medium text-gray-700 px-2 py-0.5 rounded-full"
-                  style={{ background: "#FEF3C7" }}
-                >
-                  {name}
-                </span>
-              ))}
-              {r.optedOutFarmers.length > 3 && (
-                <span className="text-[11px] text-gray-400 self-center">
-                  +{r.optedOutFarmers.length - 3} more
-                </span>
-              )}
+            <div className="space-y-1.5">
+              {r.optedOutFarmers.map((name) => {
+                const uploaded = farmerFiles[name];
+                const inputId  = `refund-${r.id}-${name.replace(/\s+/g, "-").toLowerCase()}`;
+                return (
+                  <div key={name} className="flex items-center justify-between gap-2">
+                    <span className="text-[12px] font-medium text-gray-700 truncate flex-1 min-w-0">{name}</span>
+                    <input
+                      type="file"
+                      id={inputId}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        const fileName = e.target.files?.[0]?.name;
+                        if (fileName) setFarmerFiles((prev) => ({ ...prev, [name]: fileName }));
+                      }}
+                    />
+                    <label
+                      htmlFor={inputId}
+                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] font-semibold cursor-pointer transition-colors whitespace-nowrap"
+                      style={uploaded
+                        ? { borderColor: "#16A34A", color: "#16A34A", background: "#F0FDF4" }
+                        : { borderColor: "#D1D5DB", color: "#6B7280", background: "transparent" }}
+                    >
+                      {uploaded ? (
+                        <>
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Done
+                        </>
+                      ) : (
+                        <>
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 1v6M4 4.5l2-2 2 2M2 10h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Upload
+                        </>
+                      )}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -203,34 +231,6 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
               <path d="M6 5v6M10 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             On Hold
-          </div>
-        )}
-
-        {/* Opted-out: proof of refund upload */}
-        {isOptedOut && (
-          <div onClick={(e) => e.stopPropagation()}>
-            <input
-              type="file"
-              id={`refund-${r.id}`}
-              className="hidden"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setUploadedFile(e.target.files?.[0]?.name ?? null)}
-            />
-            <label
-              htmlFor={`refund-${r.id}`}
-              className="flex items-center justify-center gap-2 w-full h-9 rounded-lg border-2 border-dashed text-[12px] font-semibold cursor-pointer transition-colors"
-              style={{
-                borderColor: uploadedFile ? "#16A34A" : "#D1D5DB",
-                color:       uploadedFile ? "#16A34A" : "#6B7280",
-                background:  uploadedFile ? "#F0FDF4" : "transparent",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2v8M5 7l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              {uploadedFile ? uploadedFile : "Upload proof of refund"}
-            </label>
           </div>
         )}
 
