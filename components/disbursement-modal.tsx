@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { FarmerRequest } from "@/components/kanban/types";
+import { initials, avatarColor } from "@/components/kanban/helpers";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -34,179 +34,277 @@ function generateTxId() {
 }
 
 // ---------------------------------------------------------------------------
-// STEP 1 — Account Verification
+// Left panel — disbursement context (used in Verify + Confirm steps)
+// ---------------------------------------------------------------------------
+function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
+  const agentInitials = initials(card.agent);
+  const agentColor    = avatarColor(card.agent);
+  const isCash = card.approvedSupportType === "Cash";
+  const totalAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
+  const submittedMomo = card.momoNumber ?? "055 000 0000";
+  const submittedName = card.momoName ?? card.groupName;
+
+  return (
+    <div
+      className="flex flex-col gap-5 shrink-0 overflow-y-auto"
+      style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
+    >
+      {/* Group identity */}
+      <div>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+        <p className="text-[15px] font-bold text-gray-900 leading-snug">{card.groupName}</p>
+        <p className="text-[12px] text-gray-500 mt-0.5">{card.community}</p>
+      </div>
+
+      {/* Approved support */}
+      {card.approvedSupportType && (
+        <div>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Approved Support</p>
+          <div className="rounded-xl p-3 space-y-1.5" style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}>
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold"
+              style={isCash ? { background: "#DCFCE7", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+            >
+              {card.approvedSupportType}
+            </span>
+            <p className="text-[13px] font-bold text-gray-900">{formatGHS(totalAmount)}</p>
+            <p className="text-[11px] text-gray-500">
+              {formatGHS(card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER)} / farmer
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* MoMo account */}
+      <div>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">MoMo Account</p>
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+          <div>
+            <p className="text-[10px] text-gray-400 mb-0.5">Number</p>
+            <p className="text-[14px] font-bold font-mono text-gray-900">{submittedMomo}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 mb-0.5">Name</p>
+            <p className="text-[13px] font-semibold text-gray-800">{submittedName}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="flex gap-3">
+        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+          <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
+          <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
+        </div>
+        {card.score !== null && (
+          <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+            <p className="text-[10px] text-gray-400 mb-0.5">Score</p>
+            <p className="text-[20px] font-bold" style={{ color: "#16A34A" }}>{card.score}%</p>
+          </div>
+        )}
+      </div>
+
+      {/* Agent */}
+      <div>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+        <div className="flex items-center gap-2.5">
+          <span
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+            style={{ background: agentColor }}
+          >
+            {agentInitials}
+          </span>
+          <div>
+            <p className="text-[13px] font-semibold text-gray-800">{card.agent}</p>
+            <p className="text-[11px] text-gray-400">{card.id}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// STEP 1 — Account Verification (two-panel)
 // ---------------------------------------------------------------------------
 function VerifyStep({
   card,
-  open,
   onProceed,
   onClose,
 }: {
   card: FarmerRequest;
-  open: boolean;
   onProceed: () => void;
   onClose: () => void;
 }) {
   const submittedMomo = card.momoNumber ?? "055 000 0000";
   const submittedName = card.momoName ?? card.groupName;
+  const resolvedName  = submittedName;
+  const hasMismatch   = false;
 
-  // Simulated resolved name (slightly different to show mismatch scenario)
-  const resolvedName = submittedName;
-  const hasMismatch = false; // set to true to demo mismatch flow
-
-  const [checking, setChecking]       = useState(false);
-  const [verified, setVerified]       = useState(false);
-  const [showMismatch, setShowMismatch] = useState(false);
-
-  // Mismatch update form
+  const [checking,       setChecking]      = useState(false);
+  const [verified,       setVerified]      = useState(false);
+  const [showMismatch,   setShowMismatch]  = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [newMomo, setNewMomo]               = useState(submittedMomo);
-  const [updateReason, setUpdateReason]     = useState("");
+  const [newMomo,        setNewMomo]       = useState(submittedMomo);
+  const [updateReason,   setUpdateReason]  = useState("");
 
   function handleCheck() {
     setChecking(true);
     setTimeout(() => {
       setChecking(false);
-      if (hasMismatch) {
-        setShowMismatch(true);
-      } else {
-        setVerified(true);
-      }
+      if (hasMismatch) { setShowMismatch(true); } else { setVerified(true); }
     }, 1500);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[520px] p-0 flex flex-col" style={{ maxHeight: "85vh" }}>
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
-          <DialogTitle className="text-[17px] font-bold">Verify Account Details</DialogTitle>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
-            Confirm the MoMo account before disbursing funds to {card.groupName}.
-          </p>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
-          {/* Submitted MoMo */}
-          <div className="rounded-xl border border-border p-4 space-y-3">
-            <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">Submitted Account</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] text-muted-foreground">MoMo Number</p>
-                <p className="text-[15px] font-bold font-mono mt-0.5">{submittedMomo}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] text-muted-foreground">Submitted Name</p>
-                <p className="text-[13px] font-semibold mt-0.5">{submittedName}</p>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full h-9 text-[13px] font-semibold"
-              disabled={checking || verified}
-              onClick={handleCheck}
-            >
-              {checking ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  Checking wallet name...
-                </span>
-              ) : verified ? (
-                "Wallet verified"
-              ) : (
-                "Check wallet name"
-              )}
-            </Button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(900px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h2 className="text-[17px] font-bold text-gray-900">Verify Account Details</h2>
+            <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+              Confirm the MoMo account before disbursing funds
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
-          {/* Verified result card */}
-          {verified && !hasMismatch && (
-            <div className="rounded-xl border border-green-200 p-4 space-y-2" style={{ background: "#F0FDF4" }}>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-5 h-5 rounded-full bg-[#16A34A] flex items-center justify-center shrink-0">
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <p className="text-[13px] font-semibold text-[#16A34A]">Account verified</p>
-              </div>
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-muted-foreground">Account name</span>
-                <span className="font-bold text-foreground">{resolvedName}</span>
-              </div>
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-muted-foreground">MoMo number</span>
-                <span className="font-semibold font-mono">{submittedMomo}</span>
-              </div>
-            </div>
-          )}
+        {/* Body: two columns */}
+        <div className="flex flex-1 min-h-0">
+          <DisbursementContextPanel card={card} />
 
-          {/* Mismatch warning */}
-          {showMismatch && (
-            <div className="rounded-xl border border-yellow-300 p-4 space-y-3" style={{ background: "#FFFBEB" }}>
-              <div className="flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                <p className="text-[13px] font-semibold text-amber-700">Name mismatch detected</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-white border border-yellow-200 px-3 py-2">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">Submitted</p>
-                  <p className="text-[13px] font-semibold">{submittedName}</p>
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Submitted MoMo */}
+              <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+                <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Submitted Account</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] text-gray-400">MoMo Number</p>
+                    <p className="text-[15px] font-bold font-mono mt-0.5">{submittedMomo}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] text-gray-400">Submitted Name</p>
+                    <p className="text-[13px] font-semibold mt-0.5">{submittedName}</p>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-white border border-yellow-200 px-3 py-2">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">Resolved</p>
-                  <p className="text-[13px] font-semibold">Different Name</p>
-                </div>
-              </div>
-              {!showUpdateForm ? (
-                <Button variant="outline" size="sm" className="text-[12px] border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => setShowUpdateForm(true)}>
-                  Update account details
+
+                <Button
+                  variant="outline"
+                  className="w-full h-9 text-[13px] font-semibold"
+                  disabled={checking || verified}
+                  onClick={handleCheck}
+                >
+                  {checking ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                      Checking wallet name...
+                    </span>
+                  ) : verified ? "Wallet verified" : "Check wallet name"}
                 </Button>
-              ) : (
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <Label className="text-[11px] text-muted-foreground mb-1 block">New MoMo number</Label>
-                    <Input value={newMomo} onChange={(e) => setNewMomo(e.target.value)} className="h-9 text-[13px] font-mono" />
+              </div>
+
+              {/* Verified result */}
+              {verified && !hasMismatch && (
+                <div className="rounded-xl border border-green-200 p-4 space-y-2" style={{ background: "#F0FDF4" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-5 h-5 rounded-full bg-[#16A34A] flex items-center justify-center shrink-0">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#16A34A]">Account verified</p>
                   </div>
-                  <div>
-                    <Label className="text-[11px] text-muted-foreground mb-1 block">Reason for update</Label>
-                    <Textarea placeholder="Explain the discrepancy..." value={updateReason} onChange={(e) => setUpdateReason(e.target.value)} className="text-[13px] min-h-[60px] resize-none" />
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-gray-400">Account name</span>
+                    <span className="font-bold text-gray-900">{resolvedName}</span>
                   </div>
-                  <Button size="sm" className="bg-[#D97706] hover:bg-[#B45309] text-white text-[12px]"
-                    disabled={!updateReason.trim()}
-                    onClick={() => { setShowUpdateForm(false); setVerified(true); setShowMismatch(false); }}>
-                    Save update
-                  </Button>
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-gray-400">MoMo number</span>
+                    <span className="font-semibold font-mono">{submittedMomo}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Mismatch warning */}
+              {showMismatch && (
+                <div className="rounded-xl border border-yellow-300 p-4 space-y-3" style={{ background: "#FFFBEB" }}>
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <p className="text-[13px] font-semibold text-amber-700">Name mismatch detected</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-white border border-yellow-200 px-3 py-2">
+                      <p className="text-[10px] text-gray-400 mb-0.5">Submitted</p>
+                      <p className="text-[13px] font-semibold">{submittedName}</p>
+                    </div>
+                    <div className="rounded-lg bg-white border border-yellow-200 px-3 py-2">
+                      <p className="text-[10px] text-gray-400 mb-0.5">Resolved</p>
+                      <p className="text-[13px] font-semibold">Different Name</p>
+                    </div>
+                  </div>
+                  {!showUpdateForm ? (
+                    <Button variant="outline" size="sm" className="text-[12px] border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => setShowUpdateForm(true)}>
+                      Update account details
+                    </Button>
+                  ) : (
+                    <div className="space-y-3 pt-1">
+                      <div>
+                        <Label className="text-[11px] text-gray-400 mb-1 block">New MoMo number</Label>
+                        <Input value={newMomo} onChange={(e) => setNewMomo(e.target.value)} className="h-9 text-[13px] font-mono" />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-gray-400 mb-1 block">Reason for update</Label>
+                        <Textarea placeholder="Explain the discrepancy..." value={updateReason} onChange={(e) => setUpdateReason(e.target.value)} className="text-[13px] min-h-[60px] resize-none" />
+                      </div>
+                      <Button size="sm" className="bg-[#D97706] hover:bg-[#B45309] text-white text-[12px]"
+                        disabled={!updateReason.trim()}
+                        onClick={() => { setShowUpdateForm(false); setVerified(true); setShowMismatch(false); }}>
+                        Save update
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        <div className="px-6 py-4 border-t border-border shrink-0">
-          <Button
-            className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-10 text-[14px] font-bold"
-            disabled={!verified}
-            onClick={onProceed}
-          >
-            Proceed to disbursement
-          </Button>
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
+              <Button
+                className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-10 text-[14px] font-bold"
+                disabled={!verified}
+                onClick={onProceed}
+              >
+                Proceed to disbursement
+              </Button>
+            </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// STEP 2 — Confirm Disbursement
+// STEP 2 — Confirm Disbursement (two-panel)
 // ---------------------------------------------------------------------------
 function ConfirmStep({
   card,
-  open,
   onDisburse,
   onClose,
 }: {
   card: FarmerRequest;
-  open: boolean;
   onDisburse: () => void;
   onClose: () => void;
 }) {
@@ -226,100 +324,126 @@ function ConfirmStep({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto p-0 flex flex-col">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <DialogTitle className="text-[17px] font-bold">Confirm disbursement details</DialogTitle>
-          <p className="text-[13px] text-muted-foreground mt-0.5">Please review the payment information before proceeding</p>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* MTN MoMo Balance */}
-          <div className="rounded-xl border p-4" style={{ background: "#FEFCE8", borderColor: "#FDE047" }}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] text-yellow-700 font-medium">Current balance</p>
-                <p className="text-[18px] font-bold text-yellow-900">GHS 112,245,534.00</p>
-                <p className="text-[11px] text-yellow-600">Last updated: 09:40:44 AM</p>
-              </div>
-              <button className="text-yellow-600 hover:text-yellow-800 text-[18px] mt-1">↻</button>
-            </div>
-          </div>
-
-          {/* Info rows */}
-          <div className="rounded-xl border border-border overflow-hidden">
-            {[
-              { label: "Recipient",    value: card.groupName },
-              { label: "MoMo number", value: card.momoNumber ?? "055 000 0000" },
-              { label: "Account name", value: card.momoName ?? card.groupName },
-            ].map((row, i, arr) => (
-              <div key={row.label} className="flex items-center justify-between px-4 py-3"
-                style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
-                <span className="text-[13px] text-muted-foreground">{row.label}</span>
-                <span className="text-[13px] font-semibold text-foreground">{row.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Amount */}
-          <div className="flex items-center justify-between py-2">
-            <span className="text-[13px] text-muted-foreground font-medium">Amount</span>
-            <span className="text-[15px] font-bold text-foreground">{formatGHS(totalAmount)}</span>
-          </div>
-
-          {/* Charge Selection */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(900px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <div>
-            <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Charge Selection</p>
-            <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)} className="space-y-2">
-              {charges.map((c) => (
-                <label key={c.id} htmlFor={`charge-${c.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors"
-                  style={{ borderColor: chargeType === c.id ? "#16A34A" : "var(--border)", background: chargeType === c.id ? "#F0FDF4" : "transparent" }}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value={c.id} id={`charge-${c.id}`} className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white" />
-                    <div>
-                      <p className="text-[13px] font-semibold text-foreground">{c.label}</p>
-                      <p className="text-[11px] font-medium text-[#16A34A]">{c.sublabel}</p>
-                    </div>
+            <h2 className="text-[17px] font-bold text-gray-900">Confirm Disbursement</h2>
+            <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+              Please review the payment information before proceeding
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body: two columns */}
+        <div className="flex flex-1 min-h-0">
+          <DisbursementContextPanel card={card} />
+
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* MTN MoMo Balance */}
+              <div className="rounded-xl border p-4" style={{ background: "#FEFCE8", borderColor: "#FDE047" }}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] text-yellow-700 font-medium">Current balance</p>
+                    <p className="text-[18px] font-bold text-yellow-900">GHS 112,245,534.00</p>
+                    <p className="text-[11px] text-yellow-600">Last updated: 09:40:44 AM</p>
                   </div>
-                  <span className="text-[13px] font-bold text-foreground">{formatGHS(c.value)}</span>
-                </label>
-              ))}
-            </RadioGroup>
-          </div>
+                  <button className="text-yellow-600 hover:text-yellow-800 text-[18px] mt-1">↻</button>
+                </div>
+              </div>
 
-          {/* Fees + Tax */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[13px] text-muted-foreground">
-              <span>Fees</span><span>{formatGHS(chargeAmount)}</span>
-            </div>
-            <div className="flex justify-between text-[13px] text-muted-foreground">
-              <span>Tax</span><span>GHS 0.00</span>
-            </div>
-          </div>
+              {/* Info rows */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {[
+                  { label: "Recipient",     value: card.groupName },
+                  { label: "MoMo number",   value: card.momoNumber ?? "055 000 0000" },
+                  { label: "Account name",  value: card.momoName ?? card.groupName },
+                ].map((row, i, arr) => (
+                  <div key={row.label} className="flex items-center justify-between px-4 py-3"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid #F3F4F6" : "none" }}>
+                    <span className="text-[13px] text-gray-400">{row.label}</span>
+                    <span className="text-[13px] font-semibold text-gray-900">{row.value}</span>
+                  </div>
+                ))}
+              </div>
 
-          {/* Total */}
-          <div>
-            <div className="h-[2px] bg-foreground rounded-full mb-3" />
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] text-muted-foreground">You will be charged</span>
-              <span className="text-[20px] font-bold text-foreground">{formatGHS(grandTotal)}</span>
+              {/* Amount */}
+              <div className="flex items-center justify-between py-2">
+                <span className="text-[13px] text-gray-400 font-medium">Amount</span>
+                <span className="text-[15px] font-bold text-gray-900">{formatGHS(totalAmount)}</span>
+              </div>
+
+              {/* Charge selection */}
+              <div>
+                <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Charge Selection</p>
+                <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)} className="space-y-2">
+                  {charges.map((c) => (
+                    <label key={c.id} htmlFor={`charge-${c.id}`}
+                      className="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors"
+                      style={{ borderColor: chargeType === c.id ? "#16A34A" : "#E5E7EB", background: chargeType === c.id ? "#F0FDF4" : "transparent" }}>
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem value={c.id} id={`charge-${c.id}`} className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white" />
+                        <div>
+                          <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
+                          <p className="text-[11px] font-medium text-[#16A34A]">{c.sublabel}</p>
+                        </div>
+                      </div>
+                      <span className="text-[13px] font-bold text-gray-900">{formatGHS(c.value)}</span>
+                    </label>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Fees + Tax */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[13px] text-gray-400">
+                  <span>Fees</span><span>{formatGHS(chargeAmount)}</span>
+                </div>
+                <div className="flex justify-between text-[13px] text-gray-400">
+                  <span>Tax</span><span>GHS 0.00</span>
+                </div>
+              </div>
+
+              {/* Total */}
+              <div>
+                <div className="h-[2px] bg-gray-900 rounded-full mb-3" />
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-gray-400">You will be charged</span>
+                  <span className="text-[20px] font-bold text-gray-900">{formatGHS(grandTotal)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
+              <Button onClick={onDisburse} className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-11 text-[14px] font-bold">
+                Disburse funds
+              </Button>
             </div>
           </div>
         </div>
-
-        <div className="px-6 py-4 border-t border-border">
-          <Button onClick={onDisburse} className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-11 text-[14px] font-bold">
-            Disburse funds
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// STEP 3 — Processing
+// STEP 3 — Processing (narrow, unchanged)
 // ---------------------------------------------------------------------------
 function ProcessingStep({ open, onSuccess }: { open: boolean; onSuccess: () => void }) {
   const [seconds, setSeconds] = useState(30);
@@ -338,16 +462,16 @@ function ProcessingStep({ open, onSuccess }: { open: boolean; onSuccess: () => v
     <Dialog open={open}>
       <DialogContent className="max-w-[360px] p-0" showCloseButton={false}>
         <div className="flex flex-col items-center justify-center px-8 py-12 text-center gap-5">
-          <div className="w-16 h-16 rounded-full border-4 border-muted" style={{ borderTopColor: "#16A34A", animation: "spin 0.9s linear infinite" }} />
+          <div className="w-16 h-16 rounded-full border-4 border-gray-200" style={{ borderTopColor: "#16A34A", animation: "spin 0.9s linear infinite" }} />
           <div>
-            <h2 className="text-[18px] font-bold text-foreground">Processing disbursement</h2>
-            <p className="text-[13px] text-muted-foreground mt-1">Your transaction is currently being processed.</p>
+            <h2 className="text-[18px] font-bold text-gray-900">Processing disbursement</h2>
+            <p className="text-[13px] text-gray-400 mt-1">Your transaction is currently being processed.</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[13px] text-gray-400">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span className="font-semibold text-foreground tabular-nums">{seconds}s</span>
+            <span className="font-semibold text-gray-900 tabular-nums">{seconds}s</span>
           </div>
-          <button onClick={onSuccess} className="text-[12px] text-muted-foreground underline hover:text-foreground transition-colors mt-2">
+          <button onClick={onSuccess} className="text-[12px] text-gray-400 underline hover:text-gray-700 transition-colors mt-2">
             Simulate success →
           </button>
         </div>
@@ -358,7 +482,7 @@ function ProcessingStep({ open, onSuccess }: { open: boolean; onSuccess: () => v
 }
 
 // ---------------------------------------------------------------------------
-// STEP 4 — Success
+// STEP 4 — Success (narrow, unchanged)
 // ---------------------------------------------------------------------------
 function SuccessStep({ open, card, txId, amount, onClose }: { open: boolean; card: FarmerRequest; txId: string; amount: number; onClose: () => void }) {
   const now = new Date();
@@ -380,12 +504,12 @@ function SuccessStep({ open, card, txId, amount, onClose }: { open: boolean; car
               { label: "Date & time",  value: `${dateStr} · ${timeStr}` },
             ].map((row) => (
               <div key={row.label} className="flex justify-between">
-                <span className="text-[13px] text-muted-foreground">{row.label}</span>
-                <span className="text-[13px] font-semibold text-foreground">{row.value}</span>
+                <span className="text-[13px] text-gray-400">{row.label}</span>
+                <span className="text-[13px] font-semibold text-gray-900">{row.value}</span>
               </div>
             ))}
             <div className="flex justify-between">
-              <span className="text-[13px] text-muted-foreground">Transaction ID</span>
+              <span className="text-[13px] text-gray-400">Transaction ID</span>
               <span className="text-[13px] font-semibold text-[#16A34A]">{txId}</span>
             </div>
           </div>
@@ -419,12 +543,16 @@ export default function DisbursementModal({
     onClose();
   }
 
+  if (step === "verify") {
+    return <VerifyStep card={card} onProceed={() => setStep("confirm")} onClose={onClose} />;
+  }
+  if (step === "confirm") {
+    return <ConfirmStep card={card} onDisburse={() => setStep("processing")} onClose={onClose} />;
+  }
   return (
     <>
-      <VerifyStep  card={card} open={step === "verify"}     onProceed={() => setStep("confirm")}    onClose={onClose} />
-      <ConfirmStep card={card} open={step === "confirm"}    onDisburse={() => setStep("processing")} onClose={onClose} />
-      <ProcessingStep           open={step === "processing"} onSuccess={() => setStep("success")} />
-      <SuccessStep card={card} open={step === "success"}    txId={txId} amount={amount} onClose={handleDisbursed} />
+      <ProcessingStep open={step === "processing"} onSuccess={() => setStep("success")} />
+      <SuccessStep    open={step === "success"}    card={card} txId={txId} amount={amount} onClose={handleDisbursed} />
     </>
   );
 }

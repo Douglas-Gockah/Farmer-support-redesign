@@ -125,66 +125,41 @@ function ScoreSlider({ label, value, onChange }: {
 }
 
 // ---------------------------------------------------------------------------
-// Support interest row
+// Support interest row — compact single-line layout
 // ---------------------------------------------------------------------------
 function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) {
   const isCash = si.type === "Cash";
   const rankLabel = si.rank === "Primary" ? "1°" : "2°";
 
+  const amountLine = isCash && si.amountPerFarmer != null
+    ? `GHS ${si.amountPerFarmer.toFixed(2)} / farmer · GHS ${(si.amountPerFarmer * farmers).toLocaleString()} total`
+    : !isCash && si.landSizePerFarmer != null
+    ? `${si.landSizePerFarmer} ac / farmer · ${(si.landSizePerFarmer * farmers).toFixed(1)} ac total`
+    : null;
+
   return (
-    <div className="flex items-start gap-2.5 py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-[11px] font-bold text-gray-400 mt-0.5 w-4 shrink-0">{rankLabel}</span>
-      <div className="flex-1 min-w-0">
-        {/* Type badge */}
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold mb-1.5"
-          style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
-        >
-          {isCash ? (
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          ) : (
-            <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
-              <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
-            </svg>
-          )}
-          {si.type}
-        </span>
-        {/* Amounts */}
-        {isCash && si.amountPerFarmer != null && (
-          <div className="space-y-0.5">
-            <p className="text-[12px] text-gray-600">
-              GHS {si.amountPerFarmer.toFixed(2)}<span className="text-gray-400"> / farmer</span>
-            </p>
-            <p className="text-[12px] font-bold text-gray-900">
-              GHS {(si.amountPerFarmer * farmers).toLocaleString()} total
-            </p>
-          </div>
+    <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">
+      <span className="text-[11px] font-bold text-gray-400 w-5 shrink-0">{rankLabel}</span>
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
+        style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+      >
+        {isCash ? (
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+            <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        ) : (
+          <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
+            <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
+          </svg>
         )}
-        {!isCash && si.landSizePerFarmer != null && (
-          <div className="space-y-0.5">
-            <p className="text-[12px] text-gray-600">
-              {si.landSizePerFarmer} ac<span className="text-gray-400"> / farmer</span>
-            </p>
-            <p className="text-[12px] font-bold text-gray-900">
-              {(si.landSizePerFarmer * farmers).toFixed(1)} ac total
-            </p>
-          </div>
-        )}
-        {/* MoMo for cash */}
-        {isCash && si.momoNumber && (
-          <div className="flex items-center gap-1.5 mt-1.5 rounded-lg px-2 py-1.5" style={{ background: "#F3F4F6" }}>
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-              <rect x="4" y="1" width="8" height="14" rx="2" stroke="#6B7280" strokeWidth="1.3" />
-              <circle cx="8" cy="12" r="0.8" fill="#6B7280" />
-            </svg>
-            <span className="text-[11px] font-mono font-semibold text-gray-700">{si.momoNumber}</span>
-          </div>
-        )}
-      </div>
+        {si.type}
+      </span>
+      {amountLine && (
+        <p className="text-[11px] text-gray-500 min-w-0 truncate">{amountLine}</p>
+      )}
     </div>
   );
 }
@@ -198,8 +173,8 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
 
   return (
     <div
-      className="flex flex-col gap-4 shrink-0 overflow-y-auto"
-      style={{ width: 272, borderRight: "1px solid #F3F4F6", padding: "20px 20px 20px 24px" }}
+      className="flex flex-col gap-5 shrink-0 overflow-y-auto"
+      style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
       <div>
@@ -208,15 +183,15 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
         <p className="text-[12px] text-gray-500 mt-0.5">{card.community}</p>
       </div>
 
-      {/* Key stats */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+      {/* Key stats — horizontal row */}
+      <div className="flex gap-3">
+        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
-        <div className="rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Submitted</p>
-          <p className="text-[12px] font-bold text-gray-900 leading-tight">{card.date}</p>
+          <p className="text-[12px] font-bold text-gray-900 leading-tight mt-1">{card.date}</p>
         </div>
       </div>
 
