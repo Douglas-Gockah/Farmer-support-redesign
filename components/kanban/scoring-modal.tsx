@@ -125,40 +125,47 @@ function ScoreSlider({ label, value, onChange }: {
 }
 
 // ---------------------------------------------------------------------------
-// Support interest row — compact single-line layout
+// Support interest row — vertical layout so amounts are never clipped
 // ---------------------------------------------------------------------------
 function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) {
   const isCash = si.type === "Cash";
   const rankLabel = si.rank === "Primary" ? "1°" : "2°";
 
-  const amountLine = isCash && si.amountPerFarmer != null
-    ? `GHS ${si.amountPerFarmer.toFixed(2)} / farmer · GHS ${(si.amountPerFarmer * farmers).toLocaleString()} total`
-    : !isCash && si.landSizePerFarmer != null
-    ? `${si.landSizePerFarmer} ac / farmer · ${(si.landSizePerFarmer * farmers).toFixed(1)} ac total`
-    : null;
-
   return (
-    <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-[11px] font-bold text-gray-400 w-5 shrink-0">{rankLabel}</span>
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
-        style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
-      >
-        {isCash ? (
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        ) : (
-          <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
-            <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
-          </svg>
-        )}
-        {si.type}
-      </span>
-      {amountLine && (
-        <p className="text-[11px] text-gray-500 min-w-0 truncate">{amountLine}</p>
+    <div className="py-2.5 px-3 border-b border-gray-100 last:border-0">
+      {/* Badge row */}
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[11px] font-bold text-gray-400 shrink-0">{rankLabel}</span>
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+          style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+        >
+          {isCash ? (
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          ) : (
+            <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
+              <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          )}
+          {si.type}
+        </span>
+      </div>
+      {/* Amounts — stacked vertically */}
+      {isCash && si.amountPerFarmer != null && (
+        <div className="pl-5 space-y-0.5">
+          <p className="text-[12px] text-gray-500">GHS {si.amountPerFarmer.toFixed(2)} / farmer</p>
+          <p className="text-[12px] font-bold text-gray-900">GHS {(si.amountPerFarmer * farmers).toLocaleString()} total</p>
+        </div>
+      )}
+      {!isCash && si.landSizePerFarmer != null && (
+        <div className="pl-5 space-y-0.5">
+          <p className="text-[12px] text-gray-500">{si.landSizePerFarmer} ac / farmer</p>
+          <p className="text-[12px] font-bold text-gray-900">{(si.landSizePerFarmer * farmers).toFixed(1)} ac total</p>
+        </div>
       )}
     </div>
   );

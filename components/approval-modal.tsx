@@ -34,40 +34,47 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// InterestRow — compact, no MoMo
+// InterestRow — vertical layout so amounts are never clipped
 // ---------------------------------------------------------------------------
 function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) {
   const isCash = si.type === "Cash";
   const rankLabel = si.rank === "Primary" ? "1°" : "2°";
 
-  const amountLine = isCash && si.amountPerFarmer != null
-    ? `GHS ${si.amountPerFarmer.toFixed(2)} / farmer · GHS ${(si.amountPerFarmer * farmers).toLocaleString()} total`
-    : !isCash && si.landSizePerFarmer != null
-    ? `${si.landSizePerFarmer} ac / farmer · ${(si.landSizePerFarmer * farmers).toFixed(1)} ac total`
-    : null;
-
   return (
-    <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-[11px] font-bold text-gray-400 w-5 shrink-0">{rankLabel}</span>
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
-        style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
-      >
-        {isCash ? (
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        ) : (
-          <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
-            <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
-          </svg>
-        )}
-        {si.type}
-      </span>
-      {amountLine && (
-        <p className="text-[11px] text-gray-500 min-w-0 truncate">{amountLine}</p>
+    <div className="py-2.5 px-3 border-b border-gray-100 last:border-0">
+      {/* Badge row */}
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[11px] font-bold text-gray-400 shrink-0">{rankLabel}</span>
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+          style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+        >
+          {isCash ? (
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          ) : (
+            <svg width="11" height="10" viewBox="0 0 16 14" fill="none">
+              <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          )}
+          {si.type}
+        </span>
+      </div>
+      {/* Amounts */}
+      {isCash && si.amountPerFarmer != null && (
+        <div className="pl-5 space-y-0.5">
+          <p className="text-[12px] text-gray-500">GHS {si.amountPerFarmer.toFixed(2)} / farmer</p>
+          <p className="text-[12px] font-bold text-gray-900">GHS {(si.amountPerFarmer * farmers).toLocaleString()} total</p>
+        </div>
+      )}
+      {!isCash && si.landSizePerFarmer != null && (
+        <div className="pl-5 space-y-0.5">
+          <p className="text-[12px] text-gray-500">{si.landSizePerFarmer} ac / farmer</p>
+          <p className="text-[12px] font-bold text-gray-900">{(si.landSizePerFarmer * farmers).toFixed(1)} ac total</p>
+        </div>
       )}
     </div>
   );
@@ -148,78 +155,159 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
 }
 
 // ---------------------------------------------------------------------------
-// SupportOptionCard — selectable card for each support interest
+// SupportOptionCard — selectable, with inline editable amount
 // ---------------------------------------------------------------------------
 function SupportOptionCard({
   interest,
   farmers,
   selected,
   onSelect,
+  editableAmount,
+  onAmountSave,
 }: {
   interest: SupportInterest;
   farmers: number;
   selected: boolean;
   onSelect: () => void;
+  editableAmount: number;
+  onAmountSave: (amount: number, comment: string) => void;
 }) {
   const isCash = interest.type === "Cash";
+  const [editing,      setEditing]      = useState(false);
+  const [editValue,    setEditValue]    = useState(String(editableAmount));
+  const [editComment,  setEditComment]  = useState("");
+
+  const displayAmount = isCash ? editableAmount : (interest.landSizePerFarmer ?? 0);
+
+  function handleSave(e: React.MouseEvent) {
+    e.stopPropagation();
+    const num = parseFloat(editValue);
+    if (!isNaN(num) && num > 0) onAmountSave(num, editComment);
+    setEditing(false);
+    setEditComment("");
+  }
+
+  function handleCancel(e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditValue(String(editableAmount));
+    setEditing(false);
+    setEditComment("");
+  }
 
   return (
     <div
-      className="relative rounded-xl border-2 p-4 cursor-pointer transition-all"
+      className="relative rounded-xl border-2 p-4 transition-all"
       style={{
         borderColor: selected ? "#16A34A" : "#E5E7EB",
-        background: selected ? "#F0FDF4" : "#FAFAFA",
-        opacity: selected ? 1 : 0.6,
+        background:  selected ? "#F0FDF4" : "#FAFAFA",
+        opacity:     selected ? 1 : 0.65,
+        cursor:      editing  ? "default" : "pointer",
       }}
-      onClick={onSelect}
+      onClick={() => { if (!editing) onSelect(); }}
     >
-      <div className="flex items-center justify-between mb-3">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-2">
         <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
           {interest.rank}
         </span>
         <div
-          className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+          className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0"
           style={{ borderColor: selected ? "#16A34A" : "#D1D5DB", background: selected ? "#16A34A" : "transparent" }}
         >
           {selected && (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
         </div>
       </div>
 
+      {/* Type label */}
       <p className="text-[14px] font-bold text-gray-900 mb-3">
         {isCash ? "Cash Support" : "Ploughing Support"}
       </p>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-        <div>
-          <p className="text-[10px] text-gray-400">Farmers</p>
-          <p className="text-[13px] font-semibold">{farmers}</p>
+      {/* Stats — flex-wrap so they all sit in one row when space permits */}
+      <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
+
+        {/* Farmers */}
+        <div className="min-w-[56px]">
+          <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
+          <p className="text-[13px] font-semibold text-gray-900">{farmers}</p>
         </div>
+
+        {/* Amount / farmer — editable for cash */}
         {isCash ? (
-          <>
-            <div>
+          <div className="min-w-[110px]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5 mb-0.5">
               <p className="text-[10px] text-gray-400">Amount / farmer</p>
-              <p className="text-[13px] font-semibold">GHS {interest.amountPerFarmer?.toFixed(2)}</p>
+              {!editing && selected && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+                  className="text-[10px] font-semibold underline"
+                  style={{ color: "#16A34A" }}
+                >
+                  Edit
+                </button>
+              )}
             </div>
-            <div>
-              <p className="text-[10px] text-gray-400">Total amount</p>
-              <p className="text-[13px] font-semibold">GHS {((interest.amountPerFarmer ?? 0) * farmers).toFixed(2)}</p>
-            </div>
-          </>
+            {editing ? (
+              <div className="space-y-2 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] text-gray-500 shrink-0">GHS</span>
+                  <input
+                    type="number"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    autoFocus
+                    className="w-20 h-7 rounded-md text-[13px] font-semibold px-2 outline-none"
+                    style={{ border: "1.5px solid #16A34A", background: "white" }}
+                  />
+                </div>
+                <textarea
+                  rows={2}
+                  placeholder="Reason for change (optional)..."
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  className="w-full text-[11px] border border-gray-200 rounded-md px-2 py-1.5 resize-none outline-none bg-white"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSave}
+                    className="text-[11px] font-bold text-white rounded-md px-2.5 py-1 transition-colors"
+                    style={{ background: "#16A34A" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="text-[11px] font-semibold text-gray-500 hover:bg-gray-100 rounded-md px-2.5 py-1 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[13px] font-semibold text-gray-900">GHS {editableAmount.toFixed(2)}</p>
+            )}
+          </div>
         ) : (
-          <>
-            <div>
-              <p className="text-[10px] text-gray-400">Land / farmer</p>
-              <p className="text-[13px] font-semibold">{interest.landSizePerFarmer} ac</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400">Total land</p>
-              <p className="text-[13px] font-semibold">{((interest.landSizePerFarmer ?? 0) * farmers).toFixed(1)} ac</p>
-            </div>
-          </>
+          <div className="min-w-[90px]">
+            <p className="text-[10px] text-gray-400 mb-0.5">Land / farmer</p>
+            <p className="text-[13px] font-semibold text-gray-900">{interest.landSizePerFarmer} ac</p>
+          </div>
+        )}
+
+        {/* Total */}
+        {!editing && (
+          <div className="min-w-[90px]">
+            <p className="text-[10px] text-gray-400 mb-0.5">{isCash ? "Total amount" : "Total land"}</p>
+            <p className="text-[13px] font-semibold text-gray-900">
+              {isCash
+                ? `GHS ${(editableAmount * farmers).toFixed(2)}`
+                : `${((interest.landSizePerFarmer ?? 0) * farmers).toFixed(1)} ac`}
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -227,33 +315,21 @@ function SupportOptionCard({
 }
 
 // ---------------------------------------------------------------------------
-// Cash approval detail fields
+// Cash additional fields — qty only (amount is now editable inline in the card)
 // ---------------------------------------------------------------------------
-function CashApprovalFields({
+function CashQtyFields({
   farmers,
-  amountPerFarmer,
-  setAmountPerFarmer,
   qtyPerFarmer,
   setQtyPerFarmer,
 }: {
   farmers: number;
-  amountPerFarmer: number;
-  setAmountPerFarmer: (v: number) => void;
   qtyPerFarmer: number;
   setQtyPerFarmer: (v: number) => void;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-4 space-y-4">
-      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Approval Details — Cash</p>
+    <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Additional Details — Cash</p>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-[11px] text-gray-400 mb-1 block">Amount per farmer (GHS)</Label>
-          <Input type="number" value={amountPerFarmer} onChange={(e) => setAmountPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400 mb-1 block">Total amount</Label>
-          <div className="h-9 flex items-center px-3 rounded-md bg-gray-50 border border-gray-200 text-[13px] font-bold">GHS {(amountPerFarmer * farmers).toFixed(2)}</div>
-        </div>
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Expected qty per farmer (KG)</Label>
           <Input type="number" value={qtyPerFarmer} onChange={(e) => setQtyPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
@@ -268,14 +344,12 @@ function CashApprovalFields({
 }
 
 // ---------------------------------------------------------------------------
-// Ploughing approval detail fields
+// Ploughing additional fields — land size + service + payment
 // ---------------------------------------------------------------------------
 function PloughingApprovalFields({
   farmers,
   landPerFarmer,
   setLandPerFarmer,
-  amountPerFarmer,
-  setAmountPerFarmer,
   provider,
   setProvider,
   payment,
@@ -284,8 +358,6 @@ function PloughingApprovalFields({
   farmers: number;
   landPerFarmer: number;
   setLandPerFarmer: (v: number) => void;
-  amountPerFarmer: number;
-  setAmountPerFarmer: (v: number) => void;
   provider: string;
   setProvider: (v: string) => void;
   payment: string;
@@ -293,7 +365,7 @@ function PloughingApprovalFields({
 }) {
   return (
     <div className="rounded-xl border border-gray-200 p-4 space-y-4">
-      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Approval Details — Ploughing</p>
+      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Additional Details — Ploughing</p>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Land per farmer (acres)</Label>
@@ -302,14 +374,6 @@ function PloughingApprovalFields({
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Total land size</Label>
           <div className="h-9 flex items-center px-3 rounded-md bg-gray-50 border border-gray-200 text-[13px] font-bold">{(landPerFarmer * farmers).toFixed(2)} ac</div>
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400 mb-1 block">Amount per farmer (GHS)</Label>
-          <Input type="number" value={amountPerFarmer} onChange={(e) => setAmountPerFarmer(Number(e.target.value))} className="h-9 text-[13px] font-bold" />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400 mb-1 block">Total amount</Label>
-          <div className="h-9 flex items-center px-3 rounded-md bg-gray-50 border border-gray-200 text-[13px] font-bold">GHS {(amountPerFarmer * farmers).toFixed(2)}</div>
         </div>
         <div>
           <Label className="text-[11px] text-gray-400 mb-1 block">Service provider</Label>
@@ -362,7 +426,6 @@ export default function ApprovalModal({
   const [cashAmount,   setCashAmount]   = useState(selectedCashInterest?.amountPerFarmer ?? 100);
   const [cashQty,      setCashQty]      = useState(50);
   const [ploughLand,   setPloughLand]   = useState(selectedPloughInterest?.landSizePerFarmer ?? 1.5);
-  const [ploughAmount, setPloughAmount] = useState(200);
   const [provider,     setProvider]     = useState("FieldTech Ghana");
   const [payment,      setPayment]      = useState("Full payment");
 
@@ -429,7 +492,7 @@ export default function ApprovalModal({
         {/* Body: two columns */}
         <div className="flex flex-1 min-h-0">
 
-          {/* Left: group context (sticky) */}
+          {/* Left: group context */}
           <GroupContextPanel card={card} />
 
           {/* Right: action area (scrollable) */}
@@ -447,17 +510,20 @@ export default function ApprovalModal({
                       farmers={card.farmers}
                       selected={selectedType === si.type}
                       onSelect={() => setSelectedType(si.type)}
+                      editableAmount={si.type === "Cash" ? cashAmount : (si.landSizePerFarmer ?? 0)}
+                      onAmountSave={(amount) => {
+                        if (si.type === "Cash") setCashAmount(amount);
+                        else setPloughLand(amount);
+                      }}
                     />
                   ))}
                 </div>
               </section>
 
-              {/* Approval detail fields */}
+              {/* Additional detail fields for the selected type */}
               {selectedType === "Cash" && selectedCashInterest && (
-                <CashApprovalFields
+                <CashQtyFields
                   farmers={card.farmers}
-                  amountPerFarmer={cashAmount}
-                  setAmountPerFarmer={setCashAmount}
                   qtyPerFarmer={cashQty}
                   setQtyPerFarmer={setCashQty}
                 />
@@ -467,8 +533,6 @@ export default function ApprovalModal({
                   farmers={card.farmers}
                   landPerFarmer={ploughLand}
                   setLandPerFarmer={setPloughLand}
-                  amountPerFarmer={ploughAmount}
-                  setAmountPerFarmer={setPloughAmount}
                   provider={provider}
                   setProvider={setProvider}
                   payment={payment}

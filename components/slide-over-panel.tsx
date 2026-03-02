@@ -90,19 +90,20 @@ export default function SlideOverPanel({
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}
+        style={{ background: "rgba(0,0,0,0.50)" }}
         onClick={onClose}
         aria-hidden
       />
 
-      {/* Drawer */}
+      {/* Centered modal */}
       <div
-        className="fixed top-0 right-0 z-50 flex flex-col bg-white"
+        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+      >
+      <div
+        className="flex flex-col bg-white rounded-2xl shadow-2xl pointer-events-auto"
         style={{
-          width: "min(480px, 45vw)",
-          minWidth: 360,
-          height: "100vh",
-          boxShadow: "-6px 0 32px rgba(0,0,0,0.12)",
+          width: "min(520px, 92vw)",
+          maxHeight: "88vh",
         }}
       >
         {/* Header */}
@@ -263,6 +264,7 @@ export default function SlideOverPanel({
             </button>
           )}
         </div>
+      </div>
       </div>
     </>
   );
