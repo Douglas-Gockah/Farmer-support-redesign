@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import type { FarmerRequest } from "@/components/slide-over-panel";
+import type { FarmerRequest } from "@/components/kanban/types";
 
 // ---------------------------------------------------------------------------
 // Hold Modal
