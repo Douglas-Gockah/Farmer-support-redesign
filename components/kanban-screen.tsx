@@ -13,6 +13,7 @@ import { ColumnHeader } from "@/components/kanban/column-header";
 import { ScoringModal } from "@/components/kanban/scoring-modal";
 import { useKanbanState } from "@/components/kanban/use-kanban-state";
 import { COLUMNS } from "@/components/kanban/constants";
+import type { Stage } from "@/components/kanban/types";
 
 const DEFAULT_FILTERS: ActiveFilters = {
   search: "", community: null, region: null, district: null, agent: null, datePreset: null,
@@ -20,8 +21,8 @@ const DEFAULT_FILTERS: ActiveFilters = {
 
 export default function KanbanScreen() {
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(DEFAULT_FILTERS);
+  const [mobileColId,   setMobileColId]   = useState<Stage>("synced");
 
-  // Stable callback so FilterBar doesn't cause unnecessary re-renders
   const handleFilterChange = useCallback((f: ActiveFilters) => setActiveFilters(f), []);
 
   const {
@@ -38,11 +39,19 @@ export default function KanbanScreen() {
     handleHeld, handleRejected, handleScored, handleDisbursed,
   } = useKanbanState(activeFilters);
 
+  function cardOnView(r: Parameters<typeof setSelectedCard>[0], colId: string) {
+    if (colId === "synced")               return setScoreCard(r);
+    if (colId === "pending_approval")     return setReviewCard(r);
+    if (colId === "agent_confirmation")   return setManagerCard(r);
+    if (colId === "finance_disbursement") return setDisburseCard(r);
+    setSelectedCard(r);
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200" style={{ background: "#F9FAFB", flexShrink: 0 }}>
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-gray-200 shrink-0" style={{ background: "#F9FAFB" }}>
         <span className="text-[13px] text-gray-400 font-medium">Farmer support</span>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M5 3l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -50,18 +59,67 @@ export default function KanbanScreen() {
         <span className="text-[13px] font-bold text-gray-800">Requesting groups</span>
       </div>
 
-      {/* Search + filter bar (self-contained) */}
+      {/* Filter bar */}
       <FilterBar agents={agents} onFilterChange={handleFilterChange} />
 
-      {/* Kanban board */}
-      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
+      {/* ── Mobile: column tab strip (hidden on lg+) ── */}
+      <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
+        {COLUMNS.map((col) => {
+          const count   = filtered.filter((r) => r.stage === col.id).length;
+          const isActive = mobileColId === col.id;
+          return (
+            <button
+              key={col.id}
+              onClick={() => setMobileColId(col.id)}
+              className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
+              style={isActive
+                ? { background: col.dotColor, color: "white" }
+                : { background: "#F3F4F6", color: "#6B7280" }}
+            >
+              {col.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Mobile board: single column view ── */}
+      <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#F9FAFB" }}>
+        <div className="px-4 py-4">
+          {(() => {
+            const col       = COLUMNS.find((c) => c.id === mobileColId)!;
+            let cards = filtered.filter((r) => r.stage === mobileColId);
+            if (mobileColId === "pending_approval" && scoreSort !== "default") {
+              cards = [...cards].sort((a, b) => {
+                const sa = a.score ?? -1; const sb = b.score ?? -1;
+                return scoreSort === "desc" ? sb - sa : sa - sb;
+              });
+            }
+            if (cards.length === 0) return (
+              <div className="flex items-center justify-center h-32">
+                <span className="text-[13px] text-gray-300">No requests</span>
+              </div>
+            );
+            return cards.map((r) => (
+              <KanbanCard
+                key={r.id}
+                r={r}
+                ctaLabel={col.ctaLabel}
+                onCta={() => ctaAction(r, col.id)}
+                onView={() => cardOnView(r, col.id)}
+              />
+            ));
+          })()}
+        </div>
+      </div>
+
+      {/* ── Desktop board: all columns, horizontal scroll ── */}
+      <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
         <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
           {COLUMNS.map((col) => {
             let cards = filtered.filter((r) => r.stage === col.id);
             if (col.id === "pending_approval" && scoreSort !== "default") {
               cards = [...cards].sort((a, b) => {
-                const sa = a.score ?? -1;
-                const sb = b.score ?? -1;
+                const sa = a.score ?? -1; const sb = b.score ?? -1;
                 return scoreSort === "desc" ? sb - sa : sa - sb;
               });
             }
@@ -90,14 +148,7 @@ export default function KanbanScreen() {
                           r={r}
                           ctaLabel={col.ctaLabel}
                           onCta={() => ctaAction(r, col.id)}
-                          // Action stage cards skip the slide-over and open their modal directly
-                          onView={() => {
-                            if (col.id === "synced")               return setScoreCard(r);
-                            if (col.id === "pending_approval")     return setReviewCard(r);
-                            if (col.id === "agent_confirmation")   return setManagerCard(r);
-                            if (col.id === "finance_disbursement") return setDisburseCard(r);
-                            setSelectedCard(r); // rejected, disbursed — slide-over (read-only)
-                          }}
+                          onView={() => cardOnView(r, col.id)}
                         />
                       ))
                     )}

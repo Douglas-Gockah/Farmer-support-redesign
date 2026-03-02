@@ -8,8 +8,9 @@ export const COLUMNS: ColDef[] = [
   { id: "pending_approval",     label: "Pending Approval",       dotColor: "#2563EB", ctaLabel: "Review",   ctaStages: ["pending_approval"] },
   { id: "rejected",             label: "Rejected",               dotColor: "#DC2626", ctaLabel: "",         ctaStages: [] },
   { id: "agent_confirmation",   label: "Manager Confirmation",   dotColor: "#16A34A", ctaLabel: "Confirm",  ctaStages: ["agent_confirmation"] },
-  { id: "finance_disbursement", label: "Finance & Disbursement", dotColor: "#7C3AED", ctaLabel: "Disburse", ctaStages: ["finance_disbursement"] },
+  { id: "finance_disbursement", label: "Pending Disbursement",   dotColor: "#7C3AED", ctaLabel: "Disburse", ctaStages: ["finance_disbursement"] },
   { id: "disbursed",            label: "Disbursed",              dotColor: "#6B7280", ctaLabel: "",         ctaStages: [] },
+  { id: "opted_out",            label: "Cash Opt-Outs",          dotColor: "#F59E0B", ctaLabel: "",         ctaStages: [] },
 ];
 
 export const AVATAR_COLORS = [

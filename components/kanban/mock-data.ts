@@ -105,4 +105,30 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 180, momoNumber: "0244-999-000", momoName: "WE Food Coalition" },
     ],
   },
+  {
+    id: "FS-2024-011", date: "02 Feb 2024", agent: "Akosua Frimpong", community: "Tamale Metro",
+    groupName: "Metro Pioneer Group", score: 80, stage: "opted_out", farmers: 25,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 120,
+    momoNumber: "0244-777-888", momoName: "Metro Pioneer",
+    transactionId: "TXN-1A2B3C4D", disbursedAmount: 2640, disbursedDate: "02 Feb 2024",
+    optedOutFarmers: ["Rabi Alhassan", "Sana Korawuni", "Azuma Atta", "Doapok Tidow", "Mercy Bakanyin"],
+    supportInterests: [
+      { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0244-777-888", momoName: "Metro Pioneer" },
+      { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
+    ],
+  },
+  {
+    id: "FS-2024-012", date: "05 Feb 2024", agent: "Yaw Darko", community: "Bole",
+    groupName: "Bole United Farmers", score: 88, stage: "opted_out", farmers: 30,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 150,
+    momoNumber: "0551-444-555", momoName: "Bole United",
+    transactionId: "TXN-5E6F7G8H", disbursedAmount: 4200, disbursedDate: "05 Feb 2024",
+    optedOutFarmers: ["Kusohuba Duku", "Shetu Affuro", "Yetama Akuta"],
+    supportInterests: [
+      { rank: "Primary",   type: "Cash",      amountPerFarmer: 150, momoNumber: "0551-444-555", momoName: "Bole United" },
+      { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
+    ],
+  },
 ];
