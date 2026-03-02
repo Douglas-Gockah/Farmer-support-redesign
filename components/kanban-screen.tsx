@@ -90,7 +90,8 @@ export default function KanbanScreen() {
                           r={r}
                           ctaLabel={col.ctaLabel}
                           onCta={() => ctaAction(r, col.id)}
-                          onView={() => setSelectedCard(r)}
+                          // Synced cards: body click goes straight to scoring modal (no extra click needed)
+                          onView={() => col.id === "synced" ? setScoreCard(r) : setSelectedCard(r)}
                         />
                       ))
                     )}
