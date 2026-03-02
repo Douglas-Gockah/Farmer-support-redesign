@@ -10,7 +10,8 @@ export type Stage =
   | "rejected"
   | "agent_confirmation"
   | "finance_disbursement"
-  | "disbursed";
+  | "disbursed"
+  | "opted_out";
 
 export interface SupportInterest {
   rank: "Primary" | "Secondary";
@@ -43,6 +44,7 @@ export interface FarmerRequest {
   disbursedAmount?: number;
   disbursedDate?: string;
   hasFinancialRecords?: boolean;
+  optedOutFarmers?: string[];
 }
 
 export interface ColDef {

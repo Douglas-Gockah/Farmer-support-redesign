@@ -13,7 +13,8 @@ interface KanbanCardProps {
 }
 
 export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
-  const [hovered, setHovered] = useState(false);
+  const [hovered,      setHovered]      = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const agentInitials = initials(r.agent);
   const agentColor    = avatarColor(r.agent);
 
@@ -23,6 +24,7 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
   const isPending   = r.stage === "pending_approval";
   const isFinance   = r.stage === "finance_disbursement";
   const isSynced    = r.stage === "synced";
+  const isOptedOut  = r.stage === "opted_out";
 
   const ctaStyle: React.CSSProperties = r.onHold
     ? { background: "transparent", border: "1.5px solid #D97706", color: "#D97706" }
@@ -76,7 +78,7 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
           <p className="text-[12px] font-medium text-gray-500 truncate">
             {r.community} &middot; {r.farmers} farmers
           </p>
-          {r.score !== null && (isPending || isAgentConf || isFinance || isDisbursed) && (
+          {r.score !== null && (isPending || isAgentConf || isFinance || isDisbursed || isOptedOut) && (
             <>
               <span className="text-[12px] text-gray-400">&middot;</span>
               <ScoreBadge score={r.score} />
@@ -120,6 +122,31 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
             <p className="text-[10px] text-gray-400 mb-0.5">MoMo</p>
             <p className="text-[13px] font-semibold font-mono text-gray-800">{r.momoNumber ?? "—"}</p>
             <p className="text-[11px] text-gray-500">{r.momoName ?? "—"}</p>
+          </div>
+        )}
+
+        {/* Opted-out: farmer list */}
+        {isOptedOut && r.optedOutFarmers && r.optedOutFarmers.length > 0 && (
+          <div className="mb-3">
+            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
+              Opted out — {r.optedOutFarmers.length} farmer{r.optedOutFarmers.length !== 1 ? "s" : ""}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {r.optedOutFarmers.slice(0, 3).map((name) => (
+                <span
+                  key={name}
+                  className="text-[11px] font-medium text-gray-700 px-2 py-0.5 rounded-full"
+                  style={{ background: "#FEF3C7" }}
+                >
+                  {name}
+                </span>
+              ))}
+              {r.optedOutFarmers.length > 3 && (
+                <span className="text-[11px] text-gray-400 self-center">
+                  +{r.optedOutFarmers.length - 3} more
+                </span>
+              )}
+            </div>
           </div>
         )}
 
@@ -176,6 +203,34 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
               <path d="M6 5v6M10 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             On Hold
+          </div>
+        )}
+
+        {/* Opted-out: proof of refund upload */}
+        {isOptedOut && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <input
+              type="file"
+              id={`refund-${r.id}`}
+              className="hidden"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setUploadedFile(e.target.files?.[0]?.name ?? null)}
+            />
+            <label
+              htmlFor={`refund-${r.id}`}
+              className="flex items-center justify-center gap-2 w-full h-9 rounded-lg border-2 border-dashed text-[12px] font-semibold cursor-pointer transition-colors"
+              style={{
+                borderColor: uploadedFile ? "#16A34A" : "#D1D5DB",
+                color:       uploadedFile ? "#16A34A" : "#6B7280",
+                background:  uploadedFile ? "#F0FDF4" : "transparent",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v8M5 7l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {uploadedFile ? uploadedFile : "Upload proof of refund"}
+            </label>
           </div>
         )}
 

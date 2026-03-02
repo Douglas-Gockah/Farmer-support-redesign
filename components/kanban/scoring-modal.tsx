@@ -180,7 +180,7 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
 
   return (
     <div
-      className="flex flex-col gap-5 shrink-0 overflow-y-auto"
+      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
       style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
@@ -290,9 +290,17 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
         </div>
 
         {/* ── Body: two columns ── */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
 
-          {/* Left: group summary (sticky) */}
+          {/* Mobile context strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{card.groupName}</p>
+              <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
+            </div>
+          </div>
+
+          {/* Left: group summary (hidden on mobile) */}
           <GroupSummaryPanel card={card} />
 
           {/* Right: scoring sections (scrollable) */}

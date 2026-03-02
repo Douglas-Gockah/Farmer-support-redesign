@@ -18,12 +18,13 @@ import { initials, avatarColor } from "@/components/kanban/helpers";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-type ChargeType = "none" | "flat" | "percentage";
+type ChargeType = "none" | "flat" | "percentage" | "transport";
 type DisburseStep = "verify" | "confirm" | "processing" | "success";
 
 const AMOUNT_PER_FARMER = 120;
 const FLAT_CHARGE = 20;
 const PERCENTAGE_RATE = 0.01;
+const TRANSPORT_ALLOWANCE = 50;
 
 function formatGHS(amount: number) {
   return `GHS ${amount.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -46,7 +47,7 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
 
   return (
     <div
-      className="flex flex-col gap-5 shrink-0 overflow-y-auto"
+      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
       style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
@@ -182,7 +183,17 @@ function VerifyStep({
         </div>
 
         {/* Body: two columns */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile context strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{card.groupName}</p>
+              <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
+            </div>
+            <span className="text-[12px] font-mono font-bold text-gray-700 shrink-0">{card.momoNumber ?? "—"}</span>
+          </div>
+
           <DisbursementContextPanel card={card} />
 
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
@@ -314,13 +325,15 @@ function ConfirmStep({
   const chargeAmount =
     chargeType === "flat"       ? FLAT_CHARGE
     : chargeType === "percentage" ? Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100
+    : chargeType === "transport"  ? TRANSPORT_ALLOWANCE
     : 0;
   const grandTotal = totalAmount + chargeAmount;
 
   const charges: { id: ChargeType; label: string; sublabel: string; value: number }[] = [
-    { id: "none",       label: "No withdrawal charge", sublabel: "No additional charges applied", value: 0 },
-    { id: "flat",       label: "Flat charge",           sublabel: "Fixed amount of GHS 20.00",    value: FLAT_CHARGE },
-    { id: "percentage", label: "Percentage charge",     sublabel: "1% of transaction amount",     value: Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100 },
+    { id: "none",       label: "No withdrawal charge",    sublabel: "No additional charges applied",   value: 0 },
+    { id: "flat",       label: "Flat charge",             sublabel: "Fixed amount of GHS 20.00",       value: FLAT_CHARGE },
+    { id: "percentage", label: "Percentage charge",       sublabel: "1% of transaction amount",        value: Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100 },
+    { id: "transport",  label: "Transportation allowance", sublabel: "Fixed allowance of GHS 50.00",   value: TRANSPORT_ALLOWANCE },
   ];
 
   return (
@@ -349,7 +362,17 @@ function ConfirmStep({
         </div>
 
         {/* Body: two columns */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile context strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{card.groupName}</p>
+              <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
+            </div>
+            <span className="text-[12px] font-mono font-bold text-gray-700 shrink-0">{card.momoNumber ?? "—"}</span>
+          </div>
+
           <DisbursementContextPanel card={card} />
 
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
@@ -388,24 +411,35 @@ function ConfirmStep({
                 <span className="text-[15px] font-bold text-gray-900">{formatGHS(totalAmount)}</span>
               </div>
 
-              {/* Charge selection */}
+              {/* Charge selection — all options in one grouped container */}
               <div>
                 <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Charge Selection</p>
-                <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)} className="space-y-2">
-                  {charges.map((c) => (
-                    <label key={c.id} htmlFor={`charge-${c.id}`}
-                      className="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors"
-                      style={{ borderColor: chargeType === c.id ? "#16A34A" : "#E5E7EB", background: chargeType === c.id ? "#F0FDF4" : "transparent" }}>
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem value={c.id} id={`charge-${c.id}`} className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white" />
-                        <div>
-                          <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
-                          <p className="text-[11px] font-medium text-[#16A34A]">{c.sublabel}</p>
+                <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)}>
+                  <div className="rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+                    {charges.map((c) => (
+                      <label
+                        key={c.id}
+                        htmlFor={`charge-${c.id}`}
+                        className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
+                        style={{ background: chargeType === c.id ? "#F0FDF4" : "transparent" }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem
+                            value={c.id}
+                            id={`charge-${c.id}`}
+                            className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white shrink-0"
+                          />
+                          <div>
+                            <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
+                            <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>{c.sublabel}</p>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-[13px] font-bold text-gray-900">{formatGHS(c.value)}</span>
-                    </label>
-                  ))}
+                        <span className="text-[13px] font-bold text-gray-900 shrink-0">
+                          {c.value > 0 ? formatGHS(c.value) : "—"}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </RadioGroup>
               </div>
 

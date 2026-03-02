@@ -112,6 +112,9 @@ const ChevronDown = () => (
 // FilterBar
 // ---------------------------------------------------------------------------
 export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
+  // Mobile filter panel toggle
+  const [filtersVisible, setFiltersVisible] = useState(false);
+
   // Search
   const [search, setSearch] = useState("");
 
@@ -187,11 +190,13 @@ export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
 
   const pillBase = "flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-300 text-[12px] font-semibold text-gray-600 bg-white hover:border-gray-400 transition-colors";
 
+  const activeFilterCount = [datePreset, selectedRegion, selectedDistrict, selectedCommunity, selectedAgent].filter(Boolean).length;
+
   return (
     <>
-      {/* ── Row 1: search + export ── */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
-        <div className="relative" style={{ width: 320 }}>
+      {/* ── Row 1: search + export + mobile filter toggle ── */}
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-white border-b border-gray-200">
+        <div className="relative flex-1 sm:flex-none" style={{ maxWidth: 320 }}>
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
             <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -200,12 +205,26 @@ export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for group name or reference..."
+            placeholder="Search groups..."
             className="w-full pl-9 pr-4 h-9 rounded-lg border border-gray-200 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/25 focus:border-[#16A34A] bg-white"
           />
         </div>
+
+        {/* Mobile filter toggle */}
         <button
-          className="flex items-center gap-2 h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors"
+          className="flex lg:hidden items-center gap-1.5 h-9 px-3 rounded-lg border text-[13px] font-semibold transition-colors shrink-0"
+          style={{ borderColor: filtersVisible ? "#16A34A" : "#D1D5DB", color: filtersVisible ? "#16A34A" : "#6B7280", background: "white" }}
+          onClick={() => setFiltersVisible((v) => !v)}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+        </button>
+
+        {/* Desktop export button */}
+        <button
+          className="hidden sm:flex items-center gap-2 h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors ml-auto shrink-0"
           style={{ borderColor: "#16A34A", color: "#16A34A", background: "white" }}
           disabled
         >
@@ -217,8 +236,8 @@ export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
         </button>
       </div>
 
-      {/* ── Row 2: filter pills ── */}
-      <div className="flex items-center flex-wrap gap-2 px-6 py-2 bg-white border-b border-gray-200">
+      {/* ── Row 2: filter pills — always visible on lg+, toggleable on mobile ── */}
+      <div className={`${filtersVisible ? "flex" : "hidden"} lg:flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2 bg-white border-b border-gray-200`}>
 
         {/* 1. Date picker */}
         <div ref={dateRef} className="relative">
