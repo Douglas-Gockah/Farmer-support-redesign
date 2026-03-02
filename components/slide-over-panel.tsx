@@ -7,50 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 
 // ---------------------------------------------------------------------------
-// Types (exported for use in kanban-screen)
+// Types — re-exported from canonical location for backwards compatibility
 // ---------------------------------------------------------------------------
-export type SupportType = "Cash" | "Ploughing";
-
-export type Stage =
-  | "synced"
-  | "pending_approval"
-  | "rejected"
-  | "agent_confirmation"
-  | "finance_disbursement"
-  | "disbursed";
-
-export interface SupportInterest {
-  rank: "Primary" | "Secondary";
-  type: SupportType;
-  amountPerFarmer?: number;
-  momoNumber?: string;
-  momoName?: string;
-  landSizePerFarmer?: number;
-}
-
-export interface FarmerRequest {
-  id: string;
-  date: string;
-  agent: string;
-  community: string;
-  groupName: string;
-  score: number | null;
-  stage: Stage;
-  farmers: number;
-  onHold: boolean;
-  holdComment: string;
-  rejectionComment: string;
-  supportInterests: SupportInterest[];
-  approvedSupportType: SupportType | null;
-  approvedAmountPerFarmer?: number;
-  approvedLandSizePerFarmer?: number;
-  momoNumber?: string;
-  momoName?: string;
-  transactionId?: string;
-  disbursedAmount?: number;
-  disbursedDate?: string;
-  hasFinancialRecords?: boolean;
-}
+export type { SupportType, Stage, SupportInterest, FarmerRequest } from "@/components/kanban/types";
 
 // ---------------------------------------------------------------------------
 // Section card wrapper

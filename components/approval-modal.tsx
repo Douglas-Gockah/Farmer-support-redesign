@@ -21,7 +21,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import type { FarmerRequest, SupportInterest, SupportType } from "@/components/slide-over-panel";
+import type { FarmerRequest, SupportInterest, SupportType } from "@/components/kanban/types";
 
 // ---------------------------------------------------------------------------
 // ScoreBar

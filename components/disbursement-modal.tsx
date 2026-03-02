@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { FarmerRequest } from "@/components/slide-over-panel";
+import type { FarmerRequest } from "@/components/kanban/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
