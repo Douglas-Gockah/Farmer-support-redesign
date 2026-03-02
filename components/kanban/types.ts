@@ -55,4 +55,10 @@ export interface ColDef {
   ctaStages: Stage[];
 }
 
+export interface GenericColDef {
+  id: string;
+  label: string;
+  dotColor: string;
+}
+
 export type ScoreSort = "default" | "desc" | "asc";

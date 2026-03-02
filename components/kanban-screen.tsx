@@ -6,6 +6,8 @@ import SlideOverPanel from "@/components/slide-over-panel";
 import ApprovalModal from "@/components/approval-modal";
 import DisbursementModal from "@/components/disbursement-modal";
 import ManagerConfirmationModal from "@/components/manager-confirmation-modal";
+import FulfillmentBoard from "@/components/fulfillment-board";
+import RecoveriesBoard from "@/components/recoveries-board";
 import { ToastContainer } from "@/components/toast-notification";
 import { FilterBar, type ActiveFilters } from "@/components/kanban/filter-bar";
 import { KanbanCard } from "@/components/kanban/kanban-card";
@@ -15,11 +17,23 @@ import { useKanbanState } from "@/components/kanban/use-kanban-state";
 import { COLUMNS } from "@/components/kanban/constants";
 import type { Stage } from "@/components/kanban/types";
 
+// ---------------------------------------------------------------------------
+// Flow tabs
+// ---------------------------------------------------------------------------
+type ActiveFlow = "disbursement" | "fulfillment" | "recoveries";
+
+const FLOWS: { id: ActiveFlow; label: string; shortLabel: string }[] = [
+  { id: "disbursement", label: "Requests & Disbursement", shortLabel: "Disbursement" },
+  { id: "fulfillment",  label: "Support Fulfilment",      shortLabel: "Fulfilment"   },
+  { id: "recoveries",   label: "Recoveries",              shortLabel: "Recoveries"   },
+];
+
 const DEFAULT_FILTERS: ActiveFilters = {
   search: "", community: null, region: null, district: null, agent: null, datePreset: null,
 };
 
 export default function KanbanScreen() {
+  const [activeFlow,    setActiveFlow]    = useState<ActiveFlow>("disbursement");
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(DEFAULT_FILTERS);
   const [mobileColId,   setMobileColId]   = useState<Stage>("synced");
 
@@ -59,106 +73,135 @@ export default function KanbanScreen() {
         <span className="text-[13px] font-bold text-gray-800">Requesting groups</span>
       </div>
 
-      {/* Filter bar */}
-      <FilterBar agents={agents} onFilterChange={handleFilterChange} />
-
-      {/* ── Mobile: column tab strip (hidden on lg+) ── */}
-      <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
-        {COLUMNS.map((col) => {
-          const count   = filtered.filter((r) => r.stage === col.id).length;
-          const isActive = mobileColId === col.id;
-          return (
-            <button
-              key={col.id}
-              onClick={() => setMobileColId(col.id)}
-              className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
-              style={isActive
-                ? { background: col.dotColor, color: "white" }
-                : { background: "#F3F4F6", color: "#6B7280" }}
-            >
-              {col.label} ({count})
-            </button>
-          );
-        })}
+      {/* ── Flow tabs ── */}
+      <div className="shrink-0 flex overflow-x-auto border-b border-gray-200 bg-white scrollbar-none">
+        {FLOWS.map((flow) => (
+          <button
+            key={flow.id}
+            onClick={() => setActiveFlow(flow.id)}
+            className="shrink-0 h-11 px-4 sm:px-5 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap"
+            style={activeFlow === flow.id
+              ? { borderBottomColor: "#16A34A", color: "#16A34A" }
+              : { borderBottomColor: "transparent", color: "#6B7280" }}
+          >
+            {/* Show short label on small screens, full label on sm+ */}
+            <span className="sm:hidden">{flow.shortLabel}</span>
+            <span className="hidden sm:inline">{flow.label}</span>
+          </button>
+        ))}
       </div>
 
-      {/* ── Mobile board: single column view ── */}
-      <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#F9FAFB" }}>
-        <div className="px-4 py-4">
-          {(() => {
-            const col       = COLUMNS.find((c) => c.id === mobileColId)!;
-            let cards = filtered.filter((r) => r.stage === mobileColId);
-            if (mobileColId === "pending_approval" && scoreSort !== "default") {
-              cards = [...cards].sort((a, b) => {
-                const sa = a.score ?? -1; const sb = b.score ?? -1;
-                return scoreSort === "desc" ? sb - sa : sa - sb;
-              });
-            }
-            if (cards.length === 0) return (
-              <div className="flex items-center justify-center h-32">
-                <span className="text-[13px] text-gray-300">No requests</span>
-              </div>
-            );
-            return cards.map((r) => (
-              <KanbanCard
-                key={r.id}
-                r={r}
-                ctaLabel={col.ctaLabel}
-                onCta={() => ctaAction(r, col.id)}
-                onView={() => cardOnView(r, col.id)}
-              />
-            ));
-          })()}
-        </div>
-      </div>
+      {/* ── Flow: Requests & Disbursement ── */}
+      {activeFlow === "disbursement" && (
+        <>
+          {/* Filter bar */}
+          <FilterBar agents={agents} onFilterChange={handleFilterChange} />
 
-      {/* ── Desktop board: all columns, horizontal scroll ── */}
-      <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
-        <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
-          {COLUMNS.map((col) => {
-            let cards = filtered.filter((r) => r.stage === col.id);
-            if (col.id === "pending_approval" && scoreSort !== "default") {
-              cards = [...cards].sort((a, b) => {
-                const sa = a.score ?? -1; const sb = b.score ?? -1;
-                return scoreSort === "desc" ? sb - sa : sa - sb;
-              });
-            }
-            const isPendingCol = col.id === "pending_approval";
-            return (
-              <div key={col.id} style={{ width: 288, minWidth: 288, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-                <div style={{ flexShrink: 0 }}>
-                  <ColumnHeader
-                    label={col.label}
-                    dotColor={col.dotColor}
-                    count={cards.length}
-                    scoreSort={isPendingCol ? scoreSort : undefined}
-                    onCycleSort={isPendingCol ? cycleScoreSort : undefined}
-                  />
-                </div>
-                <ScrollArea className="flex-1 min-h-0">
-                  <div style={{ paddingBottom: 16 }}>
-                    {cards.length === 0 ? (
-                      <div className="flex items-center justify-center h-20">
-                        <span className="text-[12px] text-gray-300">No requests</span>
-                      </div>
-                    ) : (
-                      cards.map((r) => (
-                        <KanbanCard
-                          key={r.id}
-                          r={r}
-                          ctaLabel={col.ctaLabel}
-                          onCta={() => ctaAction(r, col.id)}
-                          onView={() => cardOnView(r, col.id)}
-                        />
-                      ))
-                    )}
+          {/* Mobile: column tab strip */}
+          <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
+            {COLUMNS.map((col) => {
+              const count    = filtered.filter((r) => r.stage === col.id).length;
+              const isActive = mobileColId === col.id;
+              return (
+                <button
+                  key={col.id}
+                  onClick={() => setMobileColId(col.id)}
+                  className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
+                  style={isActive
+                    ? { background: col.dotColor, color: "white" }
+                    : { background: "#F3F4F6", color: "#6B7280" }}
+                >
+                  {col.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile: single column view */}
+          <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#F9FAFB" }}>
+            <div className="px-4 py-4">
+              {(() => {
+                const col   = COLUMNS.find((c) => c.id === mobileColId)!;
+                let cards   = filtered.filter((r) => r.stage === mobileColId);
+                if (mobileColId === "pending_approval" && scoreSort !== "default") {
+                  cards = [...cards].sort((a, b) => {
+                    const sa = a.score ?? -1; const sb = b.score ?? -1;
+                    return scoreSort === "desc" ? sb - sa : sa - sb;
+                  });
+                }
+                if (cards.length === 0) return (
+                  <div className="flex items-center justify-center h-32">
+                    <span className="text-[13px] text-gray-300">No requests</span>
                   </div>
-                </ScrollArea>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                );
+                return cards.map((r) => (
+                  <KanbanCard
+                    key={r.id}
+                    r={r}
+                    ctaLabel={col.ctaLabel}
+                    onCta={() => ctaAction(r, col.id)}
+                    onView={() => cardOnView(r, col.id)}
+                  />
+                ));
+              })()}
+            </div>
+          </div>
+
+          {/* Desktop: all columns, horizontal scroll */}
+          <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
+            <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
+              {COLUMNS.map((col) => {
+                let cards = filtered.filter((r) => r.stage === col.id);
+                if (col.id === "pending_approval" && scoreSort !== "default") {
+                  cards = [...cards].sort((a, b) => {
+                    const sa = a.score ?? -1; const sb = b.score ?? -1;
+                    return scoreSort === "desc" ? sb - sa : sa - sb;
+                  });
+                }
+                const isPendingCol = col.id === "pending_approval";
+                return (
+                  <div key={col.id} style={{ width: 288, minWidth: 288, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+                    <div style={{ flexShrink: 0 }}>
+                      <ColumnHeader
+                        label={col.label}
+                        dotColor={col.dotColor}
+                        count={cards.length}
+                        scoreSort={isPendingCol ? scoreSort : undefined}
+                        onCycleSort={isPendingCol ? cycleScoreSort : undefined}
+                      />
+                    </div>
+                    <ScrollArea className="flex-1 min-h-0">
+                      <div style={{ paddingBottom: 16 }}>
+                        {cards.length === 0 ? (
+                          <div className="flex items-center justify-center h-20">
+                            <span className="text-[12px] text-gray-300">No requests</span>
+                          </div>
+                        ) : (
+                          cards.map((r) => (
+                            <KanbanCard
+                              key={r.id}
+                              r={r}
+                              ctaLabel={col.ctaLabel}
+                              onCta={() => ctaAction(r, col.id)}
+                              onView={() => cardOnView(r, col.id)}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Flow: Support Fulfilment ── */}
+      {activeFlow === "fulfillment" && <FulfillmentBoard />}
+
+      {/* ── Flow: Recoveries ── */}
+      {activeFlow === "recoveries" && <RecoveriesBoard />}
 
       {/* Modals + panels */}
       {managerCard && (
