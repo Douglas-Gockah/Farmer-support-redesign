@@ -45,6 +45,7 @@ export interface FarmerRequest {
   disbursedDate?: string;
   hasFinancialRecords?: boolean;
   optedOutFarmers?: string[];
+  wantsDouble?: boolean;
 }
 
 export interface ColDef {

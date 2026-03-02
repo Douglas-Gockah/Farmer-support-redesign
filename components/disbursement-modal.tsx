@@ -18,7 +18,7 @@ import { initials, avatarColor } from "@/components/kanban/helpers";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-type ChargeType = "none" | "flat" | "percentage" | "transport";
+type ChargeType = "none" | "flat" | "percentage";
 type DisburseStep = "verify" | "confirm" | "processing" | "success";
 
 const AMOUNT_PER_FARMER = 120;
@@ -320,20 +320,20 @@ function ConfirmStep({
   onClose: () => void;
 }) {
   const totalAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
-  const [chargeType, setChargeType] = useState<ChargeType>("none");
+  const [chargeType,   setChargeType]   = useState<ChargeType>("none");
+  const [addTransport, setAddTransport] = useState(false);
 
-  const chargeAmount =
+  const withdrawalCharge =
     chargeType === "flat"       ? FLAT_CHARGE
     : chargeType === "percentage" ? Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100
-    : chargeType === "transport"  ? TRANSPORT_ALLOWANCE
     : 0;
-  const grandTotal = totalAmount + chargeAmount;
+  const transportCharge = addTransport ? TRANSPORT_ALLOWANCE : 0;
+  const grandTotal = totalAmount + withdrawalCharge + transportCharge;
 
-  const charges: { id: ChargeType; label: string; sublabel: string; value: number }[] = [
-    { id: "none",       label: "No withdrawal charge",    sublabel: "No additional charges applied",   value: 0 },
-    { id: "flat",       label: "Flat charge",             sublabel: "Fixed amount of GHS 20.00",       value: FLAT_CHARGE },
-    { id: "percentage", label: "Percentage charge",       sublabel: "1% of transaction amount",        value: Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100 },
-    { id: "transport",  label: "Transportation allowance", sublabel: "Fixed allowance of GHS 50.00",   value: TRANSPORT_ALLOWANCE },
+  const withdrawalOptions: { id: ChargeType; label: string; sublabel: string; value: number }[] = [
+    { id: "none",       label: "No withdrawal charge", sublabel: "No additional charges applied", value: 0 },
+    { id: "flat",       label: "Flat charge",          sublabel: "Fixed amount of GHS 20.00",     value: FLAT_CHARGE },
+    { id: "percentage", label: "Percentage charge",    sublabel: "1% of transaction amount",      value: Math.round(totalAmount * PERCENTAGE_RATE * 100) / 100 },
   ];
 
   return (
@@ -411,43 +411,87 @@ function ConfirmStep({
                 <span className="text-[15px] font-bold text-gray-900">{formatGHS(totalAmount)}</span>
               </div>
 
-              {/* Charge selection — all options in one grouped container */}
-              <div>
-                <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Charge Selection</p>
-                <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)}>
-                  <div className="rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
-                    {charges.map((c) => (
-                      <label
-                        key={c.id}
-                        htmlFor={`charge-${c.id}`}
-                        className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
-                        style={{ background: chargeType === c.id ? "#F0FDF4" : "transparent" }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <RadioGroupItem
-                            value={c.id}
-                            id={`charge-${c.id}`}
-                            className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white shrink-0"
-                          />
-                          <div>
-                            <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
-                            <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>{c.sublabel}</p>
+              {/* Charge Selection */}
+              <div className="space-y-4">
+                <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide">Charge Selection</p>
+
+                {/* Withdrawal charge — pick exactly one */}
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 mb-2">Withdrawal charge</p>
+                  <RadioGroup value={chargeType} onValueChange={(v) => setChargeType(v as ChargeType)}>
+                    <div className="rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+                      {withdrawalOptions.map((c) => (
+                        <label
+                          key={c.id}
+                          htmlFor={`charge-${c.id}`}
+                          className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
+                          style={{ background: chargeType === c.id ? "#F0FDF4" : "transparent" }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <RadioGroupItem
+                              value={c.id}
+                              id={`charge-${c.id}`}
+                              className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white shrink-0"
+                            />
+                            <div>
+                              <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
+                              <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>{c.sublabel}</p>
+                            </div>
                           </div>
-                        </div>
-                        <span className="text-[13px] font-bold text-gray-900 shrink-0">
-                          {c.value > 0 ? formatGHS(c.value) : "—"}
-                        </span>
-                      </label>
-                    ))}
+                          <span className="text-[13px] font-bold text-gray-900 shrink-0">
+                            {c.value > 0 ? formatGHS(c.value) : "—"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Transportation allowance — independent add-on */}
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 mb-2">Additional charges</p>
+                  <div
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-colors"
+                    style={{
+                      borderColor: addTransport ? "#16A34A" : "#E5E7EB",
+                      background:  addTransport ? "#F0FDF4" : "transparent",
+                    }}
+                    onClick={() => setAddTransport(!addTransport)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0"
+                        style={{
+                          borderColor: addTransport ? "#16A34A" : "#D1D5DB",
+                          background:  addTransport ? "#16A34A" : "transparent",
+                        }}
+                      >
+                        {addTransport && (
+                          <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-gray-900">Transportation allowance</p>
+                        <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>Fixed allowance of GHS 50.00 — added on top of withdrawal charge</p>
+                      </div>
+                    </div>
+                    <span className="text-[13px] font-bold text-gray-900 shrink-0">{formatGHS(TRANSPORT_ALLOWANCE)}</span>
                   </div>
-                </RadioGroup>
+                </div>
               </div>
 
               {/* Fees + Tax */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[13px] text-gray-400">
-                  <span>Fees</span><span>{formatGHS(chargeAmount)}</span>
+                  <span>Withdrawal charge</span><span>{formatGHS(withdrawalCharge)}</span>
                 </div>
+                {addTransport && (
+                  <div className="flex justify-between text-[13px] text-gray-400">
+                    <span>Transportation allowance</span><span>{formatGHS(TRANSPORT_ALLOWANCE)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[13px] text-gray-400">
                   <span>Tax</span><span>GHS 0.00</span>
                 </div>
