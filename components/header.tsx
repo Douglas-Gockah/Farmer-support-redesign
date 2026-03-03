@@ -1,41 +1,54 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// Top App Bar — full-width, no sidebar
+// Top App Bar
 // ---------------------------------------------------------------------------
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   return (
     <header
-      className="flex items-center justify-between bg-white border-b border-gray-200 px-6"
+      className="flex items-center justify-between bg-white border-b border-gray-200 px-4 lg:px-6 relative z-10"
       style={{ height: 64, flexShrink: 0 }}
     >
-      {/* Left: module title */}
-      <h1 className="text-[22px] font-bold text-gray-900 tracking-tight select-none">
-        Farmer support
-      </h1>
-
-      {/* Right: language selector + profile */}
-      <div className="flex items-center gap-5">
-        {/* Language selector */}
+      {/* Left: hamburger (mobile only) + module title */}
+      <div className="flex items-center gap-3">
+        {/* Hamburger — visible only on mobile */}
         <button
-          className="flex items-center gap-1.5 text-[13px] font-medium text-gray-600 hover:text-gray-800 transition-colors"
-          disabled
-          aria-label="Language selector"
+          onClick={onMenuClick}
+          className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+          aria-label="Open navigation"
         >
-          {/* Globe icon */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
-            <ellipse cx="8" cy="8" rx="2.5" ry="6.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M1.5 6h13M1.5 10h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          <span>English</span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         </button>
 
-        {/* Divider */}
-        <div className="w-px h-7 bg-gray-200" aria-hidden="true" />
+        <h1 className="text-[20px] lg:text-[22px] font-bold text-gray-900 tracking-tight select-none">
+          Farmer support
+        </h1>
+      </div>
+
+      {/* Right: language selector + divider + profile */}
+      <div className="flex items-center gap-3 lg:gap-5">
+
+        {/* Language selector — desktop only */}
+        <button
+          className="hidden lg:flex items-center gap-1.5 text-[13px] font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          disabled
+          aria-label="Language selector"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+            <ellipse cx="8" cy="8" rx="2.5" ry="6.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M1.5 6h13M1.5 10h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span>English</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {/* Divider — desktop only */}
+        <div className="hidden lg:block w-px h-7 bg-gray-200" aria-hidden="true" />
 
         {/* User profile */}
         <button
@@ -43,18 +56,23 @@ export default function Header() {
           disabled
           aria-label="User profile"
         >
+          {/* Avatar — always visible */}
           <div
             className="flex items-center justify-center rounded-full text-white font-bold text-[13px] select-none shrink-0"
             style={{ width: 36, height: 36, background: "#16A34A" }}
           >
             DG
           </div>
-          <div className="flex flex-col items-start">
+
+          {/* Name + org — desktop only */}
+          <div className="hidden lg:flex flex-col items-start">
             <span className="text-[14px] font-bold text-gray-900 leading-tight">Douglas Gockah</span>
             <span className="text-[12px] text-gray-400 leading-tight">Sommalife</span>
           </div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 4.5l3 3 3-3" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+
+          {/* Chevron — desktop only */}
+          <svg className="hidden lg:block" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 4.5l3 3 3-3" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>

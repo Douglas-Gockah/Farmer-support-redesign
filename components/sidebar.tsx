@@ -4,19 +4,34 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { LayoutDashboard, Wheat, Users, BarChart2, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard",       active: false },
-  { icon: Wheat,           label: "Farmer Support",  active: true  },
-  { icon: Users,           label: "Profiles",        active: false },
-  { icon: BarChart2,       label: "Reports",         active: false },
-  { icon: Settings,        label: "Settings",        active: false },
+  { icon: LayoutDashboard, label: "Dashboard",      active: false },
+  { icon: Wheat,           label: "Farmer Support", active: true  },
+  { icon: Users,           label: "Profiles",       active: false },
+  { icon: BarChart2,       label: "Reports",        active: false },
+  { icon: Settings,        label: "Settings",       active: false },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  isOpen = false,
+  onClose,
+}: {
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   return (
     <TooltipProvider delayDuration={200}>
       <aside
-        className="flex flex-col items-center bg-white border-r border-gray-200"
-        style={{ width: 56, minWidth: 56, height: "100vh", flexShrink: 0 }}
+        className={[
+          // Base
+          "flex flex-col items-center bg-white border-r border-gray-200 flex-shrink-0",
+          // Mobile: fixed overlay, slides in/out from the left
+          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 ease-in-out",
+          // Desktop (lg+): back in normal flow, always visible
+          "lg:static lg:translate-x-0",
+          // Toggle based on open state (only matters on mobile)
+          isOpen ? "translate-x-0" : "-translate-x-full",
+        ].join(" ")}
+        style={{ width: 56, minWidth: 56, height: "100vh" }}
         aria-label="Main navigation"
       >
         {/* Logo mark */}
@@ -46,10 +61,10 @@ export default function Sidebar() {
                     background: active ? "#F0FDF4" : "transparent",
                     color: active ? "#16A34A" : "#6B7280",
                   }}
+                  onClick={onClose}
                   onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#F3F4F6"; }}
                   onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
                 >
-                  {/* Active left border indicator */}
                   {active && (
                     <span
                       className="absolute left-0 top-2 bottom-2 rounded-r-full"
