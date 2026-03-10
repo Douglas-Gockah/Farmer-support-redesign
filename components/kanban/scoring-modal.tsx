@@ -5,6 +5,22 @@ import type { FarmerRequest, SupportInterest } from "./types";
 import { initials, avatarColor } from "./helpers";
 
 // ---------------------------------------------------------------------------
+// Score helpers
+// ---------------------------------------------------------------------------
+function scoreLabel(s: number) {
+  if (s < 40) return "Poor";
+  if (s < 60) return "Fair";
+  if (s < 80) return "Good";
+  return "Excellent";
+}
+function scoreColor(s: number) {
+  if (s < 40) return "#DC2626";
+  if (s < 60) return "#D97706";
+  if (s < 80) return "#16A34A";
+  return "#059669";
+}
+
+// ---------------------------------------------------------------------------
 // Image carousel — document viewer placeholder
 // ---------------------------------------------------------------------------
 function ImageCarousel({ index, setIndex, total = 2 }: {
@@ -172,6 +188,100 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
 }
 
 // ---------------------------------------------------------------------------
+// Voice note player — mock audio player with waveform visualization
+// ---------------------------------------------------------------------------
+const WAVEFORM_BARS = [3, 5, 9, 14, 8, 16, 20, 12, 6, 18, 11, 7, 15, 20, 10, 5, 13, 17, 9, 6, 12, 10, 16, 8, 5, 11, 14, 9, 4, 8, 6, 3];
+const BAR_MAX = 20;
+
+function VoiceNotePlayer({ title, duration }: { title: string; duration: string }) {
+  const [playing, setPlaying] = useState(false);
+  // Mock: show first 40% of bars as "played" when active
+  const playedCount = playing ? Math.floor(WAVEFORM_BARS.length * 0.4) : 0;
+
+  return (
+    <div
+      className="flex items-center gap-3 rounded-xl px-4 py-3.5"
+      style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB" }}
+    >
+      {/* Play / Pause button */}
+      <button
+        onClick={() => setPlaying((p) => !p)}
+        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all"
+        style={{
+          background: playing ? "#16A34A" : "#F0FDF4",
+          border: `2px solid ${playing ? "#16A34A" : "#BBF7D0"}`,
+        }}
+        aria-label={playing ? "Pause" : "Play"}
+      >
+        {playing ? (
+          <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
+            <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="white" />
+            <rect x="7.5" y="0.5" width="3" height="12" rx="1" fill="white" />
+          </svg>
+        ) : (
+          <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
+            <path d="M1 1.5l9 5-9 5V1.5z" fill="#16A34A" />
+          </svg>
+        )}
+      </button>
+
+      {/* Label + waveform */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold text-gray-800 mb-2 truncate">{title}</p>
+        <div className="flex items-end gap-[2px]" style={{ height: 28 }}>
+          {WAVEFORM_BARS.map((h, i) => (
+            <div
+              key={i}
+              className="rounded-full flex-shrink-0 transition-colors"
+              style={{
+                width: 3,
+                height: Math.max(3, Math.round((h / BAR_MAX) * 28)),
+                background: i < playedCount ? "#16A34A" : "#D1D5DB",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Duration */}
+      <span className="text-[11px] font-medium text-gray-400 shrink-0 tabular-nums">{duration}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Group score widget
+// ---------------------------------------------------------------------------
+function GroupScoreWidget({ score }: { score: number }) {
+  const label = scoreLabel(score);
+  const color = scoreColor(score);
+  // Unfilled overlay: starts from the score% position to the right
+  const unfilledWidth = `${100 - score}%`;
+
+  return (
+    <div>
+      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Group Score</p>
+      <div className="rounded-xl border border-gray-200 px-4 py-3.5" style={{ background: "#FAFAFA" }}>
+        <div className="flex items-end gap-2 mb-3">
+          <span className="text-[30px] font-bold leading-none" style={{ color }}>{score}%</span>
+          <span className="text-[12px] font-semibold mb-0.5" style={{ color }}>{label}</span>
+        </div>
+        {/* Gradient track */}
+        <div className="relative h-2.5 rounded-full overflow-hidden" style={{ background: "linear-gradient(to right, #EF4444 0%, #F59E0B 45%, #16A34A 100%)" }}>
+          <div
+            className="absolute top-0 right-0 h-full"
+            style={{ width: unfilledWidth, background: "#E5E7EB", opacity: 0.88 }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] text-gray-400 mt-1.5">
+          <span>Poor</span><span>Fair</span><span>Good</span><span>Excellent</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Left panel — group summary
 // ---------------------------------------------------------------------------
 function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
@@ -212,6 +322,9 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
         </div>
       </div>
 
+      {/* Group score */}
+      {card.groupScore != null && <GroupScoreWidget score={card.groupScore} />}
+
       {/* Agent */}
       <div>
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
@@ -228,6 +341,35 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
           </div>
         </div>
       </div>
+
+      {/* Interested farmers list */}
+      {card.farmersList && card.farmersList.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Interested Farmers ({card.farmersList.length} of {card.farmers})
+          </p>
+          <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 200 }}>
+            {card.farmersList.map((farmer) => {
+              const farmerInitials = initials(farmer.name);
+              const farmerColor    = avatarColor(farmer.name);
+              return (
+                <div key={farmer.id} className="flex items-center gap-2.5">
+                  <span
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                    style={{ background: farmerColor }}
+                  >
+                    {farmerInitials}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-gray-800 leading-tight truncate">{farmer.name}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">{farmer.id}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* On-hold notice */}
       {card.onHold && card.holdComment && (
@@ -298,6 +440,14 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
               <p className="text-[13px] font-bold text-gray-900">{card.groupName}</p>
               <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
             </div>
+            {card.groupScore != null && (
+              <span
+                className="text-[13px] font-bold px-2.5 py-1 rounded-lg"
+                style={{ background: "#F0FDF4", color: scoreColor(card.groupScore) }}
+              >
+                {card.groupScore}%
+              </span>
+            )}
           </div>
 
           {/* Left: group summary (hidden on mobile) */}
@@ -322,6 +472,27 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
 
             {/* Scrollable scoring body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+              {/* Section 0 — Evidence of Support Requests (voice notes) */}
+              <div className="rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center gap-2 mb-0.5">
+                  {/* Mic icon */}
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="shrink-0 text-gray-500">
+                    <rect x="7" y="1" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.6" />
+                    <path d="M4 10a6 6 0 0012 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    <line x1="10" y1="16" x2="10" y2="19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    <line x1="7" y1="19" x2="13" y2="19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                  <p className="text-[14px] font-bold text-gray-900">Evidence of Support Requests</p>
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 mb-4">
+                  Voice notes captured during the field visit confirming the group's request for support.
+                </p>
+                <div className="space-y-3">
+                  <VoiceNotePlayer title="Group leader's voice note" duration="0:42" />
+                  <VoiceNotePlayer title="Witness's voice note" duration="0:31" />
+                </div>
+              </div>
 
               {/* Section 1 — Meeting Minutes */}
               <div className="rounded-xl border border-gray-200 p-5">

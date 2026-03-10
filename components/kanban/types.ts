@@ -46,6 +46,8 @@ export interface FarmerRequest {
   hasFinancialRecords?: boolean;
   optedOutFarmers?: string[];
   wantsDouble?: boolean;
+  farmersList?: Array<{ id: string; name: string }>;
+  groupScore?: number;
 }
 
 export interface ColDef {
