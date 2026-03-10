@@ -8,6 +8,17 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     id: "FS-2024-001", date: "12 Jan 2024", agent: "Kofi Mensah", community: "Tamale Metro",
     groupName: "Savannah Growers Union", score: null, stage: "synced", farmers: 22,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
+    groupScore: 65,
+    farmersList: [
+      { id: "FRM-0011", name: "Abena Owusu" },
+      { id: "FRM-0012", name: "Kweku Asante" },
+      { id: "FRM-0013", name: "Adwoa Mensah" },
+      { id: "FRM-0014", name: "Kofi Adu" },
+      { id: "FRM-0015", name: "Akosua Baidoo" },
+      { id: "FRM-0016", name: "Yaw Appiah" },
+      { id: "FRM-0017", name: "Efua Darko" },
+      { id: "FRM-0018", name: "Nana Boateng" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0244-567-890", momoName: "Savannah Union GH" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
@@ -18,6 +29,15 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     groupName: "Northern Fields Cooperative", score: null, stage: "synced", farmers: 18,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
     hasFinancialRecords: true,
+    groupScore: 48,
+    farmersList: [
+      { id: "FRM-0021", name: "Issaka Mahama" },
+      { id: "FRM-0022", name: "Ramatu Abubakari" },
+      { id: "FRM-0023", name: "Sumaila Seidu" },
+      { id: "FRM-0024", name: "Fatima Yakubu" },
+      { id: "FRM-0025", name: "Alhassan Fuseini" },
+      { id: "FRM-0026", name: "Zenabu Dauda" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 2.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 100, momoNumber: "0200-123-456", momoName: "Northern Coop" },
