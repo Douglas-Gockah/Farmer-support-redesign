@@ -54,8 +54,8 @@ export function ColumnHeader({ label, dotColor, count, scoreSort, onCycleSort }:
           </div>
         )}
         <span
-          className="flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold text-white shrink-0"
-          style={{ background: dotColor }}
+          className="flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold shrink-0"
+          style={{ background: dotColor + "26", color: dotColor }}
         >
           {count}
         </span>
