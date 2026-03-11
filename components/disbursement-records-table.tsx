@@ -319,7 +319,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
   return (
     <>
       {/* Outer padding + background */}
-      <div className="flex-1 flex flex-col min-h-0 p-4" style={{ background: "#F9FAFB" }}>
+      <div className="flex-1 flex flex-col min-h-0 p-4" style={{ background: "#FAFAFA" }}>
         {/*
           Border card. overflow:clip clips to rounded corners without creating
           a scroll container — so position:sticky on the first column still works.

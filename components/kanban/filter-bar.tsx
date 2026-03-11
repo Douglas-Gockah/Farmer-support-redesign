@@ -197,7 +197,7 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
   return (
     <>
       {/* ── Row 1: search + export + mobile filter toggle ── */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-white">
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3" style={{ background: "#FAFAFA" }}>
         <div className="relative flex-1 sm:flex-none" style={{ maxWidth: 320 }}>
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
@@ -242,7 +242,7 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
       </div>
 
       {/* ── Row 2: filter pills — always visible on lg+, toggleable on mobile ── */}
-      <div className={`${filtersVisible ? "flex" : "hidden"} lg:flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2 bg-white`}>
+      <div className={`${filtersVisible ? "flex" : "hidden"} lg:flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2`} style={{ background: "#FAFAFA" }}>
 
         {/* 1. Date picker */}
         <div ref={dateRef} className="relative">
