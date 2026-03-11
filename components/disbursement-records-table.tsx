@@ -181,7 +181,7 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
 // ---------------------------------------------------------------------------
 // Pagination bar
 // ---------------------------------------------------------------------------
-const PER_PAGE = 5;
+const PER_PAGE = 8;
 
 function PaginationBar({
   page, totalPages, totalItems, perPage,
@@ -318,129 +318,140 @@ export default function DisbursementRecordsTable({ records }: Props) {
 
   return (
     <>
-      {/* Table wrapper — margin on all sides, first column sticky, rest scroll horizontally */}
-      <div className="flex-1 overflow-auto min-h-0 p-4" style={{ background: "#F9FAFB" }}>
-        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 980 }}>
-        <table className="border-collapse" style={{ width: "100%" }}>
-          <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 2 }}>
-              <Th sticky style={{ background: "#F9FAFB" }}>Reference</Th>
-              <Th>Group Name</Th>
-              <Th>Community</Th>
-              <Th className="text-center">Farmers</Th>
-              <Th>Support</Th>
-              <Th>Amt / Farmer</Th>
-              <Th>Total Disbursed</Th>
-              <Th>Transaction ID</Th>
-              <Th>Disbursed On</Th>
-              <Th>Field Agent</Th>
-              <Th></Th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageRecords.map((r, idx) => {
-              const agentColor    = avatarColor(r.agent);
-              const agentInitials = initials(r.agent);
-              const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
-
-              return (
-                <tr
-                  key={r.id}
-                  className="transition-colors hover:bg-green-50 group"
-                  style={{ background: rowBg, borderBottom: "1px solid #E5E7EB" }}
-                >
-                  {/* Reference — sticky */}
-                  <Td sticky bg={rowBg}>
-                    <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
-                      {r.id}
-                    </span>
-                  </Td>
-
-                  {/* Group Name */}
-                  <Td>
-                    <span className="font-semibold text-gray-900 whitespace-nowrap">{r.groupName}</span>
-                  </Td>
-
-                  {/* Community */}
-                  <Td>
-                    <span className="text-gray-600 whitespace-nowrap">{r.community}</span>
-                  </Td>
-
-                  {/* Farmers */}
-                  <Td className="text-center">
-                    <span className="font-semibold text-gray-900">{r.farmers}</span>
-                  </Td>
-
-                  {/* Support type */}
-                  <Td>
-                    <SupportBadge type={r.approvedSupportType} />
-                  </Td>
-
-                  {/* Amount per farmer */}
-                  <Td>
-                    <span className="text-gray-700 whitespace-nowrap">
-                      {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer}` : "—"}
-                    </span>
-                  </Td>
-
-                  {/* Total disbursed */}
-                  <Td>
-                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
-                      GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
-                    </span>
-                  </Td>
-
-                  {/* Transaction ID */}
-                  <Td>
-                    <span className="font-mono text-[12px] text-gray-500 whitespace-nowrap">{r.transactionId ?? "—"}</span>
-                  </Td>
-
-                  {/* Date disbursed */}
-                  <Td>
-                    <span className="text-gray-600 whitespace-nowrap">{r.disbursedDate ?? "—"}</span>
-                  </Td>
-
-                  {/* Agent */}
-                  <Td>
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                        style={{ background: agentColor }}
-                      >
-                        {agentInitials}
-                      </span>
-                      <span className="text-gray-700">{r.agent}</span>
-                    </div>
-                  </Td>
-
-                  {/* Action */}
-                  <Td className="pr-5">
-                    <button
-                      onClick={() => setDetailRecord(r)}
-                      className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap"
-                      style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}
-                    >
-                      View
-                    </button>
-                  </Td>
+      {/* Outer padding + background */}
+      <div className="flex-1 flex flex-col min-h-0 p-4" style={{ background: "#F9FAFB" }}>
+        {/*
+          Border card. overflow:clip clips to rounded corners without creating
+          a scroll container — so position:sticky on the first column still works.
+          (Unlike overflow:hidden which would break sticky.)
+        */}
+        <div
+          className="flex-1 flex flex-col min-h-0 rounded-xl border border-gray-200 bg-white"
+          style={{ overflow: "clip" }}
+        >
+          {/* Scrollable table area — this is the actual scroll container for sticky */}
+          <div className="flex-1 overflow-auto min-h-0">
+            <table className="border-collapse" style={{ minWidth: 980, width: "100%" }}>
+              <thead>
+                <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 2 }}>
+                  <Th sticky style={{ background: "#F9FAFB" }}>Reference</Th>
+                  <Th>Group Name</Th>
+                  <Th>Community</Th>
+                  <Th className="text-center">Farmers</Th>
+                  <Th>Support</Th>
+                  <Th>Amt / Farmer</Th>
+                  <Th>Total Disbursed</Th>
+                  <Th>Transaction ID</Th>
+                  <Th>Disbursed On</Th>
+                  <Th>Field Agent</Th>
+                  <Th></Th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {pageRecords.map((r, idx) => {
+                  const agentColor    = avatarColor(r.agent);
+                  const agentInitials = initials(r.agent);
+                  const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
+
+                  return (
+                    <tr
+                      key={r.id}
+                      className="transition-colors hover:bg-green-50 group"
+                      style={{ background: rowBg, borderBottom: "1px solid #E5E7EB" }}
+                    >
+                      {/* Reference — sticky left */}
+                      <Td sticky bg={rowBg}>
+                        <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
+                          {r.id}
+                        </span>
+                      </Td>
+
+                      {/* Group Name */}
+                      <Td>
+                        <span className="font-semibold text-gray-900 whitespace-nowrap">{r.groupName}</span>
+                      </Td>
+
+                      {/* Community */}
+                      <Td>
+                        <span className="text-gray-600 whitespace-nowrap">{r.community}</span>
+                      </Td>
+
+                      {/* Farmers */}
+                      <Td className="text-center">
+                        <span className="font-semibold text-gray-900">{r.farmers}</span>
+                      </Td>
+
+                      {/* Support type */}
+                      <Td>
+                        <SupportBadge type={r.approvedSupportType} />
+                      </Td>
+
+                      {/* Amount per farmer */}
+                      <Td>
+                        <span className="text-gray-700 whitespace-nowrap">
+                          {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer}` : "—"}
+                        </span>
+                      </Td>
+
+                      {/* Total disbursed */}
+                      <Td>
+                        <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
+                          GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
+                        </span>
+                      </Td>
+
+                      {/* Transaction ID */}
+                      <Td>
+                        <span className="font-mono text-[12px] text-gray-500 whitespace-nowrap">{r.transactionId ?? "—"}</span>
+                      </Td>
+
+                      {/* Date disbursed */}
+                      <Td>
+                        <span className="text-gray-600 whitespace-nowrap">{r.disbursedDate ?? "—"}</span>
+                      </Td>
+
+                      {/* Agent */}
+                      <Td>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                            style={{ background: agentColor }}
+                          >
+                            {agentInitials}
+                          </span>
+                          <span className="text-gray-700">{r.agent}</span>
+                        </div>
+                      </Td>
+
+                      {/* Action */}
+                      <Td className="pr-5">
+                        <button
+                          onClick={() => setDetailRecord(r)}
+                          className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap"
+                          style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}
+                        >
+                          View
+                        </button>
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination — inside the card border */}
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={records.length}
+            perPage={PER_PAGE}
+            onPrev={() => setPage((p) => Math.max(0, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            onPage={setPage}
+          />
         </div>
       </div>
-
-      {/* Pagination — pinned to bottom */}
-      <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        totalItems={records.length}
-        perPage={PER_PAGE}
-        onPrev={() => setPage((p) => Math.max(0, p - 1))}
-        onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-        onPage={setPage}
-      />
 
       {/* Detail drawer */}
       {detailRecord && (
