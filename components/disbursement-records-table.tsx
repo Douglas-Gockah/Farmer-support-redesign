@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FarmerRequest } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 
@@ -186,6 +186,106 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
 }
 
 // ---------------------------------------------------------------------------
+// Pagination bar
+// ---------------------------------------------------------------------------
+const PER_PAGE = 5;
+
+function PaginationBar({
+  page, totalPages, totalItems, perPage,
+  onPrev, onNext, onPage,
+}: {
+  page: number; totalPages: number; totalItems: number; perPage: number;
+  onPrev: () => void; onNext: () => void; onPage: (p: number) => void;
+}) {
+  const from = totalItems === 0 ? 0 : page * perPage + 1;
+  const to   = Math.min((page + 1) * perPage, totalItems);
+
+  // Build page number list — show up to 5 buttons with ellipsis
+  const pages: (number | "…")[] = [];
+  if (totalPages <= 5) {
+    for (let i = 0; i < totalPages; i++) pages.push(i);
+  } else if (page < 3) {
+    pages.push(0, 1, 2, 3, "…", totalPages - 1);
+  } else if (page >= totalPages - 3) {
+    pages.push(0, "…", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1);
+  } else {
+    pages.push(0, "…", page - 1, page, page + 1, "…", totalPages - 1);
+  }
+
+  const btnBase = "h-8 min-w-[32px] px-2 rounded-lg text-[12px] font-semibold transition-colors";
+
+  return (
+    <div
+      className="shrink-0 flex items-center justify-between gap-4 px-5 py-3 border-t border-gray-200 bg-white"
+    >
+      {/* Left: count label */}
+      <span className="text-[12px] text-gray-400 whitespace-nowrap">
+        Showing <span className="font-semibold text-gray-700">{from}–{to}</span> of{" "}
+        <span className="font-semibold text-gray-700">{totalItems}</span> records
+      </span>
+
+      {/* Right: page controls */}
+      <div className="flex items-center gap-1">
+        {/* Prev */}
+        <button
+          onClick={onPrev}
+          disabled={page === 0}
+          className={`${btnBase} flex items-center gap-1 px-3`}
+          style={page === 0
+            ? { color: "#D1D5DB", cursor: "default" }
+            : { color: "#374151", background: "#F9FAFB", border: "1px solid #E5E7EB" }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="hidden sm:inline">Prev</span>
+        </button>
+
+        {/* Page numbers */}
+        <div className="hidden sm:flex items-center gap-1">
+          {pages.map((p, i) =>
+            p === "…" ? (
+              <span key={`ellipsis-${i}`} className="w-8 text-center text-[12px] text-gray-400">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => onPage(p)}
+                className={btnBase}
+                style={p === page
+                  ? { background: "#16A34A", color: "#FFFFFF" }
+                  : { background: "#F9FAFB", color: "#374151", border: "1px solid #E5E7EB" }}
+              >
+                {(p as number) + 1}
+              </button>
+            )
+          )}
+        </div>
+
+        {/* Mobile: just "Page X of Y" */}
+        <span className="sm:hidden text-[12px] text-gray-500 px-2">
+          {page + 1} / {totalPages}
+        </span>
+
+        {/* Next */}
+        <button
+          onClick={onNext}
+          disabled={page >= totalPages - 1}
+          className={`${btnBase} flex items-center gap-1 px-3`}
+          style={page >= totalPages - 1
+            ? { color: "#D1D5DB", cursor: "default" }
+            : { color: "#374151", background: "#F9FAFB", border: "1px solid #E5E7EB" }}
+        >
+          <span className="hidden sm:inline">Next</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M4.5 2L8.5 6l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main table component
 // ---------------------------------------------------------------------------
 interface Props {
@@ -194,6 +294,13 @@ interface Props {
 
 export default function DisbursementRecordsTable({ records }: Props) {
   const [detailRecord, setDetailRecord] = useState<FarmerRequest | null>(null);
+  const [page,         setPage]         = useState(0);
+
+  // Reset to page 0 whenever the records list changes (e.g. filter applied)
+  useEffect(() => { setPage(0); }, [records]);
+
+  const totalPages  = Math.max(1, Math.ceil(records.length / PER_PAGE));
+  const pageRecords = records.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
   if (records.length === 0) {
     return (
@@ -221,11 +328,11 @@ export default function DisbursementRecordsTable({ records }: Props) {
       {/* Summary stats */}
       <SummaryBar records={records} />
 
-      {/* Table wrapper — horizontally scrollable on small screens */}
-      <div className="flex-1 overflow-auto">
+      {/* Table wrapper — scrollable, takes all remaining space above pagination */}
+      <div className="flex-1 overflow-auto min-h-0">
         <table className="w-full border-collapse" style={{ minWidth: 860 }}>
           <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6" }}>
+            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6", position: "sticky", top: 0, zIndex: 1 }}>
               <Th>Request</Th>
               <Th>Community</Th>
               <Th className="text-center">Farmers</Th>
@@ -238,7 +345,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
             </tr>
           </thead>
           <tbody>
-            {records.map((r, idx) => {
+            {pageRecords.map((r, idx) => {
               const agentColor    = avatarColor(r.agent);
               const agentInitials = initials(r.agent);
               const isEven        = idx % 2 === 0;
@@ -323,6 +430,17 @@ export default function DisbursementRecordsTable({ records }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination — pinned to bottom */}
+      <PaginationBar
+        page={page}
+        totalPages={totalPages}
+        totalItems={records.length}
+        perPage={PER_PAGE}
+        onPrev={() => setPage((p) => Math.max(0, p - 1))}
+        onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+        onPage={setPage}
+      />
 
       {/* Detail drawer */}
       {detailRecord && (
