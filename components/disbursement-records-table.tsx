@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FarmerRequest } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 
@@ -34,47 +34,40 @@ function SupportBadge({ type }: { type: string | null }) {
 }
 
 // ---------------------------------------------------------------------------
-// Summary stats bar
+// Th / Td helpers — with optional sticky-left support
 // ---------------------------------------------------------------------------
-function SummaryBar({ records }: { records: FarmerRequest[] }) {
-  const totalFarmers  = records.reduce((s, r) => s + r.farmers, 0);
-  const totalDisbursed = records.reduce((s, r) => s + (r.disbursedAmount ?? 0), 0);
+const STICKY_STYLE = {
+  position: "sticky" as const,
+  left: 0,
+  zIndex: 1,
+  boxShadow: "2px 0 6px rgba(0,0,0,0.06)",
+};
 
-  const stats = [
-    { label: "Groups disbursed", value: records.length.toString() },
-    { label: "Farmers supported", value: totalFarmers.toLocaleString() },
-    { label: "Total disbursed",   value: `GHS ${totalDisbursed.toLocaleString()}` },
-  ];
-
-  return (
-    <div className="flex flex-wrap gap-3 px-5 py-3 border-b border-gray-100 shrink-0" style={{ background: "#F9FAFB" }}>
-      {stats.map((s) => (
-        <div key={s.label} className="flex items-center gap-2">
-          <span className="text-[13px] font-bold text-gray-900">{s.value}</span>
-          <span className="text-[12px] text-gray-400">{s.label}</span>
-          <span className="text-gray-200 select-none last:hidden">·</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Th / Td helpers for consistent cell styling
-// ---------------------------------------------------------------------------
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Th({
+  children, className = "", sticky = false, style = {},
+}: {
+  children: React.ReactNode; className?: string; sticky?: boolean; style?: React.CSSProperties;
+}) {
   return (
     <th
       className={`px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap ${className}`}
+      style={sticky ? { ...STICKY_STYLE, zIndex: 3, background: "#F9FAFB", ...style } : style}
     >
       {children}
     </th>
   );
 }
 
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Td({
+  children, className = "", sticky = false, bg = "#FFFFFF", style = {},
+}: {
+  children: React.ReactNode; className?: string; sticky?: boolean; bg?: string; style?: React.CSSProperties;
+}) {
   return (
-    <td className={`px-4 py-3.5 text-[13px] text-gray-700 ${className}`}>
+    <td
+      className={`px-4 py-3.5 text-[13px] text-gray-700 ${className}`}
+      style={sticky ? { ...STICKY_STYLE, background: bg, ...style } : style}
+    >
       {children}
     </td>
   );
@@ -186,6 +179,106 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
 }
 
 // ---------------------------------------------------------------------------
+// Pagination bar
+// ---------------------------------------------------------------------------
+const PER_PAGE = 5;
+
+function PaginationBar({
+  page, totalPages, totalItems, perPage,
+  onPrev, onNext, onPage,
+}: {
+  page: number; totalPages: number; totalItems: number; perPage: number;
+  onPrev: () => void; onNext: () => void; onPage: (p: number) => void;
+}) {
+  const from = totalItems === 0 ? 0 : page * perPage + 1;
+  const to   = Math.min((page + 1) * perPage, totalItems);
+
+  // Build page number list — show up to 5 buttons with ellipsis
+  const pages: (number | "…")[] = [];
+  if (totalPages <= 5) {
+    for (let i = 0; i < totalPages; i++) pages.push(i);
+  } else if (page < 3) {
+    pages.push(0, 1, 2, 3, "…", totalPages - 1);
+  } else if (page >= totalPages - 3) {
+    pages.push(0, "…", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1);
+  } else {
+    pages.push(0, "…", page - 1, page, page + 1, "…", totalPages - 1);
+  }
+
+  const btnBase = "h-8 min-w-[32px] px-2 rounded-lg text-[12px] font-semibold transition-colors";
+
+  return (
+    <div
+      className="shrink-0 flex items-center justify-between gap-4 px-5 py-3 border-t border-gray-200 bg-white"
+    >
+      {/* Left: count label */}
+      <span className="text-[12px] text-gray-400 whitespace-nowrap">
+        Showing <span className="font-semibold text-gray-700">{from}–{to}</span> of{" "}
+        <span className="font-semibold text-gray-700">{totalItems}</span> records
+      </span>
+
+      {/* Right: page controls */}
+      <div className="flex items-center gap-1">
+        {/* Prev */}
+        <button
+          onClick={onPrev}
+          disabled={page === 0}
+          className={`${btnBase} flex items-center gap-1 px-3`}
+          style={page === 0
+            ? { color: "#D1D5DB", cursor: "default" }
+            : { color: "#374151", background: "#F9FAFB", border: "1px solid #E5E7EB" }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="hidden sm:inline">Prev</span>
+        </button>
+
+        {/* Page numbers */}
+        <div className="hidden sm:flex items-center gap-1">
+          {pages.map((p, i) =>
+            p === "…" ? (
+              <span key={`ellipsis-${i}`} className="w-8 text-center text-[12px] text-gray-400">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => onPage(p)}
+                className={btnBase}
+                style={p === page
+                  ? { background: "#16A34A", color: "#FFFFFF" }
+                  : { background: "#F9FAFB", color: "#374151", border: "1px solid #E5E7EB" }}
+              >
+                {(p as number) + 1}
+              </button>
+            )
+          )}
+        </div>
+
+        {/* Mobile: just "Page X of Y" */}
+        <span className="sm:hidden text-[12px] text-gray-500 px-2">
+          {page + 1} / {totalPages}
+        </span>
+
+        {/* Next */}
+        <button
+          onClick={onNext}
+          disabled={page >= totalPages - 1}
+          className={`${btnBase} flex items-center gap-1 px-3`}
+          style={page >= totalPages - 1
+            ? { color: "#D1D5DB", cursor: "default" }
+            : { color: "#374151", background: "#F9FAFB", border: "1px solid #E5E7EB" }}
+        >
+          <span className="hidden sm:inline">Next</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M4.5 2L8.5 6l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main table component
 // ---------------------------------------------------------------------------
 interface Props {
@@ -194,6 +287,13 @@ interface Props {
 
 export default function DisbursementRecordsTable({ records }: Props) {
   const [detailRecord, setDetailRecord] = useState<FarmerRequest | null>(null);
+  const [page,         setPage]         = useState(0);
+
+  // Reset to page 0 whenever the records list changes (e.g. filter applied)
+  useEffect(() => { setPage(0); }, [records]);
+
+  const totalPages  = Math.max(1, Math.ceil(records.length / PER_PAGE));
+  const pageRecords = records.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
   if (records.length === 0) {
     return (
@@ -218,18 +318,17 @@ export default function DisbursementRecordsTable({ records }: Props) {
 
   return (
     <>
-      {/* Summary stats */}
-      <SummaryBar records={records} />
-
-      {/* Table wrapper — horizontally scrollable on small screens */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full border-collapse" style={{ minWidth: 860 }}>
+      {/* Table wrapper — first column sticky, rest scroll horizontally */}
+      <div className="flex-1 overflow-auto min-h-0">
+        <table className="border-collapse" style={{ minWidth: 980, width: "100%" }}>
           <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6" }}>
-              <Th>Request</Th>
+            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
+              <Th sticky>Reference</Th>
+              <Th>Group Name</Th>
               <Th>Community</Th>
               <Th className="text-center">Farmers</Th>
               <Th>Support</Th>
+              <Th>Amt / Farmer</Th>
               <Th>Total Disbursed</Th>
               <Th>Transaction ID</Th>
               <Th>Disbursed On</Th>
@@ -238,28 +337,32 @@ export default function DisbursementRecordsTable({ records }: Props) {
             </tr>
           </thead>
           <tbody>
-            {records.map((r, idx) => {
+            {pageRecords.map((r, idx) => {
               const agentColor    = avatarColor(r.agent);
               const agentInitials = initials(r.agent);
-              const isEven        = idx % 2 === 0;
+              const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
 
               return (
                 <tr
                   key={r.id}
                   className="transition-colors hover:bg-green-50 group"
-                  style={{ background: isEven ? "#FFFFFF" : "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}
+                  style={{ background: rowBg, borderBottom: "1px solid #F3F4F6" }}
                 >
-                  {/* Request ID + Group Name */}
+                  {/* Reference — sticky */}
+                  <Td sticky bg={rowBg}>
+                    <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
+                      {r.id}
+                    </span>
+                  </Td>
+
+                  {/* Group Name */}
                   <Td>
-                    <div>
-                      <span className="font-mono text-[12px] font-semibold" style={{ color: "#16A34A" }}>{r.id}</span>
-                      <p className="text-[13px] font-semibold text-gray-900 mt-0.5 leading-tight">{r.groupName}</p>
-                    </div>
+                    <span className="font-semibold text-gray-900 whitespace-nowrap">{r.groupName}</span>
                   </Td>
 
                   {/* Community */}
                   <Td>
-                    <span className="text-gray-600">{r.community}</span>
+                    <span className="text-gray-600 whitespace-nowrap">{r.community}</span>
                   </Td>
 
                   {/* Farmers */}
@@ -267,26 +370,28 @@ export default function DisbursementRecordsTable({ records }: Props) {
                     <span className="font-semibold text-gray-900">{r.farmers}</span>
                   </Td>
 
-                  {/* Support type + amount */}
+                  {/* Support type */}
                   <Td>
-                    <div className="space-y-1">
-                      <SupportBadge type={r.approvedSupportType} />
-                      {r.approvedAmountPerFarmer != null && (
-                        <p className="text-[11px] text-gray-400">GHS {r.approvedAmountPerFarmer} / farmer</p>
-                      )}
-                    </div>
+                    <SupportBadge type={r.approvedSupportType} />
+                  </Td>
+
+                  {/* Amount per farmer */}
+                  <Td>
+                    <span className="text-gray-700 whitespace-nowrap">
+                      {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer}` : "—"}
+                    </span>
                   </Td>
 
                   {/* Total disbursed */}
                   <Td>
-                    <span className="text-[14px] font-bold text-gray-900">
+                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
                       GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
                     </span>
                   </Td>
 
                   {/* Transaction ID */}
                   <Td>
-                    <span className="font-mono text-[12px] text-gray-500">{r.transactionId ?? "—"}</span>
+                    <span className="font-mono text-[12px] text-gray-500 whitespace-nowrap">{r.transactionId ?? "—"}</span>
                   </Td>
 
                   {/* Date disbursed */}
@@ -303,15 +408,15 @@ export default function DisbursementRecordsTable({ records }: Props) {
                       >
                         {agentInitials}
                       </span>
-                      <span className="text-[13px] text-gray-700">{r.agent}</span>
+                      <span className="text-gray-700">{r.agent}</span>
                     </div>
                   </Td>
 
                   {/* Action */}
-                  <Td className="text-right pr-5">
+                  <Td className="pr-5">
                     <button
                       onClick={() => setDetailRecord(r)}
-                      className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors"
+                      className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap"
                       style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}
                     >
                       View
@@ -323,6 +428,17 @@ export default function DisbursementRecordsTable({ records }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination — pinned to bottom */}
+      <PaginationBar
+        page={page}
+        totalPages={totalPages}
+        totalItems={records.length}
+        perPage={PER_PAGE}
+        onPrev={() => setPage((p) => Math.max(0, p - 1))}
+        onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+        onPage={setPage}
+      />
 
       {/* Detail drawer */}
       {detailRecord && (
