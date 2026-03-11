@@ -135,6 +135,29 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     ],
   },
   {
+    id: "FS-2024-014", date: "01 Feb 2024", agent: "Yaw Darko", community: "Nanumba North",
+    groupName: "Nanumba Agri Group", score: 80, stage: "disbursed", farmers: 19,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 150,
+    momoNumber: "0246-601-432", momoName: "Nanumba Agri Group",
+    transactionId: "TXN-2B4E6A8C", disbursedAmount: 2850, disbursedDate: "01 Feb 2024",
+    supportInterests: [
+      { rank: "Primary", type: "Cash", amountPerFarmer: 150, momoNumber: "0246-601-432", momoName: "Nanumba Agri Group" },
+    ],
+  },
+  {
+    id: "FS-2024-015", date: "03 Feb 2024", agent: "Nana Adjei", community: "Tolon",
+    groupName: "Tolon Cooperative Society", score: 87, stage: "disbursed", farmers: 28,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 120,
+    momoNumber: "0551-882-015", momoName: "Tolon Coop Society",
+    transactionId: "TXN-9D1F3H5J", disbursedAmount: 3360, disbursedDate: "03 Feb 2024",
+    supportInterests: [
+      { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0551-882-015", momoName: "Tolon Coop Society" },
+      { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
+    ],
+  },
+  {
     id: "FS-2024-011", date: "02 Feb 2024", agent: "Akosua Frimpong", community: "Tamale Metro",
     groupName: "Metro Pioneer Group", score: 80, stage: "opted_out", farmers: 25,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
