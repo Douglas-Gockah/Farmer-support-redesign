@@ -339,10 +339,10 @@ export default function DisbursementRecordsTable({ records }: Props) {
                   <Th sticky style={{ background: "#F9FAFB" }}>Reference</Th>
                   <Th>Group Name</Th>
                   <Th>Community</Th>
-                  <Th className="text-center">Farmers</Th>
+                  <Th className="text-right">Farmers</Th>
                   <Th>Support</Th>
-                  <Th>Amt / Farmer</Th>
-                  <Th>Total Disbursed</Th>
+                  <Th className="text-right">Amt / Farmer</Th>
+                  <Th className="text-right">Total Disbursed</Th>
                   <Th>Transaction ID</Th>
                   <Th>Disbursed On</Th>
                   <Th>Field Agent</Th>
@@ -379,7 +379,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
                       </Td>
 
                       {/* Farmers */}
-                      <Td className="text-center">
+                      <Td className="text-right">
                         <span className="font-semibold text-gray-900">{r.farmers}</span>
                       </Td>
 
@@ -389,14 +389,14 @@ export default function DisbursementRecordsTable({ records }: Props) {
                       </Td>
 
                       {/* Amount per farmer */}
-                      <Td>
+                      <Td className="text-right">
                         <span className="text-gray-700 whitespace-nowrap">
-                          {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer}` : "—"}
+                          {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer.toLocaleString()}` : "—"}
                         </span>
                       </Td>
 
                       {/* Total disbursed */}
-                      <Td>
+                      <Td className="text-right">
                         <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
                           GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
                         </span>
