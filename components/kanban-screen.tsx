@@ -96,46 +96,43 @@ export default function KanbanScreen() {
       {/* ── Flow: Requests & Disbursement ── */}
       {activeFlow === "disbursement" && (
         <>
-          {/* Filter bar (full-width, self-contained row) */}
-          <FilterBar agents={agents} onFilterChange={handleFilterChange} />
-
-          {/* View toggle strip */}
-          <div className="shrink-0 flex items-center justify-end px-4 sm:px-5 py-2 border-b border-gray-200 bg-white gap-2">
-            <span className="text-[12px] text-gray-400 font-medium mr-1">View:</span>
-            <div
-              className="flex items-center rounded-lg p-0.5 gap-0.5"
-              style={{ background: "#F3F4F6" }}
-            >
-              <button
-                onClick={() => setViewMode("pipeline")}
-                className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
-                style={viewMode === "pipeline"
-                  ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                  : { background: "transparent", color: "#6B7280" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="6" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="11" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Pipeline
-              </button>
-              <button
-                onClick={() => setViewMode("records")}
-                className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
-                style={viewMode === "records"
-                  ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                  : { background: "transparent", color: "#6B7280" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1" y="6.25" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1" y="11.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Records
-              </button>
-            </div>
-          </div>
+          {/* Filter bar — toggle lives inline on the right via rightSlot */}
+          <FilterBar
+            agents={agents}
+            onFilterChange={handleFilterChange}
+            rightSlot={
+              <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#F3F4F6" }}>
+                <button
+                  onClick={() => setViewMode("pipeline")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  style={viewMode === "pipeline"
+                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
+                    : { background: "transparent", color: "#6B7280" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="6" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="11" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  </svg>
+                  Pipeline
+                </button>
+                <button
+                  onClick={() => setViewMode("records")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  style={viewMode === "records"
+                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
+                    : { background: "transparent", color: "#6B7280" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="1" y="6.25" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="1" y="11.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  </svg>
+                  Records
+                </button>
+              </div>
+            }
+          />
 
           {/* ── Pipeline view ── */}
           {viewMode === "pipeline" && (

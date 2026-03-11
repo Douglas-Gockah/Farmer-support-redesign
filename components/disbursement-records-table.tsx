@@ -318,12 +318,13 @@ export default function DisbursementRecordsTable({ records }: Props) {
 
   return (
     <>
-      {/* Table wrapper — first column sticky, rest scroll horizontally */}
-      <div className="flex-1 overflow-auto min-h-0">
-        <table className="border-collapse" style={{ minWidth: 980, width: "100%" }}>
+      {/* Table wrapper — margin on all sides, first column sticky, rest scroll horizontally */}
+      <div className="flex-1 overflow-auto min-h-0 p-4" style={{ background: "#F9FAFB" }}>
+        <div className="rounded-xl overflow-hidden border border-gray-200" style={{ minWidth: 980 }}>
+        <table className="border-collapse" style={{ width: "100%" }}>
           <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
-              <Th sticky>Reference</Th>
+            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 2 }}>
+              <Th sticky style={{ background: "#F9FAFB" }}>Reference</Th>
               <Th>Group Name</Th>
               <Th>Community</Th>
               <Th className="text-center">Farmers</Th>
@@ -346,7 +347,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
                 <tr
                   key={r.id}
                   className="transition-colors hover:bg-green-50 group"
-                  style={{ background: rowBg, borderBottom: "1px solid #F3F4F6" }}
+                  style={{ background: rowBg, borderBottom: "1px solid #E5E7EB" }}
                 >
                   {/* Reference — sticky */}
                   <Td sticky bg={rowBg}>
@@ -427,6 +428,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination — pinned to bottom */}
