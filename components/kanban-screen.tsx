@@ -67,7 +67,7 @@ export default function KanbanScreen() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-gray-200 shrink-0" style={{ background: "#F9FAFB" }}>
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 shrink-0" style={{ background: "#FFFFFF" }}>
         <span className="text-[13px] text-gray-400 font-medium">Farmer support</span>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M5 3l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -76,7 +76,7 @@ export default function KanbanScreen() {
       </div>
 
       {/* ── Flow tabs ── */}
-      <div className="shrink-0 flex overflow-x-auto border-b border-gray-200 bg-white scrollbar-none">
+      <div className="shrink-0 flex overflow-x-auto bg-white scrollbar-none">
         {FLOWS.map((flow) => (
           <button
             key={flow.id}
@@ -96,46 +96,43 @@ export default function KanbanScreen() {
       {/* ── Flow: Requests & Disbursement ── */}
       {activeFlow === "disbursement" && (
         <>
-          {/* Filter bar (full-width, self-contained row) */}
-          <FilterBar agents={agents} onFilterChange={handleFilterChange} />
-
-          {/* View toggle strip */}
-          <div className="shrink-0 flex items-center justify-end px-4 sm:px-5 py-2 border-b border-gray-200 bg-white gap-2">
-            <span className="text-[12px] text-gray-400 font-medium mr-1">View:</span>
-            <div
-              className="flex items-center rounded-lg p-0.5 gap-0.5"
-              style={{ background: "#F3F4F6" }}
-            >
-              <button
-                onClick={() => setViewMode("pipeline")}
-                className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
-                style={viewMode === "pipeline"
-                  ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                  : { background: "transparent", color: "#6B7280" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="6" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="11" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Pipeline
-              </button>
-              <button
-                onClick={() => setViewMode("records")}
-                className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
-                style={viewMode === "records"
-                  ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                  : { background: "transparent", color: "#6B7280" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1" y="6.25" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1" y="11.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Records
-              </button>
-            </div>
-          </div>
+          {/* Filter bar — toggle lives inline on the right via rightSlot */}
+          <FilterBar
+            agents={agents}
+            onFilterChange={handleFilterChange}
+            rightSlot={
+              <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#F3F4F6" }}>
+                <button
+                  onClick={() => setViewMode("pipeline")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  style={viewMode === "pipeline"
+                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
+                    : { background: "transparent", color: "#6B7280" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="6" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="11" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  </svg>
+                  Pipeline
+                </button>
+                <button
+                  onClick={() => setViewMode("records")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  style={viewMode === "records"
+                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
+                    : { background: "transparent", color: "#6B7280" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="1" y="6.25" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <rect x="1" y="11.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  </svg>
+                  Records
+                </button>
+              </div>
+            }
+          />
 
           {/* ── Pipeline view ── */}
           {viewMode === "pipeline" && (
@@ -161,7 +158,7 @@ export default function KanbanScreen() {
               </div>
 
               {/* Mobile: single column view */}
-              <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#F9FAFB" }}>
+              <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#FAFAFA" }}>
                 <div className="px-4 py-4">
                   {(() => {
                     const col   = COLUMNS.find((c) => c.id === mobileColId)!;
@@ -191,7 +188,7 @@ export default function KanbanScreen() {
               </div>
 
               {/* Desktop: all columns, horizontal scroll */}
-              <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#F9FAFB" }}>
+              <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#FAFAFA" }}>
                 <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
                   {COLUMNS.map((col) => {
                     let cards = filtered.filter((r) => r.stage === col.id);
@@ -242,7 +239,7 @@ export default function KanbanScreen() {
 
           {/* ── Records view ── */}
           {viewMode === "records" && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: "#FFFFFF" }}>
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: "#FAFAFA" }}>
               <DisbursementRecordsTable
                 records={filtered.filter((r) => r.stage === "disbursed")}
               />

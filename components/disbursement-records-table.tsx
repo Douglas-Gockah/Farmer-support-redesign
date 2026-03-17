@@ -74,26 +74,25 @@ function Td({
 }
 
 // ---------------------------------------------------------------------------
-// Detail drawer — lightweight slide-in panel for a single record
+// Detail modal — centred dialog for a single record
 // ---------------------------------------------------------------------------
-function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClose: () => void }) {
+function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose: () => void }) {
   const agentColor    = avatarColor(record.agent);
   const agentInitials = initials(record.agent);
 
   const rows: Array<{ label: string; value: React.ReactNode }> = [
-    { label: "Request ID",       value: <span className="font-mono text-[13px] text-green-700">{record.id}</span> },
-    { label: "Group Name",       value: record.groupName },
-    { label: "Community",        value: record.community },
-    { label: "No. of Farmers",   value: record.farmers },
-    { label: "Support Type",     value: <SupportBadge type={record.approvedSupportType} /> },
-    { label: "Amount / Farmer",  value: record.approvedAmountPerFarmer ? `GHS ${record.approvedAmountPerFarmer.toLocaleString()}` : "—" },
-    { label: "Total Disbursed",  value: record.disbursedAmount ? <span className="font-bold text-gray-900">GHS {record.disbursedAmount.toLocaleString()}</span> : "—" },
-    { label: "MoMo Name",        value: record.momoName ?? "—" },
-    { label: "MoMo Number",      value: <span className="font-mono">{record.momoNumber ?? "—"}</span> },
-    { label: "Transaction ID",   value: <span className="font-mono text-[12px] text-gray-500">{record.transactionId ?? "—"}</span> },
-    { label: "Disbursed On",     value: record.disbursedDate ?? "—" },
-    { label: "Submitted",        value: record.date },
-    { label: "Field Agent",      value: (
+    { label: "Request ID",      value: <span className="font-mono text-[13px] text-green-700">{record.id}</span> },
+    { label: "Group Name",      value: record.groupName },
+    { label: "Community",       value: record.community },
+    { label: "No. of Farmers",  value: record.farmers },
+    { label: "Support Type",    value: <SupportBadge type={record.approvedSupportType} /> },
+    { label: "Amount / Farmer", value: record.approvedAmountPerFarmer ? `GHS ${record.approvedAmountPerFarmer.toLocaleString()}` : "—" },
+    { label: "MoMo Name",       value: record.momoName ?? "—" },
+    { label: "MoMo Number",     value: <span className="font-mono">{record.momoNumber ?? "—"}</span> },
+    { label: "Transaction ID",  value: <span className="font-mono text-[12px] text-gray-500">{record.transactionId ?? "—"}</span> },
+    { label: "Disbursed On",    value: record.disbursedDate ?? "—" },
+    { label: "Submitted",       value: record.date },
+    { label: "Field Agent",     value: (
         <div className="flex items-center gap-2">
           <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ background: agentColor }}>
             {agentInitials}
@@ -102,7 +101,7 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
         </div>
       )
     },
-    { label: "Score",            value: record.score != null ? `${record.score} / 100` : "—" },
+    { label: "Score", value: record.score != null ? `${record.score} / 100` : "—" },
   ];
 
   return (
@@ -110,68 +109,71 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.35)" }}
+        style={{ background: "rgba(0,0,0,0.45)" }}
         onClick={onClose}
       />
-      {/* Drawer */}
-      <div
-        className="fixed inset-y-0 right-0 z-50 flex flex-col bg-white shadow-2xl"
-        style={{ width: "min(440px, 100vw)" }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-          <div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Disbursement Record</p>
-            <h2 className="text-[16px] font-bold text-gray-900">{record.groupName}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
-            aria-label="Close"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
 
-        {/* Disbursed amount hero */}
-        <div className="px-6 py-5 shrink-0" style={{ background: "#F0FDF4", borderBottom: "1px solid #BBF7D0" }}>
-          <p className="text-[12px] font-semibold text-green-600 mb-1">Total Amount Disbursed</p>
-          <p className="text-[32px] font-bold text-green-800 leading-none">
-            GHS {record.disbursedAmount?.toLocaleString() ?? "—"}
-          </p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[12px] text-green-700">{record.disbursedDate}</span>
-            {record.transactionId && (
-              <>
-                <span className="text-green-300">·</span>
-                <span className="font-mono text-[11px] text-green-600">{record.transactionId}</span>
-              </>
-            )}
+      {/* Modal — centred, max-height with scroll */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="pointer-events-auto w-full flex flex-col bg-white rounded-2xl shadow-2xl"
+          style={{ maxWidth: 560, maxHeight: "calc(100vh - 64px)" }}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between px-6 pt-5 pb-4 shrink-0">
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Disbursement Record</p>
+              <h2 className="text-[17px] font-bold text-gray-900 leading-snug">{record.groupName}</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors shrink-0 ml-4 mt-0.5"
+              aria-label="Close"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
           </div>
-        </div>
 
-        {/* Detail rows */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="divide-y divide-gray-100">
-            {rows.map(({ label, value }) => (
-              <div key={label} className="flex items-start justify-between gap-4 py-3">
-                <span className="text-[12px] text-gray-400 shrink-0 w-36">{label}</span>
-                <span className="text-[13px] text-gray-800 text-right">{value}</span>
-              </div>
-            ))}
+          {/* Disbursed amount hero */}
+          <div className="mx-6 mb-4 rounded-xl px-5 py-4 shrink-0" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+            <p className="text-[11px] font-semibold text-green-600 uppercase tracking-wider mb-1">Total Amount Disbursed</p>
+            <p className="text-[30px] font-bold text-green-800 leading-none">
+              GHS {record.disbursedAmount?.toLocaleString() ?? "—"}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[12px] text-green-700">{record.disbursedDate}</span>
+              {record.transactionId && (
+                <>
+                  <span className="text-green-300">·</span>
+                  <span className="font-mono text-[11px] text-green-600">{record.transactionId}</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="shrink-0 px-6 py-4 border-t border-gray-100">
-          <button
-            onClick={onClose}
-            className="w-full h-9 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            Close
-          </button>
+          {/* Detail rows — scrollable if content overflows */}
+          <div className="flex-1 overflow-y-auto px-6 min-h-0">
+            <div className="divide-y divide-gray-100">
+              {rows.map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between gap-6 py-3">
+                  <span className="text-[12px] text-gray-400 shrink-0 w-32">{label}</span>
+                  <span className="text-[13px] text-gray-800 text-right">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="shrink-0 px-6 py-4 border-t border-gray-100 mt-2">
+            <button
+              onClick={onClose}
+              className="w-full h-9 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -181,7 +183,7 @@ function RecordDetailDrawer({ record, onClose }: { record: FarmerRequest; onClos
 // ---------------------------------------------------------------------------
 // Pagination bar
 // ---------------------------------------------------------------------------
-const PER_PAGE = 5;
+const PER_PAGE = 8;
 
 function PaginationBar({
   page, totalPages, totalItems, perPage,
@@ -318,131 +320,144 @@ export default function DisbursementRecordsTable({ records }: Props) {
 
   return (
     <>
-      {/* Table wrapper — first column sticky, rest scroll horizontally */}
-      <div className="flex-1 overflow-auto min-h-0">
-        <table className="border-collapse" style={{ minWidth: 980, width: "100%" }}>
-          <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
-              <Th sticky>Reference</Th>
-              <Th>Group Name</Th>
-              <Th>Community</Th>
-              <Th className="text-center">Farmers</Th>
-              <Th>Support</Th>
-              <Th>Amt / Farmer</Th>
-              <Th>Total Disbursed</Th>
-              <Th>Transaction ID</Th>
-              <Th>Disbursed On</Th>
-              <Th>Field Agent</Th>
-              <Th></Th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageRecords.map((r, idx) => {
-              const agentColor    = avatarColor(r.agent);
-              const agentInitials = initials(r.agent);
-              const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
-
-              return (
-                <tr
-                  key={r.id}
-                  className="transition-colors hover:bg-green-50 group"
-                  style={{ background: rowBg, borderBottom: "1px solid #F3F4F6" }}
-                >
-                  {/* Reference — sticky */}
-                  <Td sticky bg={rowBg}>
-                    <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
-                      {r.id}
-                    </span>
-                  </Td>
-
-                  {/* Group Name */}
-                  <Td>
-                    <span className="font-semibold text-gray-900 whitespace-nowrap">{r.groupName}</span>
-                  </Td>
-
-                  {/* Community */}
-                  <Td>
-                    <span className="text-gray-600 whitespace-nowrap">{r.community}</span>
-                  </Td>
-
-                  {/* Farmers */}
-                  <Td className="text-center">
-                    <span className="font-semibold text-gray-900">{r.farmers}</span>
-                  </Td>
-
-                  {/* Support type */}
-                  <Td>
-                    <SupportBadge type={r.approvedSupportType} />
-                  </Td>
-
-                  {/* Amount per farmer */}
-                  <Td>
-                    <span className="text-gray-700 whitespace-nowrap">
-                      {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer}` : "—"}
-                    </span>
-                  </Td>
-
-                  {/* Total disbursed */}
-                  <Td>
-                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
-                      GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
-                    </span>
-                  </Td>
-
-                  {/* Transaction ID */}
-                  <Td>
-                    <span className="font-mono text-[12px] text-gray-500 whitespace-nowrap">{r.transactionId ?? "—"}</span>
-                  </Td>
-
-                  {/* Date disbursed */}
-                  <Td>
-                    <span className="text-gray-600 whitespace-nowrap">{r.disbursedDate ?? "—"}</span>
-                  </Td>
-
-                  {/* Agent */}
-                  <Td>
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                        style={{ background: agentColor }}
-                      >
-                        {agentInitials}
-                      </span>
-                      <span className="text-gray-700">{r.agent}</span>
-                    </div>
-                  </Td>
-
-                  {/* Action */}
-                  <Td className="pr-5">
-                    <button
-                      onClick={() => setDetailRecord(r)}
-                      className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap"
-                      style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}
-                    >
-                      View
-                    </button>
-                  </Td>
+      {/* Outer padding + background */}
+      <div className="flex-1 flex flex-col min-h-0 p-4" style={{ background: "#FAFAFA" }}>
+        {/*
+          Border card. overflow:clip clips to rounded corners without creating
+          a scroll container — so position:sticky on the first column still works.
+          (Unlike overflow:hidden which would break sticky.)
+        */}
+        <div
+          className="flex-1 flex flex-col min-h-0 rounded-xl border border-gray-200 bg-white"
+          style={{ overflow: "clip" }}
+        >
+          {/* Scrollable table area — this is the actual scroll container for sticky */}
+          <div className="flex-1 overflow-auto min-h-0">
+            <table className="border-collapse" style={{ minWidth: 980, width: "100%" }}>
+              <thead>
+                <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 2 }}>
+                  <Th sticky style={{ background: "#F9FAFB" }}>Reference</Th>
+                  <Th>Group Name</Th>
+                  <Th>Community</Th>
+                  <Th className="text-right">Farmers</Th>
+                  <Th>Support</Th>
+                  <Th className="text-right">Amt / Farmer</Th>
+                  <Th className="text-right">Total Disbursed</Th>
+                  <Th>Transaction ID</Th>
+                  <Th>Disbursed On</Th>
+                  <Th>Field Agent</Th>
+                  <Th></Th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {pageRecords.map((r, idx) => {
+                  const agentColor    = avatarColor(r.agent);
+                  const agentInitials = initials(r.agent);
+                  const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
 
-      {/* Pagination — pinned to bottom */}
-      <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        totalItems={records.length}
-        perPage={PER_PAGE}
-        onPrev={() => setPage((p) => Math.max(0, p - 1))}
-        onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-        onPage={setPage}
-      />
+                  return (
+                    <tr
+                      key={r.id}
+                      className="transition-colors hover:bg-green-50 group"
+                      style={{ background: rowBg, borderBottom: "1px solid #E5E7EB" }}
+                    >
+                      {/* Reference — sticky left */}
+                      <Td sticky bg={rowBg}>
+                        <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
+                          {r.id}
+                        </span>
+                      </Td>
+
+                      {/* Group Name */}
+                      <Td>
+                        <span className="font-semibold text-gray-900 whitespace-nowrap">{r.groupName}</span>
+                      </Td>
+
+                      {/* Community */}
+                      <Td>
+                        <span className="text-gray-600 whitespace-nowrap">{r.community}</span>
+                      </Td>
+
+                      {/* Farmers */}
+                      <Td className="text-right">
+                        <span className="font-semibold text-gray-900">{r.farmers}</span>
+                      </Td>
+
+                      {/* Support type */}
+                      <Td>
+                        <SupportBadge type={r.approvedSupportType} />
+                      </Td>
+
+                      {/* Amount per farmer */}
+                      <Td className="text-right">
+                        <span className="text-gray-700 whitespace-nowrap">
+                          {r.approvedAmountPerFarmer != null ? `GHS ${r.approvedAmountPerFarmer.toLocaleString()}` : "—"}
+                        </span>
+                      </Td>
+
+                      {/* Total disbursed */}
+                      <Td className="text-right">
+                        <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
+                          GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
+                        </span>
+                      </Td>
+
+                      {/* Transaction ID */}
+                      <Td>
+                        <span className="font-mono text-[12px] text-gray-500 whitespace-nowrap">{r.transactionId ?? "—"}</span>
+                      </Td>
+
+                      {/* Date disbursed */}
+                      <Td>
+                        <span className="text-gray-600 whitespace-nowrap">{r.disbursedDate ?? "—"}</span>
+                      </Td>
+
+                      {/* Agent */}
+                      <Td>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                            style={{ background: agentColor }}
+                          >
+                            {agentInitials}
+                          </span>
+                          <span className="text-gray-700">{r.agent}</span>
+                        </div>
+                      </Td>
+
+                      {/* Action */}
+                      <Td className="pr-5">
+                        <button
+                          onClick={() => setDetailRecord(r)}
+                          className="h-7 px-3 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap"
+                          style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}
+                        >
+                          View
+                        </button>
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination — inside the card border */}
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalItems={records.length}
+            perPage={PER_PAGE}
+            onPrev={() => setPage((p) => Math.max(0, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            onPage={setPage}
+          />
+        </div>
+      </div>
 
       {/* Detail drawer */}
       {detailRecord && (
-        <RecordDetailDrawer
+        <RecordDetailModal
           record={detailRecord}
           onClose={() => setDetailRecord(null)}
         />

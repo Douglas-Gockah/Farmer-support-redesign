@@ -21,6 +21,8 @@ interface FilterBarProps {
   agents: string[];
   /** Called whenever any filter value changes */
   onFilterChange: (filters: ActiveFilters) => void;
+  /** Optional element rendered on the right side of the search row (e.g. a view toggle) */
+  rightSlot?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,7 +113,7 @@ const ChevronDown = () => (
 // ---------------------------------------------------------------------------
 // FilterBar
 // ---------------------------------------------------------------------------
-export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
+export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps) {
   // Mobile filter panel toggle
   const [filtersVisible, setFiltersVisible] = useState(false);
 
@@ -195,7 +197,7 @@ export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
   return (
     <>
       {/* ── Row 1: search + export + mobile filter toggle ── */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-white border-b border-gray-200">
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3" style={{ background: "#FAFAFA" }}>
         <div className="relative flex-1 sm:flex-none" style={{ maxWidth: 320 }}>
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
@@ -222,22 +224,25 @@ export function FilterBar({ agents, onFilterChange }: FilterBarProps) {
           Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
         </button>
 
-        {/* Desktop export button */}
-        <button
-          className="hidden sm:flex items-center gap-2 h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors ml-auto shrink-0"
-          style={{ borderColor: "#16A34A", color: "#16A34A", background: "white" }}
-          disabled
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Export data
-        </button>
+        {/* Right-side slot + export button — grouped so they push together to the right */}
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          {rightSlot}
+          <button
+            className="hidden sm:flex items-center gap-2 h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors shrink-0"
+            style={{ borderColor: "#16A34A", color: "#16A34A", background: "white" }}
+            disabled
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Export data
+          </button>
+        </div>
       </div>
 
       {/* ── Row 2: filter pills — always visible on lg+, toggleable on mobile ── */}
-      <div className={`${filtersVisible ? "flex" : "hidden"} lg:flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2 bg-white border-b border-gray-200`}>
+      <div className={`${filtersVisible ? "flex" : "hidden"} lg:flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2`} style={{ background: "#FAFAFA" }}>
 
         {/* 1. Date picker */}
         <div ref={dateRef} className="relative">
