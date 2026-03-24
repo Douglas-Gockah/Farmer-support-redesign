@@ -65,3 +65,33 @@ export interface GenericColDef {
 }
 
 export type ScoreSort = "default" | "desc" | "asc";
+
+// ---------------------------------------------------------------------------
+// Support Fulfilment types
+// ---------------------------------------------------------------------------
+
+export type FulfillmentStage = "pending_fulfillment" | "partially_fulfilled" | "fully_fulfilled";
+
+export interface FarmerFulfillmentRecord {
+  id: string;
+  name: string;
+  received: boolean;
+  voiceRecordingDuration?: string; // e.g. "0:32" — proof of receipt
+  receivedDate?: string;
+}
+
+export interface FulfillmentRequest {
+  id: string;
+  groupName: string;
+  community: string;
+  agent: string;
+  disbursedDate: string;
+  transactionId: string;
+  disbursedAmount: number;
+  approvedAmountPerFarmer: number;
+  approvedSupportType: SupportType;
+  fulfillmentStage: FulfillmentStage;
+  confirmedFarmers: FarmerFulfillmentRecord[];
+  momoNumber: string;
+  momoName: string;
+}
