@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FulfillmentCard } from "@/components/kanban/fulfillment-card";
 import { ColumnHeader } from "@/components/kanban/column-header";
 import FulfillmentSlideOver from "@/components/fulfillment-slide-over";
+import FulfillmentOptOutModal from "@/components/fulfillment-opt-out-modal";
 import { FULFILLMENT_COLUMNS } from "@/components/kanban/constants";
 import { MOCK_FULFILLMENT_REQUESTS } from "@/components/kanban/mock-data";
 import type { FulfillmentRequest } from "@/components/kanban/types";
@@ -35,19 +36,20 @@ function EmptyColState() {
 }
 
 // Map column ids to FulfillmentStage values
-const COL_STAGE_MAP: Record<string, FulfillmentRequest["fulfillmentStage"] | null> = {
+const COL_STAGE_MAP: Record<string, FulfillmentRequest["fulfillmentStage"]> = {
   pending_fulfillment: "pending_fulfillment",
   partially_fulfilled: "partially_fulfilled",
   fully_fulfilled:     "fully_fulfilled",
-  opted_out:           null,
+  opted_out:           "opted_out",
 };
 
 export default function FulfillmentBoard() {
   const [mobileColId, setMobileColId] = useState(FULFILLMENT_COLUMNS[0].id);
   const [selectedReq, setSelectedReq] = useState<FulfillmentRequest | null>(null);
+  const [optOutReq, setOptOutReq] = useState<FulfillmentRequest | null>(null);
 
-  // Only show the three fulfilment stage columns (not opted_out)
-  const displayCols = FULFILLMENT_COLUMNS.filter((c) => c.id !== "opted_out");
+  // All four columns are shown
+  const displayCols = FULFILLMENT_COLUMNS;
 
   function cardsForCol(colId: string): FulfillmentRequest[] {
     const stage = COL_STAGE_MAP[colId];
@@ -55,13 +57,29 @@ export default function FulfillmentBoard() {
     return MOCK_FULFILLMENT_REQUESTS.filter((r) => r.fulfillmentStage === stage);
   }
 
+  function handleCardClick(r: FulfillmentRequest) {
+    if (r.fulfillmentStage === "opted_out") {
+      setOptOutReq(r);
+    } else {
+      setSelectedReq(r);
+    }
+  }
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#F9FAFB" }}>
-      {/* Slide-over panel */}
+      {/* Slide-over panel — pending / partial / full */}
       {selectedReq && (
         <FulfillmentSlideOver
           req={selectedReq}
           onClose={() => setSelectedReq(null)}
+        />
+      )}
+
+      {/* Opt-out modal */}
+      {optOutReq && (
+        <FulfillmentOptOutModal
+          req={optOutReq}
+          onClose={() => setOptOutReq(null)}
         />
       )}
 
@@ -94,7 +112,7 @@ export default function FulfillmentBoard() {
             const cards = cardsForCol(mobileColId);
             if (cards.length === 0) return <EmptyColState />;
             return cards.map((r) => (
-              <FulfillmentCard key={r.id} req={r} onView={() => setSelectedReq(r)} />
+              <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} />
             ));
           })()}
         </div>
@@ -146,7 +164,7 @@ export default function FulfillmentBoard() {
                         <FulfillmentCard
                           key={r.id}
                           req={r}
-                          onView={() => setSelectedReq(r)}
+                          onView={() => handleCardClick(r)}
                         />
                       ))
                     )}

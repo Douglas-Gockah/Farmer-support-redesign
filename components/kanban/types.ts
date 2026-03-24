@@ -70,7 +70,7 @@ export type ScoreSort = "default" | "desc" | "asc";
 // Support Fulfilment types
 // ---------------------------------------------------------------------------
 
-export type FulfillmentStage = "pending_fulfillment" | "partially_fulfilled" | "fully_fulfilled";
+export type FulfillmentStage = "pending_fulfillment" | "partially_fulfilled" | "fully_fulfilled" | "opted_out";
 
 export interface FarmerFulfillmentRecord {
   id: string;
@@ -94,4 +94,5 @@ export interface FulfillmentRequest {
   confirmedFarmers: FarmerFulfillmentRecord[];
   momoNumber: string;
   momoName: string;
+  optedOutFarmers?: Array<{ id: string; name: string }>;
 }

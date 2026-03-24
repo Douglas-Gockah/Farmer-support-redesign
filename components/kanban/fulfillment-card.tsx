@@ -16,6 +16,8 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
   const total = req.confirmedFarmers.length;
   const isPartial = req.fulfillmentStage === "partially_fulfilled";
   const isFull = req.fulfillmentStage === "fully_fulfilled";
+  const isOptedOut = req.fulfillmentStage === "opted_out";
+  const optedOutCount = req.optedOutFarmers?.length ?? 0;
   const pct = total > 0 ? Math.round((received / total) * 100) : 0;
 
   const agentInitials = initials(req.agent);
@@ -24,10 +26,11 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 mb-3 cursor-pointer"
+      className="bg-white rounded-xl mb-3 cursor-pointer"
       style={{
         boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.13)" : "0 1px 4px rgba(0,0,0,0.09)",
         transition: "box-shadow 150ms ease",
+        border: isOptedOut ? "1.5px dashed #F59E0B" : "1px solid #E5E7EB",
       }}
       onClick={onView}
       onMouseEnter={() => setHovered(true)}
@@ -43,6 +46,25 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
         <p className="text-[12px] font-medium text-gray-500 mb-3">
           {req.community} &middot; {total} farmers confirmed
         </p>
+
+        {/* Opted-out warning chip */}
+        {isOptedOut && optedOutCount > 0 && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3"
+            style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6.5" stroke="#D97706" strokeWidth="1.4" />
+              <path d="M8 5v3.5M8 10.5v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-[12px] font-semibold text-amber-700">
+              {optedOutCount} farmer{optedOutCount !== 1 ? "s" : ""} opted out
+            </span>
+            <span className="ml-auto text-[11px] font-medium text-amber-600">
+              GHS {(optedOutCount * req.approvedAmountPerFarmer).toLocaleString()} to refund
+            </span>
+          </div>
+        )}
 
         {/* Amount row */}
         <div className="flex items-center justify-between mb-3">
