@@ -53,6 +53,7 @@ export default function KanbanScreen() {
     ctaAction,
     handleApproved, handleManagerConfirmed,
     handleHeld, handleRejected, handleScored, handleDisbursed,
+    archiveRequest,
   } = useKanbanState(activeFilters);
 
   function cardOnView(r: Parameters<typeof setSelectedCard>[0], colId: string) {
@@ -181,6 +182,7 @@ export default function KanbanScreen() {
                         ctaLabel={col.ctaLabel}
                         onCta={() => ctaAction(r, col.id)}
                         onView={() => cardOnView(r, col.id)}
+                        onArchive={(col.id === "rejected" || col.id === "disbursed") ? () => archiveRequest(r.id) : undefined}
                       />
                     ));
                   })()}
@@ -224,6 +226,7 @@ export default function KanbanScreen() {
                                   ctaLabel={col.ctaLabel}
                                   onCta={() => ctaAction(r, col.id)}
                                   onView={() => cardOnView(r, col.id)}
+                                  onArchive={(col.id === "rejected" || col.id === "disbursed") ? () => archiveRequest(r.id) : undefined}
                                 />
                               ))
                             )}

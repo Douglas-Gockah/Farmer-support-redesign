@@ -10,6 +10,7 @@ interface KanbanCardProps {
   ctaLabel: string;
   onCta: (e: React.MouseEvent) => void;
   onView: () => void;
+  onArchive?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +189,7 @@ function OptOutModal({
 // ---------------------------------------------------------------------------
 // Kanban card
 // ---------------------------------------------------------------------------
-export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
+export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCardProps) {
   const [hovered, setHovered] = useState(false);
   const [optOutOpen, setOptOutOpen] = useState(false);
 
@@ -254,8 +255,21 @@ export function KanbanCard({ r, ctaLabel, onCta, onView }: KanbanCardProps) {
       >
         <div className="p-4">
           {/* Group name */}
-          <div className="mb-0.5">
-            <p className="text-[15px] font-semibold text-gray-900 leading-snug">{r.groupName}</p>
+          <div className="flex items-start justify-between gap-2 mb-0.5">
+            <p className="text-[15px] font-semibold text-gray-900 leading-snug flex-1">{r.groupName}</p>
+            {(isRejected || isDisbursed) && onArchive && (
+              <button
+                className="w-6 h-6 rounded-md flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors shrink-0 -mt-0.5 -mr-1"
+                onClick={(e) => { e.stopPropagation(); onArchive(); }}
+                title="Archive request"
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Community · farmers + optional score badge */}
