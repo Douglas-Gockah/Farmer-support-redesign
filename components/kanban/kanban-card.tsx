@@ -192,6 +192,7 @@ function OptOutModal({
 export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCardProps) {
   const [hovered, setHovered] = useState(false);
   const [optOutOpen, setOptOutOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
   const agentInitials = initials(r.agent);
   const agentColor = avatarColor(r.agent);
@@ -240,6 +241,50 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
         <OptOutModal request={r} onClose={() => setOptOutOpen(false)} />
       )}
 
+      {archiveConfirmOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setArchiveConfirmOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="pointer-events-auto w-full bg-white rounded-2xl shadow-2xl p-6 flex flex-col gap-4" style={{ maxWidth: 400 }}>
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="#DC2626" strokeWidth="1.4"/>
+                    <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="#DC2626" strokeWidth="1.4"/>
+                    <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="#DC2626" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-gray-900 leading-snug">Archive this request?</p>
+                  <p className="text-[12px] text-gray-500 mt-1 leading-relaxed">
+                    <span className="font-semibold text-gray-700">{r.groupName}</span> will be hidden from the board. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  className="flex-1 h-9 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                  onClick={() => setArchiveConfirmOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 h-9 rounded-lg text-[13px] font-bold text-white transition-colors"
+                  style={{ background: "#DC2626" }}
+                  onClick={() => { setArchiveConfirmOpen(false); onArchive?.(); }}
+                >
+                  Archive
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div
         className="bg-white rounded-xl border mb-3 cursor-pointer"
         style={{
@@ -259,14 +304,14 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
             <p className="text-[15px] font-semibold text-gray-900 leading-snug flex-1">{r.groupName}</p>
             {(isRejected || isDisbursed) && onArchive && (
               <button
-                className="w-6 h-6 rounded-md flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors shrink-0 -mt-0.5 -mr-1"
-                onClick={(e) => { e.stopPropagation(); onArchive(); }}
+                className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5 -mr-1"
+                onClick={(e) => { e.stopPropagation(); setArchiveConfirmOpen(true); }}
                 title="Archive request"
               >
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                  <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.3"/>
-                  <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                  <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.4"/>
+                  <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             )}
