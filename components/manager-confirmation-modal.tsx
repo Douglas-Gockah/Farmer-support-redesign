@@ -104,7 +104,7 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
       {/* Stats row */}
       <div className="flex gap-3">
         <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
-          <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
+          <p className="text-[10px] text-gray-400 mb-0.5">Interested farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
         {card.score !== null && (
@@ -259,14 +259,14 @@ export default function ManagerConfirmationModal({
                   {/* Selection summary */}
                   <div className="sticky bottom-0 px-6 py-2 bg-white border-t border-gray-100">
                     <p className="text-[12px] text-gray-400">
-                      <span className="font-semibold text-gray-600">{selectedCount}</span> of {totalFarmers} farmers selected
+                      <span className="font-semibold text-gray-600">{selectedCount}</span> of {totalFarmers} interested farmers selected
                     </p>
                   </div>
                 </div>
 
                 {/* Footer */}
                 <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-3">
-                  <span className="text-[13px] font-semibold text-gray-600">{selectedCount} farmers selected</span>
+                  <span className="text-[13px] font-semibold text-gray-600">{selectedCount} interested farmers selected</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={onClose}
