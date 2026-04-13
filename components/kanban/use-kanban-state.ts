@@ -18,10 +18,12 @@ export function useKanbanState(activeFilters: ActiveFilters) {
   const [managerCard,  setManagerCard]  = useState<FarmerRequest | null>(null);
   const [toasts,       setToasts]       = useState<ToastMessage[]>([]);
   const [scoreSort,    setScoreSort]    = useState<ScoreSort>("default");
+  const [archivedIds,  setArchivedIds]  = useState<Set<string>>(new Set());
 
-  // Derived: filtered requests
+  // Derived: filtered requests (archived cards are hidden from the board)
   const filtered = useMemo(() => {
     return requests.filter((r) => {
+      if (archivedIds.has(r.id)) return false;
       if (activeFilters.search) {
         const q = activeFilters.search.toLowerCase();
         if (!r.groupName.toLowerCase().includes(q) && !r.id.toLowerCase().includes(q)) return false;
@@ -30,7 +32,7 @@ export function useKanbanState(activeFilters: ActiveFilters) {
       if (activeFilters.agent     && r.agent     !== activeFilters.agent)     return false;
       return true;
     });
-  }, [requests, activeFilters]);
+  }, [requests, activeFilters, archivedIds]);
 
   // Derived: unique agent names for the filter bar
   const agents = useMemo(() => [...new Set(requests.map((r) => r.agent))], [requests]);
@@ -117,6 +119,11 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     showToast("Score submitted — moved to Pending Approval");
   }
 
+  function archiveRequest(id: string) {
+    setArchivedIds((prev) => new Set(prev).add(id));
+    showToast("Request archived");
+  }
+
   function handleDisbursed(id: string, txId: string, amount: number) {
     setRequests((prev) =>
       prev.map((r) =>
@@ -152,6 +159,7 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     scoreSort, cycleScoreSort,
     // Handlers
     ctaAction,
+    archiveRequest,
     handleApproved,
     handleManagerConfirmed,
     handleHeld,

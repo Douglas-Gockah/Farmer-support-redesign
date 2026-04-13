@@ -5,7 +5,7 @@ import type { ColDef, GenericColDef } from "./types";
 
 // Flow 1 — Requests & Disbursement
 export const COLUMNS: ColDef[] = [
-  { id: "synced",               label: "Synced Requests",        dotColor: "#D97706", ctaLabel: "Score",    ctaStages: ["synced"] },
+  { id: "synced",               label: "Pending Scoring",        dotColor: "#D97706", ctaLabel: "Score",    ctaStages: ["synced"] },
   { id: "pending_approval",     label: "Pending Approval",       dotColor: "#2563EB", ctaLabel: "Review",   ctaStages: ["pending_approval"] },
   { id: "rejected",             label: "Rejected",               dotColor: "#DC2626", ctaLabel: "",         ctaStages: [] },
   { id: "agent_confirmation",   label: "Manager Confirmation",   dotColor: "#16A34A", ctaLabel: "Confirm",  ctaStages: ["agent_confirmation"] },
