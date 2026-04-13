@@ -16,154 +16,87 @@ interface KanbanCardProps {
 // ---------------------------------------------------------------------------
 // Opt-out upload modal
 // ---------------------------------------------------------------------------
-function OptOutModal({
-  request,
-  onClose,
-}: {
-  request: FarmerRequest;
-  onClose: () => void;
-}) {
+function OptOutModal({ request, onClose }: { request: FarmerRequest; onClose: () => void }) {
   const [farmerFiles, setFarmerFiles] = useState<Record<string, string>>({});
   const farmers = request.optedOutFarmers ?? [];
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.45)" }}
-        onClick={onClose}
-      />
-
-      {/* Modal */}
+      <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="pointer-events-auto w-full flex flex-col bg-white rounded-2xl shadow-2xl"
-          style={{ maxWidth: 480, maxHeight: "calc(100vh - 64px)" }}
+          className="pointer-events-auto w-full flex flex-col bg-white"
+          style={{
+            maxWidth: 480,
+            maxHeight: "calc(100vh - 64px)",
+            borderRadius: "12px",
+            boxShadow: "0px 20px 24px -4px rgba(16,24,40,0.18)",
+          }}
         >
           {/* Header */}
           <div className="flex items-start justify-between px-6 pt-5 pb-4 shrink-0">
             <div>
-              <p className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-0.5">
+              <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "var(--yellow-600)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                 Opted Out — {farmers.length} farmer{farmers.length !== 1 ? "s" : ""}
               </p>
-              <h2 className="text-[16px] font-bold text-gray-900 leading-snug">
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--gray-900)", lineHeight: 1.3 }}>
                 {request.groupName}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors shrink-0 ml-4 mt-0.5"
+              className="flex items-center justify-center w-8 h-8 rounded transition-colors shrink-0 ml-4 mt-0.5"
+              style={{ color: "var(--gray-400)", background: "transparent" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-100)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               aria-label="Close"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M1 1l12 12M13 1L1 13"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
               </svg>
             </button>
           </div>
 
-          {/* Description */}
-          <p className="px-6 pb-4 text-[12px] text-gray-500 shrink-0">
+          <p className="px-6 pb-4 shrink-0" style={{ fontSize: "0.8125rem", color: "var(--gray-500)" }}>
             Upload a refund document for each opted-out farmer below.
           </p>
 
-          {/* Farmer rows — scrollable */}
           <div className="flex-1 overflow-y-auto px-6 min-h-0">
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y" style={{ borderColor: "var(--gray-100)" }}>
               {farmers.map((name) => {
                 const uploaded = farmerFiles[name];
-                const inputId = `refund-${request.id}-${name
-                  .replace(/\s+/g, "-")
-                  .toLowerCase()}`;
+                const inputId = `refund-${request.id}-${name.replace(/\s+/g, "-").toLowerCase()}`;
                 return (
-                  <div
-                    key={name}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
+                  <div key={name} className="flex items-center justify-between gap-3 py-3">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                        style={{ background: avatarColor(name) }}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ background: avatarColor(name), fontSize: "0.625rem", fontWeight: 700 }}
                       >
                         {initials(name)}
                       </span>
-                      <span className="text-[13px] font-medium text-gray-800 truncate">
-                        {name}
-                      </span>
+                      <span className="truncate" style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--gray-800)" }}>{name}</span>
                     </div>
-                    <input
-                      type="file"
-                      id={inputId}
-                      className="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png"
+                    <input type="file" id={inputId} className="hidden" accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => {
                         const fileName = e.target.files?.[0]?.name;
-                        if (fileName)
-                          setFarmerFiles((prev) => ({
-                            ...prev,
-                            [name]: fileName,
-                          }));
+                        if (fileName) setFarmerFiles((prev) => ({ ...prev, [name]: fileName }));
                       }}
                     />
                     <label
                       htmlFor={inputId}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-semibold cursor-pointer transition-colors whitespace-nowrap"
-                      style={
-                        uploaded
-                          ? {
-                              borderColor: "#16A34A",
-                              color: "#16A34A",
-                              background: "#F0FDF4",
-                            }
-                          : {
-                              borderColor: "#D1D5DB",
-                              color: "#6B7280",
-                              background: "transparent",
-                            }
-                      }
+                      className="shrink-0 flex items-center gap-1.5 cursor-pointer transition-colors"
+                      style={{
+                        fontSize: "0.75rem", fontWeight: 600,
+                        padding: "5px 12px",
+                        borderRadius: "var(--radius)",
+                        border: uploaded ? `1px solid var(--green-500)` : `1px solid var(--gray-300)`,
+                        color: uploaded ? "var(--green-600)" : "var(--gray-600)",
+                        background: uploaded ? "var(--green-50)" : "transparent",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      {uploaded ? (
-                        <>
-                          <svg
-                            width="11"
-                            height="11"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                          >
-                            <path
-                              d="M2 6l3 3 5-5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          Done
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            width="11"
-                            height="11"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                          >
-                            <path
-                              d="M6 1v6M4 4.5l2-2 2 2M2 10h8"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          Upload
-                        </>
-                      )}
+                      {uploaded ? "✓ Done" : "Upload"}
                     </label>
                   </div>
                 );
@@ -171,11 +104,19 @@ function OptOutModal({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="shrink-0 px-6 py-4 border-t border-gray-100 mt-2">
+          <div className="shrink-0 px-6 py-4 mt-2" style={{ borderTop: `1px solid var(--gray-100)` }}>
             <button
               onClick={onClose}
-              className="w-full h-9 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="w-full transition-colors"
+              style={{
+                height: 36, borderRadius: "var(--radius)",
+                border: `1px solid var(--gray-200)`,
+                fontSize: "0.875rem", fontWeight: 500,
+                color: "var(--gray-700)", background: "#fff",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-50)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
             >
               Done
             </button>
@@ -187,15 +128,90 @@ function OptOutModal({
 }
 
 // ---------------------------------------------------------------------------
-// Kanban card
+// Archive confirmation dialog — matches Treesyt confirm modal pattern
+// ---------------------------------------------------------------------------
+function ArchiveConfirmModal({ groupName, onCancel, onConfirm }: { groupName: string; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onCancel} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="pointer-events-auto w-full bg-white"
+          style={{
+            maxWidth: 400,
+            padding: 28,
+            borderRadius: "12px",
+            boxShadow: "0px 20px 24px -4px rgba(16,24,40,0.18)",
+          }}
+        >
+          <div className="flex items-start gap-3 mb-6">
+            <div
+              className="flex items-center justify-center shrink-0"
+              style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--error-50)" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="var(--error-600)" strokeWidth="1.4"/>
+                <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="var(--error-600)" strokeWidth="1.4"/>
+                <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="var(--error-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--gray-900)", margin: 0 }}>
+                Archive this request?
+              </h3>
+              <p style={{ fontSize: "0.875rem", color: "var(--gray-500)", marginTop: 6, lineHeight: 1.5 }}>
+                <strong style={{ color: "var(--gray-700)", fontWeight: 600 }}>{groupName}</strong> will be hidden from the board. This cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5">
+            <button
+              onClick={onCancel}
+              className="flex-1 transition-colors"
+              style={{
+                height: 36, borderRadius: "var(--radius)",
+                border: `1px solid var(--gray-200)`,
+                fontSize: "0.875rem", fontWeight: 500,
+                color: "var(--gray-700)", background: "#fff", cursor: "pointer",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-50)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 transition-colors"
+              style={{
+                height: 36, borderRadius: "var(--radius)",
+                border: "none",
+                fontSize: "0.875rem", fontWeight: 600,
+                color: "#fff", background: "var(--error-600)", cursor: "pointer",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-700)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-600)")}
+            >
+              Archive
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kanban card — Treesyt design system styling
 // ---------------------------------------------------------------------------
 export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const [optOutOpen, setOptOutOpen] = useState(false);
+  const [hovered, setHovered]                   = useState(false);
+  const [optOutOpen, setOptOutOpen]             = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
-  const agentInitials = initials(r.agent);
-  const agentColor = avatarColor(r.agent);
+  const agentInitials     = initials(r.agent);
+  const agentColor        = avatarColor(r.agent);
+  const agentDisplayName  = r.agent.split(" ").slice(0, 2).join(" ");
 
   const isRejected  = r.stage === "rejected";
   const isDisbursed = r.stage === "disbursed";
@@ -205,139 +221,131 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
   const isSynced    = r.stage === "synced";
   const isOptedOut  = r.stage === "opted_out";
 
+  // CTA button style — primary green or on-hold amber outline
   const ctaStyle: React.CSSProperties = r.onHold
-    ? { background: "transparent", border: "1.5px solid #D97706", color: "#D97706" }
-    : { background: "#16A34A", color: "white", border: "none" };
+    ? { background: "transparent", border: `1.5px solid var(--yellow-600)`, color: "var(--yellow-600)" }
+    : { background: "var(--green-600)", color: "#fff", border: "none" };
 
-  // Show first two name tokens (first + last name)
-  const agentDisplayName = r.agent.split(" ").slice(0, 2).join(" ");
+  // Cards in terminal states get slightly muted
+  const cardOpacity = (isRejected || isDisbursed) ? 0.82 : 1;
+
+  // Show archive for rejected, disbursed, and pending approval
+  const showArchive = (isRejected || isDisbursed || isPending) && !!onArchive;
 
   const agentDateRow = (
-    <div className="flex items-center justify-between mb-3">
+    <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
       <div className="flex items-center gap-2">
         <span
-          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-          style={{ background: agentColor }}
+          className="flex items-center justify-center rounded-full text-white shrink-0"
+          style={{ width: 24, height: 24, background: agentColor, fontSize: "0.625rem", fontWeight: 700 }}
         >
           {agentInitials}
         </span>
-        <span className="text-[12px] font-medium text-gray-600 truncate max-w-[140px]">
+        <span className="truncate" style={{ maxWidth: 130, fontSize: "0.75rem", fontWeight: 500, color: "var(--gray-600)" }}>
           {agentDisplayName}
         </span>
       </div>
-      <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500">
+      <div className="flex items-center gap-1" style={{ fontSize: "0.6875rem", fontWeight: 500, color: "var(--gray-500)" }}>
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
           <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
           <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
-        <span>{r.date}</span>
+        {r.date}
       </div>
     </div>
   );
 
   return (
     <>
-      {optOutOpen && (
-        <OptOutModal request={r} onClose={() => setOptOutOpen(false)} />
-      )}
-
+      {optOutOpen     && <OptOutModal request={r} onClose={() => setOptOutOpen(false)} />}
       {archiveConfirmOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            style={{ background: "rgba(0,0,0,0.45)" }}
-            onClick={() => setArchiveConfirmOpen(false)}
-          />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full bg-white rounded-2xl shadow-2xl p-6 flex flex-col gap-4" style={{ maxWidth: 400 }}>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="#DC2626" strokeWidth="1.4"/>
-                    <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="#DC2626" strokeWidth="1.4"/>
-                    <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="#DC2626" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-gray-900 leading-snug">Archive this request?</p>
-                  <p className="text-[12px] text-gray-500 mt-1 leading-relaxed">
-                    <span className="font-semibold text-gray-700">{r.groupName}</span> will be hidden from the board. This cannot be undone.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button
-                  className="flex-1 h-9 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                  onClick={() => setArchiveConfirmOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="flex-1 h-9 rounded-lg text-[13px] font-bold text-white transition-colors"
-                  style={{ background: "#DC2626" }}
-                  onClick={() => { setArchiveConfirmOpen(false); onArchive?.(); }}
-                >
-                  Archive
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
+        <ArchiveConfirmModal
+          groupName={r.groupName}
+          onCancel={() => setArchiveConfirmOpen(false)}
+          onConfirm={() => { setArchiveConfirmOpen(false); onArchive?.(); }}
+        />
       )}
 
       <div
-        className="bg-white rounded-xl border mb-3 cursor-pointer"
         style={{
-          boxShadow:   hovered ? "0 4px 16px rgba(0,0,0,0.13)" : "0 1px 4px rgba(0,0,0,0.09)",
-          transition:  "box-shadow 150ms ease",
-          borderStyle: r.onHold ? "dashed" : "solid",
-          borderColor: r.onHold ? "#F59E0B" : "#D1D5DB",
-          opacity:     (isRejected || isDisbursed) ? 0.8 : 1,
+          background: "#ffffff",
+          borderRadius: "12px",
+          border: r.onHold
+            ? `1.5px dashed var(--yellow-500)`
+            : `1px solid var(--gray-200)`,
+          boxShadow: hovered
+            ? "0px 4px 16px rgba(16,24,40,0.10)"
+            : "0px 1px 3px rgba(16,24,40,0.06)",
+          transform: hovered ? "translateY(-2px)" : "none",
+          transition: "box-shadow 0.2s, transform 0.2s",
+          opacity: cardOpacity,
+          marginBottom: 10,
+          cursor: "pointer",
         }}
         onClick={onView}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="p-4">
-          {/* Group name */}
-          <div className="flex items-start justify-between gap-2 mb-0.5">
-            <p className="text-[15px] font-semibold text-gray-900 leading-snug flex-1">{r.groupName}</p>
-            {(isRejected || isDisbursed || isPending) && onArchive && (
+        <div style={{ padding: "16px" }}>
+
+          {/* Group name + archive button */}
+          <div className="flex items-start justify-between gap-2" style={{ marginBottom: 2 }}>
+            <p style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--gray-900)", lineHeight: 1.3, flex: 1 }}>
+              {r.groupName}
+            </p>
+            {showArchive && (
               <button
-                className="flex items-center gap-1 h-6 px-1.5 rounded-md text-gray-500 bg-gray-100 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5 -mr-1"
+                className="flex items-center gap-1 shrink-0 transition-colors"
+                style={{
+                  height: 24, padding: "0 6px",
+                  borderRadius: "6px",
+                  background: "var(--gray-100)",
+                  color: "var(--gray-500)",
+                  border: "none", cursor: "pointer",
+                  marginTop: -2, marginRight: -2,
+                  fontSize: "0.625rem", fontWeight: 600,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--error-50)";
+                  e.currentTarget.style.color = "var(--error-600)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--gray-100)";
+                  e.currentTarget.style.color = "var(--gray-500)";
+                }}
                 onClick={(e) => { e.stopPropagation(); setArchiveConfirmOpen(true); }}
                 title="Archive request"
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                   <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-[10px] font-semibold">Archive</span>
+                Archive
               </button>
             )}
           </div>
 
-          {/* Community · farmers + optional score badge */}
-          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-            <p className="text-[12px] font-medium text-gray-500 truncate">
+          {/* Community · farmers count + optional score badge */}
+          <div className="flex items-center flex-wrap gap-1.5" style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--gray-500)" }}>
               {r.community} &middot; {r.farmers} farmers
             </p>
             {r.score !== null && (isPending || isAgentConf || isFinance || isDisbursed || isOptedOut) && (
               <>
-                <span className="text-[12px] text-gray-400">&middot;</span>
+                <span style={{ fontSize: "0.75rem", color: "var(--gray-400)" }}>&middot;</span>
                 <ScoreBadge score={r.score} />
               </>
             )}
           </div>
 
-          {/* Support type badges — synced / pending / rejected */}
+          {/* Support interest badges */}
           {(isSynced || isPending || isRejected) && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5" style={{ marginBottom: 12 }}>
               {r.supportInterests.map((si) => (
                 <div key={si.rank} className="flex items-center gap-1">
                   {isPending && (
-                    <span className="text-[10px] font-semibold text-gray-400">
+                    <span style={{ fontSize: "0.625rem", fontWeight: 700, color: "var(--gray-400)" }}>
                       {si.rank === "Primary" ? "1°" : "2°"}
                     </span>
                   )}
@@ -349,9 +357,9 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
 
           {/* Agent confirmation: approved type + total value */}
           {isAgentConf && (
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
               {r.approvedSupportType && <SupportPill type={r.approvedSupportType} />}
-              <span className="text-[13px] font-semibold text-gray-700">
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--gray-700)" }}>
                 {r.approvedSupportType === "Cash"
                   ? `GHS ${((r.approvedAmountPerFarmer ?? 0) * r.farmers).toLocaleString()}`
                   : r.approvedLandSizePerFarmer
@@ -363,97 +371,116 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
 
           {/* Finance: MoMo info */}
           {isFinance && (
-            <div className="rounded-lg px-3 py-2 mb-3" style={{ background: "#F3F4F6" }}>
-              <p className="text-[10px] text-gray-400 mb-0.5">MoMo</p>
-              <p className="text-[13px] font-semibold font-mono text-gray-800">{r.momoNumber ?? "—"}</p>
-              <p className="text-[11px] text-gray-500">{r.momoName ?? "—"}</p>
+            <div style={{ borderRadius: "var(--radius)", padding: "8px 12px", marginBottom: 12, background: "var(--gray-100)" }}>
+              <p style={{ fontSize: "0.625rem", color: "var(--gray-400)", marginBottom: 2 }}>MoMo</p>
+              <p style={{ fontSize: "0.875rem", fontWeight: 600, fontFamily: "monospace", color: "var(--gray-800)" }}>{r.momoNumber ?? "—"}</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--gray-500)" }}>{r.momoName ?? "—"}</p>
             </div>
           )}
 
-          {/* Opted-out: compact summary chip — click opens modal */}
+          {/* Opted-out summary chip */}
           {isOptedOut && r.optedOutFarmers && r.optedOutFarmers.length > 0 && (
             <button
-              className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 mb-3 text-left transition-colors hover:opacity-80"
-              style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOptOutOpen(true);
+              className="w-full flex items-center justify-between gap-2 text-left transition-colors"
+              style={{
+                borderRadius: "var(--radius)",
+                padding: "8px 12px", marginBottom: 12,
+                background: "var(--yellow-50)",
+                border: `1px solid var(--yellow-200)`,
               }}
+              onClick={(e) => { e.stopPropagation(); setOptOutOpen(true); }}
             >
               <div className="flex items-center gap-2">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6.5" stroke="#D97706" strokeWidth="1.4" />
-                  <path d="M8 5v3.5M8 10.5v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="8" cy="8" r="6.5" stroke="var(--yellow-600)" strokeWidth="1.4"/>
+                  <path d="M8 5v3.5M8 10.5v.5" stroke="var(--yellow-600)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <span className="text-[12px] font-semibold text-amber-700">
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--yellow-700)" }}>
                   {r.optedOutFarmers.length} farmer{r.optedOutFarmers.length !== 1 ? "s" : ""} opted out
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-amber-600 shrink-0">Manage →</span>
+              <span style={{ fontSize: "0.6875rem", fontWeight: 500, color: "var(--yellow-600)" }}>Manage →</span>
             </button>
           )}
 
-          {/* Disbursed: amount + recipient */}
+          {/* Disbursed amount */}
           {isDisbursed && (
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[12px] text-gray-400">Disbursed</span>
-                <span className="text-[14px] font-bold text-gray-900">
+            <div style={{ marginBottom: 12 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--gray-400)" }}>Disbursed</span>
+                <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--gray-900)" }}>
                   GHS {r.disbursedAmount?.toLocaleString() ?? "—"}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-500 truncate">{r.momoName ?? r.groupName}</p>
+              <p className="truncate" style={{ fontSize: "0.6875rem", color: "var(--gray-500)" }}>{r.momoName ?? r.groupName}</p>
             </div>
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-100 mb-3" />
+          <div style={{ borderTop: `1px solid var(--gray-100)`, marginBottom: 12 }} />
 
-          {/* Awaiting confirmation text */}
+          {/* Awaiting manager confirmation note */}
           {isAgentConf && (
-            <p className="text-[11px] font-medium italic text-gray-500 mb-3">Awaiting manager confirmation</p>
+            <p style={{ fontSize: "0.75rem", fontStyle: "italic", color: "var(--gray-500)", marginBottom: 12 }}>
+              Awaiting manager confirmation
+            </p>
           )}
 
-          {/* Agent + date row */}
           {agentDateRow}
 
           {/* Reference code */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold font-mono text-gray-500 tracking-wide">{r.id}</span>
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: "0.6875rem", fontWeight: 600, fontFamily: "monospace", color: "var(--gray-500)", letterSpacing: "0.03em" }}>
+              {r.id}
+            </span>
             {isDisbursed && r.transactionId && (
-              <span className="text-[10px] font-mono" style={{ color: "#16A34A" }}>{r.transactionId}</span>
+              <span style={{ fontSize: "0.625rem", fontFamily: "monospace", color: "var(--green-600)" }}>{r.transactionId}</span>
             )}
             {isDisbursed && r.disbursedDate && (
-              <span className="text-[10px] text-gray-400">{r.disbursedDate}</span>
+              <span style={{ fontSize: "0.625rem", color: "var(--gray-400)" }}>{r.disbursedDate}</span>
             )}
           </div>
 
           {/* Rejection reason */}
           {isRejected && r.rejectionComment && (
-            <div className="rounded-lg px-3 py-2 mb-3" style={{ background: "#FEF2F2" }}>
-              <p className="text-[11px] text-red-600 leading-relaxed">{r.rejectionComment}</p>
+            <div style={{ borderRadius: "var(--radius)", padding: "8px 12px", marginBottom: 12, background: "var(--error-50)" }}>
+              <p style={{ fontSize: "0.75rem", color: "var(--error-600)", lineHeight: 1.5 }}>{r.rejectionComment}</p>
             </div>
           )}
 
           {/* On-hold badge */}
           {r.onHold && (
             <div
-              className="mb-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-              style={{ background: "#FFFBEB", color: "#D97706" }}
+              className="inline-flex items-center gap-1.5"
+              style={{
+                marginBottom: 10,
+                padding: "2px 10px",
+                borderRadius: "9999px",
+                background: "var(--yellow-50)",
+                color: "var(--yellow-700)",
+                fontSize: "0.6875rem", fontWeight: 600,
+              }}
             >
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M6 5v6M10 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M6 5v6M10 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               On Hold
             </div>
           )}
 
-          {/* CTA button */}
+          {/* CTA button — Treesyt Default size: height 36px */}
           {ctaLabel && (
             <button
-              className="w-full h-9 rounded-lg text-[13px] font-bold transition-colors"
-              style={ctaStyle}
+              className="w-full transition-colors"
+              style={{
+                ...ctaStyle,
+                height: 36,
+                borderRadius: "var(--radius)",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
               onClick={(e) => { e.stopPropagation(); onCta(e); }}
             >
               {ctaLabel}

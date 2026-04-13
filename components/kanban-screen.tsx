@@ -68,26 +68,30 @@ export default function KanbanScreen() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 shrink-0" style={{ background: "#FFFFFF" }}>
-        <span className="text-[13px] text-gray-400 font-medium">Farmer support</span>
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 shrink-0" style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}>
+        <span style={{ fontSize: "0.8125rem", color: "var(--gray-400)", fontWeight: 500 }}>Farmer support</span>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M5 3l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5 3l4 4-4 4" stroke="var(--gray-300)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[13px] font-bold text-gray-800">Requesting groups</span>
+        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--gray-800)" }}>Requesting groups</span>
       </div>
 
       {/* ── Flow tabs ── */}
-      <div className="shrink-0 flex overflow-x-auto bg-white scrollbar-none">
+      <div
+        className="shrink-0 flex overflow-x-auto scrollbar-none"
+        style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}
+      >
         {FLOWS.map((flow) => (
           <button
             key={flow.id}
             onClick={() => setActiveFlow(flow.id)}
-            className="shrink-0 h-11 px-4 sm:px-5 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap"
-            style={activeFlow === flow.id
-              ? { borderBottomColor: "#16A34A", color: "#16A34A" }
-              : { borderBottomColor: "transparent", color: "#6B7280" }}
+            className="shrink-0 h-11 px-4 sm:px-5 border-b-2 transition-colors whitespace-nowrap"
+            style={
+              activeFlow === flow.id
+                ? { borderBottomColor: "var(--green-600)", color: "var(--green-600)", fontSize: "0.8125rem", fontWeight: 600 }
+                : { borderBottomColor: "transparent",      color: "var(--gray-500)",  fontSize: "0.8125rem", fontWeight: 500 }
+            }
           >
-            {/* Show short label on small screens, full label on sm+ */}
             <span className="sm:hidden">{flow.shortLabel}</span>
             <span className="hidden sm:inline">{flow.label}</span>
           </button>
@@ -102,13 +106,16 @@ export default function KanbanScreen() {
             agents={agents}
             onFilterChange={handleFilterChange}
             rightSlot={
-              <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#F3F4F6" }}>
+              <div
+                className="flex items-center rounded-lg p-0.5 gap-0.5"
+                style={{ background: "var(--gray-100)" }}
+              >
                 <button
                   onClick={() => setViewMode("pipeline")}
-                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md transition-all"
                   style={viewMode === "pipeline"
-                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                    : { background: "transparent", color: "#6B7280" }}
+                    ? { background: "#ffffff", color: "var(--gray-900)", fontSize: "0.75rem", fontWeight: 600, boxShadow: "0px 1px 3px rgba(16,24,40,0.08)" }
+                    : { background: "transparent", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
@@ -119,10 +126,10 @@ export default function KanbanScreen() {
                 </button>
                 <button
                   onClick={() => setViewMode("records")}
-                  className="flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-semibold transition-all"
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-md transition-all"
                   style={viewMode === "records"
-                    ? { background: "#FFFFFF", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
-                    : { background: "transparent", color: "#6B7280" }}
+                    ? { background: "#ffffff", color: "var(--gray-900)", fontSize: "0.75rem", fontWeight: 600, boxShadow: "0px 1px 3px rgba(16,24,40,0.08)" }
+                    : { background: "transparent", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
@@ -139,7 +146,10 @@ export default function KanbanScreen() {
           {viewMode === "pipeline" && (
             <>
               {/* Mobile: column tab strip */}
-              <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
+              <div
+                className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 scrollbar-none"
+                style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}
+              >
                 {COLUMNS.map((col) => {
                   const count    = filtered.filter((r) => r.stage === col.id).length;
                   const isActive = mobileColId === col.id;
@@ -147,10 +157,10 @@ export default function KanbanScreen() {
                     <button
                       key={col.id}
                       onClick={() => setMobileColId(col.id)}
-                      className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
+                      className="shrink-0 h-8 px-3 rounded-full whitespace-nowrap transition-colors"
                       style={isActive
-                        ? { background: col.dotColor, color: "white" }
-                        : { background: "#F3F4F6", color: "#6B7280" }}
+                        ? { background: col.dotColor, color: "#ffffff", fontSize: "0.75rem", fontWeight: 600 }
+                        : { background: "var(--gray-100)", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
                     >
                       {col.label} ({count})
                     </button>
@@ -159,7 +169,7 @@ export default function KanbanScreen() {
               </div>
 
               {/* Mobile: single column view */}
-              <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "#FAFAFA" }}>
+              <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "var(--gray-50)" }}>
                 <div className="px-4 py-4">
                   {(() => {
                     const col   = COLUMNS.find((c) => c.id === mobileColId)!;
@@ -172,7 +182,7 @@ export default function KanbanScreen() {
                     }
                     if (cards.length === 0) return (
                       <div className="flex items-center justify-center h-32">
-                        <span className="text-[13px] text-gray-300">No requests</span>
+                        <span style={{ fontSize: "0.8125rem", color: "var(--gray-300)" }}>No requests</span>
                       </div>
                     );
                     return cards.map((r) => (
@@ -190,7 +200,7 @@ export default function KanbanScreen() {
               </div>
 
               {/* Desktop: all columns, horizontal scroll */}
-              <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "#FAFAFA" }}>
+              <div className="hidden lg:block" style={{ flex: 1, overflowX: "auto", overflowY: "hidden", background: "var(--gray-50)" }}>
                 <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
                   {COLUMNS.map((col) => {
                     let cards = filtered.filter((r) => r.stage === col.id);
@@ -216,7 +226,7 @@ export default function KanbanScreen() {
                           <div style={{ paddingBottom: 16 }}>
                             {cards.length === 0 ? (
                               <div className="flex items-center justify-center h-20">
-                                <span className="text-[12px] text-gray-300">No requests</span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--gray-300)" }}>No requests</span>
                               </div>
                             ) : (
                               cards.map((r) => (
@@ -242,7 +252,7 @@ export default function KanbanScreen() {
 
           {/* ── Records view ── */}
           {viewMode === "records" && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: "#FAFAFA" }}>
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: "var(--gray-50)" }}>
               <DisbursementRecordsTable
                 records={filtered.filter((r) => r.stage === "disbursed")}
               />
