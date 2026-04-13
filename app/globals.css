@@ -3,40 +3,122 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Treesyt Design System — Token Layer
+   All CSS custom properties from the Treesyt design system are defined here
+   and co-exist with the Shadcn/Radix compatibility variables below.
+───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.527 0.154 150.069); /* #16A34A TreeSyt green */
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.527 0.154 150.069); /* TreeSyt green focus ring */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  /* ── Green (Brand) ─────────────────────────────────────────── */
+  --green-25:  #effaf6;
+  --green-50:  #e8f7f1;
+  --green-100: #b8e7d4;
+  --green-200: #96dcbf;
+  --green-300: #66cca1;
+  --green-400: #48c28f;
+  --green-500: #1ab373;
+  --green-600: #18a369;
+  --green-700: #127f52;
+  --green-800: #0e623f;
+  --green-900: #09402a;
+
+  /* ── Success ───────────────────────────────────────────────── */
+  --success-50:  #e9f9ef;
+  --success-500: #22c55e;
+  --success-600: #1fb356;
+  --success-700: #188c43;
+
+  /* ── Gray (Neutral) ────────────────────────────────────────── */
+  --gray-50:  #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #737373;
+  --gray-600: #696969;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
+
+  /* ── Error / Danger ────────────────────────────────────────── */
+  --error-50:  #fcebea;
+  --error-100: #f4c1be;
+  --error-200: #efa39f;
+  --error-300: #e87873;
+  --error-400: #e35e58;
+  --error-500: #dc362e;
+  --error-600: #c8312a;
+  --error-700: #9c2621;
+  --error-800: #791e19;
+  --error-900: #5c1713;
+
+  /* ── Yellow (Warning) ──────────────────────────────────────── */
+  --yellow-50:  #fffbeb;
+  --yellow-100: #fef3c7;
+  --yellow-200: #fde68a;
+  --yellow-300: #fcd34d;
+  --yellow-400: #fbbf24;
+  --yellow-500: #f59e0b;
+  --yellow-600: #d97706;
+  --yellow-700: #b45309;
+  --yellow-800: #92400e;
+  --yellow-900: #78350f;
+
+  /* ── Blue ──────────────────────────────────────────────────── */
+  --blue-50:  #e7eff8;
+  --blue-100: #b4cdea;
+  --blue-200: #90b5df;
+  --blue-300: #6993d1;
+  --blue-400: #3d81c8;
+  --blue-500: #0d5eba;
+  --blue-600: #0c56a9;
+  --blue-700: #094384;
+  --blue-800: #073466;
+  --blue-900: #05264c;
+
+  /* ── Status semantic colors ────────────────────────────────── */
+  --status-pending-bg:   #fffbeb; --status-pending-text:   #b45309; --status-pending-border:   #fde68a;
+  --status-success-bg:   #e9f9ef; --status-success-text:   #188c43; --status-success-border:   #86efac;
+  --status-ongoing-bg:   #e7eff8; --status-ongoing-text:   #094384; --status-ongoing-border:   #b4cdea;
+  --status-rejected-bg:  #fcebea; --status-rejected-text:  #9c2621; --status-rejected-border:  #f4c1be;
+  --status-on-hold-bg:   #f5f5f5; --status-on-hold-text:   #404040; --status-on-hold-border:   #e5e5e5;
+
+  /* ── Border radius ─────────────────────────────────────────── */
+  --radius: 0.5714rem; /* 8px at 14px base */
+
+  /* ── Shadcn/Radix compatibility ────────────────────────────── */
+  --background:                oklch(1 0 0);
+  --foreground:                oklch(0.145 0 0);
+  --card:                      oklch(1 0 0);
+  --card-foreground:           oklch(0.145 0 0);
+  --popover:                   oklch(1 0 0);
+  --popover-foreground:        oklch(0.145 0 0);
+  --primary:                   oklch(0.527 0.154 150.069); /* ≈ green-600 #18a369 */
+  --primary-foreground:        oklch(0.985 0 0);
+  --secondary:                 oklch(0.97 0 0);
+  --secondary-foreground:      oklch(0.205 0 0);
+  --muted:                     oklch(0.97 0 0);
+  --muted-foreground:          oklch(0.556 0 0);
+  --accent:                    oklch(0.97 0 0);
+  --accent-foreground:         oklch(0.205 0 0);
+  --destructive:               oklch(0.432 0.17 25);    /* ≈ error-600 #c8312a */
+  --destructive-foreground:    oklch(0.985 0 0);
+  --border:                    oklch(0.9 0 0);           /* ≈ gray-200 */
+  --input:                     oklch(0.9 0 0);
+  --ring:                      oklch(0.527 0.154 150.069);
+  --chart-1:                   oklch(0.646 0.222 41.116);
+  --chart-2:                   oklch(0.6 0.118 184.704);
+  --chart-3:                   oklch(0.398 0.07 227.392);
+  --chart-4:                   oklch(0.828 0.189 84.429);
+  --chart-5:                   oklch(0.769 0.188 70.08);
+  --sidebar:                   oklch(0.985 0 0);
+  --sidebar-foreground:        oklch(0.145 0 0);
+  --sidebar-primary:           oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent:            oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-border:            oklch(0.922 0 0);
+  --sidebar-ring:              oklch(0.708 0 0);
 }
 
 .dark {
@@ -75,8 +157,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -101,9 +183,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -115,11 +197,31 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Base ───────────────────────────────────────────────────────── */
+html {
+  font-size: 14px; /* Treesyt base: 1rem = 14px */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--gray-800);
   }
 }
+
+/* ─── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* ─── Motion Keyframes ───────────────────────────────────────────── */
+@keyframes grow     { from { width: 0 }   to { width: 100% } }
+@keyframes growDown { from { height: 0 }  to { height: 100% } }
+@keyframes growUp   { from { height: 0 }  to { height: 100px } }
