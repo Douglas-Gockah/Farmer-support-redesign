@@ -304,15 +304,16 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
             <p className="text-[15px] font-semibold text-gray-900 leading-snug flex-1">{r.groupName}</p>
             {(isRejected || isDisbursed) && onArchive && (
               <button
-                className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5 -mr-1"
+                className="flex items-center gap-1 h-6 px-1.5 rounded-md text-gray-500 bg-gray-100 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5 -mr-1"
                 onClick={(e) => { e.stopPropagation(); setArchiveConfirmOpen(true); }}
                 title="Archive request"
               >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                  <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.4"/>
-                  <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
+                <span className="text-[10px] font-semibold">Archive</span>
               </button>
             )}
           </div>
