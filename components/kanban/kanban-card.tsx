@@ -302,7 +302,7 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
           {/* Group name */}
           <div className="flex items-start justify-between gap-2 mb-0.5">
             <p className="text-[15px] font-semibold text-gray-900 leading-snug flex-1">{r.groupName}</p>
-            {(isRejected || isDisbursed) && onArchive && (
+            {(isRejected || isDisbursed || isPending) && onArchive && (
               <button
                 className="flex items-center gap-1 h-6 px-1.5 rounded-md text-gray-500 bg-gray-100 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5 -mr-1"
                 onClick={(e) => { e.stopPropagation(); setArchiveConfirmOpen(true); }}

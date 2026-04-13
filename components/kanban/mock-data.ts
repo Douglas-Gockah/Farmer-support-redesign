@@ -519,6 +519,11 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
       { id: "N018", name: "Mariama Nantomah",  received: false },
       { id: "N019", name: "Fatimatu Laar",     received: false },
     ],
+    optedOutFarmers: [
+      { id: "OPT-N-001", name: "Duni Tichanni" },
+      { id: "OPT-N-002", name: "Awabla Bugri"  },
+      { id: "OPT-N-003", name: "Asibi Yalpak"  },
+    ],
   },
   {
     id: "FS-2024-015",
@@ -562,6 +567,10 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
       { id: "T026", name: "Ekua Wuni",         received: false },
       { id: "T027", name: "Naana Dimari",      received: false },
       { id: "T028", name: "Serwaa Bawa",       received: false },
+    ],
+    optedOutFarmers: [
+      { id: "OPT-T-001", name: "Kusohuba Duku"  },
+      { id: "OPT-T-002", name: "Mercy Bakanyin" },
     ],
   },
 

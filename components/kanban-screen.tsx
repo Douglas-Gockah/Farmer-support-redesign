@@ -182,7 +182,7 @@ export default function KanbanScreen() {
                         ctaLabel={col.ctaLabel}
                         onCta={() => ctaAction(r, col.id)}
                         onView={() => cardOnView(r, col.id)}
-                        onArchive={(col.id === "rejected" || col.id === "disbursed") ? () => archiveRequest(r.id) : undefined}
+                        onArchive={(col.id === "rejected" || col.id === "disbursed" || col.id === "pending_approval") ? () => archiveRequest(r.id) : undefined}
                       />
                     ));
                   })()}
@@ -226,7 +226,7 @@ export default function KanbanScreen() {
                                   ctaLabel={col.ctaLabel}
                                   onCta={() => ctaAction(r, col.id)}
                                   onView={() => cardOnView(r, col.id)}
-                                  onArchive={(col.id === "rejected" || col.id === "disbursed") ? () => archiveRequest(r.id) : undefined}
+                                  onArchive={(col.id === "rejected" || col.id === "disbursed" || col.id === "pending_approval") ? () => archiveRequest(r.id) : undefined}
                                 />
                               ))
                             )}

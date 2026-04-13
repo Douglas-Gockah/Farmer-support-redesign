@@ -289,6 +289,7 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
 function FarmersPanel({ req }: { req: FulfillmentRequest }) {
   const received = req.confirmedFarmers.filter((f) => f.received);
   const pending = req.confirmedFarmers.filter((f) => !f.received);
+  const optedOut = req.optedOutFarmers ?? [];
   const isFull = req.fulfillmentStage === "fully_fulfilled";
   const isPending = req.fulfillmentStage === "pending_fulfillment";
 
@@ -308,7 +309,7 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
             ? "Voice recordings collected as proof of receipt."
             : isPending
             ? "Funds have been disbursed. Awaiting farmer confirmations."
-            : `${received.length} confirmed · ${pending.length} pending`}
+            : `${received.length} confirmed · ${pending.length} pending${optedOut.length > 0 ? ` · ${optedOut.length} opted out` : ""}`}
         </p>
       </div>
 
@@ -362,6 +363,54 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
                   amountPerFarmer={req.approvedAmountPerFarmer}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Opted-out section */}
+        {optedOut.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: "#F59E0B" }}
+              />
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#D97706" }}>
+                Opted out ({optedOut.length})
+              </span>
+            </div>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #FDE68A", background: "#FFFBEB" }}>
+              {optedOut.map((f, idx) => {
+                const color = avatarColor(f.name);
+                return (
+                  <div
+                    key={f.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{ borderTop: idx > 0 ? "1px solid #FDE68A" : undefined }}
+                  >
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                      style={{ background: color }}
+                    >
+                      {initials(f.name)}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-800 truncate">{f.name}</p>
+                      <p className="text-[11px] text-amber-600 font-mono">{f.id}</p>
+                    </div>
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0"
+                      style={{ background: "#FEF3C7", color: "#D97706" }}
+                    >
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                        <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.3"/>
+                        <path d="M5 3v2.5M5 7v.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                      Opted out
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
