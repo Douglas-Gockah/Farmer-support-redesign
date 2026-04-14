@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { FarmerRequest } from "@/components/kanban/types";
+import type { FarmerRequest, DisbursementBreakdown } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,7 +38,7 @@ function generateTxId() {
 // ---------------------------------------------------------------------------
 // Left panel — disbursement context (used in Verify + Confirm steps)
 // ---------------------------------------------------------------------------
-function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
+function DisbursementContextPanel({ card }: { card: FarmerRequest; }) {
   const agentInitials = initials(card.agent);
   const agentColor    = avatarColor(card.agent);
   const isCash = card.approvedSupportType === "Cash";
@@ -121,6 +122,13 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
           </div>
         </div>
       </div>
+
+      {/* Action timeline */}
+      {(card.actionHistory ?? []).length > 0 && (
+        <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16 }}>
+          <ActionTimeline records={card.actionHistory ?? []} />
+        </div>
+      )}
     </div>
   );
 }
@@ -316,7 +324,7 @@ function ConfirmStep({
   onClose,
 }: {
   card: FarmerRequest;
-  onDisburse: () => void;
+  onDisburse: (breakdown: DisbursementBreakdown) => void;
   onClose: () => void;
 }) {
   const totalAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
@@ -509,7 +517,15 @@ function ConfirmStep({
 
             {/* Footer */}
             <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
-              <Button onClick={onDisburse} className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-11 text-[14px] font-bold">
+              <Button
+                onClick={() => onDisburse({
+                  baseAmount: totalAmount,
+                  withdrawalCharge,
+                  transportAllowance: transportCharge,
+                  total: grandTotal,
+                })}
+                className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-11 text-[14px] font-bold"
+              >
                 Disburse funds
               </Button>
             </div>
@@ -560,37 +576,76 @@ function ProcessingStep({ open, onSuccess }: { open: boolean; onSuccess: () => v
 }
 
 // ---------------------------------------------------------------------------
-// STEP 4 — Success (narrow, unchanged)
+// STEP 4 — Success (narrow)
 // ---------------------------------------------------------------------------
-function SuccessStep({ open, card, txId, amount, onClose }: { open: boolean; card: FarmerRequest; txId: string; amount: number; onClose: () => void }) {
+function SuccessStep({
+  open, card, txId, amount, breakdown, onClose,
+}: {
+  open: boolean;
+  card: FarmerRequest;
+  txId: string;
+  amount: number;
+  breakdown?: DisbursementBreakdown;
+  onClose: () => void;
+}) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GH", { day: "2-digit", month: "short", year: "numeric" });
   const timeStr = now.toLocaleTimeString("en-GH", { hour: "2-digit", minute: "2-digit" });
+  const total = breakdown?.total ?? amount;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[400px] p-0">
+      <DialogContent className="max-w-[440px] p-0">
         <div className="flex flex-col items-center px-8 py-10 text-center gap-5">
           <div className="w-16 h-16 rounded-full bg-[var(--green-100)] flex items-center justify-center">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7 17l6 6 12-12" stroke="var(--green-600)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <h2 className="text-[20px] font-bold text-[var(--green-600)]">Disbursement successful</h2>
+
+          {/* Transaction summary */}
           <div className="w-full rounded-xl p-5 space-y-3 text-left" style={{ background: "var(--green-25)" }}>
-            {[
-              { label: "Amount paid",  value: formatGHS(amount) },
-              { label: "Recipient",    value: card.groupName },
-              { label: "Date & time",  value: `${dateStr} · ${timeStr}` },
-            ].map((row) => (
-              <div key={row.label} className="flex justify-between">
-                <span className="text-[13px] text-gray-400">{row.label}</span>
-                <span className="text-[13px] font-semibold text-gray-900">{row.value}</span>
-              </div>
-            ))}
+            <div className="flex justify-between">
+              <span className="text-[13px] text-gray-400">Recipient</span>
+              <span className="text-[13px] font-semibold text-gray-900">{card.groupName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[13px] text-gray-400">Date &amp; time</span>
+              <span className="text-[13px] font-semibold text-gray-900">{dateStr} · {timeStr}</span>
+            </div>
             <div className="flex justify-between">
               <span className="text-[13px] text-gray-400">Transaction ID</span>
               <span className="text-[13px] font-semibold text-[var(--green-600)]">{txId}</span>
             </div>
           </div>
+
+          {/* Disbursement breakdown */}
+          <div className="w-full rounded-xl border border-gray-200 overflow-hidden text-left">
+            <div className="px-4 py-2.5 border-b border-gray-100" style={{ background: "var(--gray-50)" }}>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Disbursement Breakdown</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {[
+                { label: "Base amount",            value: breakdown?.baseAmount ?? amount },
+                { label: "Withdrawal charge",       value: breakdown?.withdrawalCharge ?? 0 },
+                { label: "Transportation allowance", value: breakdown?.transportAllowance ?? 0 },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-[12px] text-gray-500">{row.label}</span>
+                  <span className="text-[12px] font-medium text-gray-700">
+                    {row.value > 0 ? formatGHS(row.value) : <span className="text-gray-300">GHS 0.00</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ background: "var(--green-25)", borderTop: "2px solid var(--green-200)" }}
+            >
+              <span className="text-[13px] font-bold text-gray-900">Total disbursed</span>
+              <span className="text-[15px] font-bold" style={{ color: "var(--green-600)" }}>{formatGHS(total)}</span>
+            </div>
+          </div>
+
           <Button onClick={onClose} className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-11 text-[14px] font-bold">
             Okay
           </Button>
@@ -610,14 +665,16 @@ export default function DisbursementModal({
 }: {
   card: FarmerRequest;
   onClose: () => void;
-  onDisbursed: (id: string, txId: string, amount: number) => void;
+  onDisbursed: (id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown) => void;
 }) {
-  const [step, setStep] = useState<DisburseStep>("verify");
-  const [txId]  = useState(generateTxId);
-  const amount  = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
+  const [step,      setStep]      = useState<DisburseStep>("verify");
+  const [txId]                    = useState(generateTxId);
+  const [breakdown, setBreakdown] = useState<DisbursementBreakdown | undefined>(undefined);
+  const baseAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
 
   function handleDisbursed() {
-    onDisbursed(card.id, txId, amount);
+    const total = breakdown?.total ?? baseAmount;
+    onDisbursed(card.id, txId, total, breakdown);
     onClose();
   }
 
@@ -625,12 +682,25 @@ export default function DisbursementModal({
     return <VerifyStep card={card} onProceed={() => setStep("confirm")} onClose={onClose} />;
   }
   if (step === "confirm") {
-    return <ConfirmStep card={card} onDisburse={() => setStep("processing")} onClose={onClose} />;
+    return (
+      <ConfirmStep
+        card={card}
+        onDisburse={(bd) => { setBreakdown(bd); setStep("processing"); }}
+        onClose={onClose}
+      />
+    );
   }
   return (
     <>
       <ProcessingStep open={step === "processing"} onSuccess={() => setStep("success")} />
-      <SuccessStep    open={step === "success"}    card={card} txId={txId} amount={amount} onClose={handleDisbursed} />
+      <SuccessStep
+        open={step === "success"}
+        card={card}
+        txId={txId}
+        amount={breakdown?.total ?? baseAmount}
+        breakdown={breakdown}
+        onClose={handleDisbursed}
+      />
     </>
   );
 }

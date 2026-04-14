@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import type { FarmerRequest } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
+
+function formatGHS(n: number) {
+  return `GHS ${n.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,6 +84,7 @@ function Td({
 function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose: () => void }) {
   const agentColor    = avatarColor(record.agent);
   const agentInitials = initials(record.agent);
+  const bd            = record.disbursementBreakdown;
 
   const rows: Array<{ label: string; value: React.ReactNode }> = [
     { label: "Request ID",      value: <span className="font-mono text-[13px] text-green-700">{record.id}</span> },
@@ -117,7 +123,7 @@ function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
           className="pointer-events-auto w-full flex flex-col bg-white rounded-2xl shadow-2xl"
-          style={{ maxWidth: 560, maxHeight: "calc(100vh - 64px)" }}
+          style={{ maxWidth: 600, maxHeight: "calc(100vh - 64px)" }}
         >
           {/* Header */}
           <div className="flex items-start justify-between px-6 pt-5 pb-4 shrink-0">
@@ -136,37 +142,81 @@ function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose
             </button>
           </div>
 
-          {/* Disbursed amount hero */}
-          <div className="mx-6 mb-4 rounded-xl px-5 py-4 shrink-0" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
-            <p className="text-[11px] font-semibold text-green-600 uppercase tracking-wider mb-1">Total Amount Disbursed</p>
-            <p className="text-[30px] font-bold text-green-800 leading-none">
-              GHS {record.disbursedAmount?.toLocaleString() ?? "—"}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[12px] text-green-700">{record.disbursedDate}</span>
-              {record.transactionId && (
-                <>
-                  <span className="text-green-300">·</span>
-                  <span className="font-mono text-[11px] text-green-600">{record.transactionId}</span>
-                </>
-              )}
-            </div>
-          </div>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-6 min-h-0 space-y-5 pb-2">
 
-          {/* Detail rows — scrollable if content overflows */}
-          <div className="flex-1 overflow-y-auto px-6 min-h-0">
-            <div className="divide-y divide-gray-100">
-              {rows.map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between gap-6 py-3">
-                  <span className="text-[12px] text-gray-400 shrink-0 w-32">{label}</span>
-                  <span className="text-[13px] text-gray-800 text-right">{value}</span>
-                </div>
-              ))}
+            {/* Disbursed amount hero */}
+            <div className="rounded-xl px-5 py-4" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+              <p className="text-[11px] font-semibold text-green-600 uppercase tracking-wider mb-1">Total Amount Disbursed</p>
+              <p className="text-[30px] font-bold text-green-800 leading-none">
+                {record.disbursedAmount != null ? formatGHS(record.disbursedAmount) : "—"}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[12px] text-green-700">{record.disbursedDate}</span>
+                {record.transactionId && (
+                  <>
+                    <span className="text-green-300">·</span>
+                    <span className="font-mono text-[11px] text-green-600">{record.transactionId}</span>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Disbursement breakdown */}
+            <div>
+              <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Disbursement Breakdown</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {[
+                  { label: "Base amount",             value: bd?.baseAmount ?? record.disbursedAmount ?? 0 },
+                  { label: "Withdrawal charge",        value: bd?.withdrawalCharge ?? 0 },
+                  { label: "Transportation allowance", value: bd?.transportAllowance ?? 0 },
+                ].map((row, i, arr) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between px-4 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[12px] text-gray-500">{row.label}</span>
+                    <span className="text-[12px] font-medium text-gray-700">
+                      {row.value > 0 ? formatGHS(row.value) : <span className="text-gray-300">GHS 0.00</span>}
+                    </span>
+                  </div>
+                ))}
+                <div
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{ background: "var(--green-25)", borderTop: "2px solid var(--green-200)" }}
+                >
+                  <span className="text-[13px] font-bold text-gray-900">Total disbursed</span>
+                  <span className="text-[14px] font-bold" style={{ color: "var(--green-600)" }}>
+                    {record.disbursedAmount != null ? formatGHS(record.disbursedAmount) : "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Detail rows */}
+            <div>
+              <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Request Details</p>
+              <div className="divide-y divide-gray-100">
+                {rows.map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between gap-6 py-3">
+                    <span className="text-[12px] text-gray-400 shrink-0 w-32">{label}</span>
+                    <span className="text-[13px] text-gray-800 text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Full action timeline */}
+            <ActionTimeline
+              records={record.actionHistory ?? []}
+              title="Full Action History"
+            />
+
           </div>
 
           {/* Footer */}
-          <div className="shrink-0 px-6 py-4 border-t border-gray-100 mt-2">
+          <div className="shrink-0 px-6 py-4 border-t border-gray-100">
             <button
               onClick={onClose}
               className="w-full h-9 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"

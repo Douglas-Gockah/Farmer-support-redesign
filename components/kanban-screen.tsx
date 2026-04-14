@@ -42,6 +42,7 @@ export default function KanbanScreen() {
   const handleFilterChange = useCallback((f: ActiveFilters) => setActiveFilters(f), []);
 
   const {
+    requests,
     filtered, agents,
     selectedCard, setSelectedCard,
     reviewCard,   setReviewCard,
@@ -53,8 +54,16 @@ export default function KanbanScreen() {
     ctaAction,
     handleApproved, handleManagerConfirmed,
     handleHeld, handleRejected, handleScored, handleDisbursed,
+    handleAmountEdited,
     archiveRequest,
   } = useKanbanState(activeFilters);
+
+  // Live card derivation — ensures modals always see the latest actionHistory
+  // after in-session edits (e.g. amount changes) update the requests array.
+  const liveScoreCard    = scoreCard    ? (requests.find((r) => r.id === scoreCard.id)    ?? scoreCard)    : null;
+  const liveReviewCard   = reviewCard   ? (requests.find((r) => r.id === reviewCard.id)   ?? reviewCard)   : null;
+  const liveManagerCard  = managerCard  ? (requests.find((r) => r.id === managerCard.id)  ?? managerCard)  : null;
+  const liveDisburseCard = disburseCard ? (requests.find((r) => r.id === disburseCard.id) ?? disburseCard) : null;
 
   function cardOnView(r: Parameters<typeof setSelectedCard>[0], colId: string) {
     if (colId === "synced")               return setScoreCard(r);
@@ -268,9 +277,9 @@ export default function KanbanScreen() {
       {activeFlow === "recoveries" && <RecoveriesBoard />}
 
       {/* Modals + panels */}
-      {managerCard && (
+      {liveManagerCard && (
         <ManagerConfirmationModal
-          card={managerCard}
+          card={liveManagerCard}
           onClose={() => setManagerCard(null)}
           onConfirmed={handleManagerConfirmed}
         />
@@ -284,25 +293,26 @@ export default function KanbanScreen() {
           onDisburse={(card) => { setSelectedCard(null); setDisburseCard(card); }}
         />
       )}
-      {reviewCard && (
+      {liveReviewCard && (
         <ApprovalModal
-          card={reviewCard}
+          card={liveReviewCard}
           onClose={() => setReviewCard(null)}
           onApproved={handleApproved}
           onHeld={handleHeld}
           onRejected={handleRejected}
+          onAmountEdited={handleAmountEdited}
         />
       )}
-      {scoreCard && (
+      {liveScoreCard && (
         <ScoringModal
-          card={scoreCard}
+          card={liveScoreCard}
           onClose={() => setScoreCard(null)}
           onScored={handleScored}
         />
       )}
-      {disburseCard && (
+      {liveDisburseCard && (
         <DisbursementModal
-          card={disburseCard}
+          card={liveDisburseCard}
           onClose={() => setDisburseCard(null)}
           onDisbursed={handleDisbursed}
         />

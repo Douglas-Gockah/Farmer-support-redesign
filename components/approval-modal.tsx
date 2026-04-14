@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import type { FarmerRequest, SupportInterest, SupportType } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // ScoreBar
@@ -490,12 +491,14 @@ export default function ApprovalModal({
   onApproved,
   onHeld,
   onRejected,
+  onAmountEdited,
 }: {
   card: FarmerRequest;
   onClose: () => void;
   onApproved: (id: string, type: SupportType, amountPerFarmer?: number, landSizePerFarmer?: number) => void;
   onHeld: (id: string, comment: string) => void;
   onRejected: (id: string, comment: string) => void;
+  onAmountEdited?: (id: string, field: "Cash" | "Land", oldValue: number, newValue: number, reason: string) => void;
 }) {
   const primaryInterest    = card.supportInterests.find((si) => si.rank === "Primary")!;
   const [selectedType, setSelectedType] = useState<SupportType>(primaryInterest.type);
@@ -606,9 +609,17 @@ export default function ApprovalModal({
                       selected={selectedType === si.type}
                       onSelect={() => setSelectedType(si.type)}
                       editableAmount={si.type === "Cash" ? cashAmount : (si.landSizePerFarmer ?? 0)}
-                      onAmountSave={(amount) => {
+                      onAmountSave={(amount, reason) => {
+                        const oldVal = si.type === "Cash" ? cashAmount : ploughLand;
                         if (si.type === "Cash") setCashAmount(amount);
                         else setPloughLand(amount);
+                        onAmountEdited?.(
+                          card.id,
+                          si.type === "Cash" ? "Cash" : "Land",
+                          oldVal,
+                          amount,
+                          reason ?? "",
+                        );
                       }}
                       isDouble={si.type === "Cash" ? cashDouble : false}
                       onToggleDouble={si.type === "Cash" ? () => setCashDouble(!cashDouble) : undefined}
@@ -637,6 +648,9 @@ export default function ApprovalModal({
                   setPayment={setPayment}
                 />
               )}
+
+              {/* Action timeline */}
+              <ActionTimeline records={card.actionHistory ?? []} />
 
               <div className="h-px bg-gray-100" />
 
