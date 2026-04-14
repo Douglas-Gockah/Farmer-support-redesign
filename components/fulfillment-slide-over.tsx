@@ -25,13 +25,13 @@ function VoicePlayer({
   return (
     <button
       className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors"
-      style={{ background: "#F0FDF4", border: "1px solid #DCFCE7" }}
+      style={{ background: "var(--green-25)", border: "1px solid var(--green-100)" }}
       onClick={() => setPlaying((p) => !p)}
     >
       {/* Play / Pause icon */}
       <span
         className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-        style={{ background: "#16A34A", color: "white" }}
+        style={{ background: "var(--green-600)", color: "white" }}
       >
         {playing ? (
           <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor">
@@ -53,7 +53,7 @@ function VoicePlayer({
             className="flex-1 rounded-full"
             style={{
               height: `${h}%`,
-              background: playing && i < 10 ? "#16A34A" : "#86EFAC",
+              background: playing && i < 10 ? "var(--green-600)" : "#86EFAC",
               minWidth: 2,
             }}
           />
@@ -61,7 +61,7 @@ function VoicePlayer({
       </div>
 
       {/* Duration */}
-      <span className="text-[11px] font-mono text-green-700 shrink-0">{duration}</span>
+      <span className="text-[11px] font-mono shrink-0" style={{ color: "var(--green-700)" }}>{duration}</span>
     </button>
   );
 }
@@ -127,12 +127,12 @@ function FarmerRow({
         {farmer.received ? (
           <span
             className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: "#DCFCE7" }}
+            style={{ background: "var(--green-100)" }}
           >
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
               <path
                 d="M2 6l3 3 5-5"
-                stroke="#16A34A"
+                stroke="var(--green-600)"
                 strokeWidth="1.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -142,7 +142,7 @@ function FarmerRow({
         ) : (
           <span
             className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: "#F3F4F6" }}
+            style={{ background: "var(--gray-100)" }}
           >
             <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
               <circle cx="5" cy="5" r="3.5" stroke="#9CA3AF" strokeWidth="1.2" />
@@ -171,8 +171,8 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
     "Pending Fulfilment";
 
   const stageDot =
-    isFull ? "#16A34A" :
-    isPartial ? "#F59E0B" :
+    isFull ? "var(--green-600)" :
+    isPartial ? "var(--yellow-500)" :
     "#7C3AED";
 
   return (
@@ -218,20 +218,20 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
       {(isPartial || isFull) && (
         <div
           className="rounded-xl p-3"
-          style={{ background: isFull ? "#F0FDF4" : "#FFFBEB", border: `1px solid ${isFull ? "#DCFCE7" : "#FDE68A"}` }}
+          style={{ background: isFull ? "var(--green-25)" : "var(--yellow-50)", border: `1px solid ${isFull ? "var(--green-100)" : "var(--yellow-200)"}` }}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[12px] font-semibold" style={{ color: isFull ? "#16A34A" : "#D97706" }}>
+            <span className="text-[12px] font-semibold" style={{ color: isFull ? "var(--green-600)" : "var(--yellow-600)" }}>
               {received} / {total} received
             </span>
-            <span className="text-[12px] font-bold" style={{ color: isFull ? "#16A34A" : "#D97706" }}>
+            <span className="text-[12px] font-bold" style={{ color: isFull ? "var(--green-600)" : "var(--yellow-600)" }}>
               {pct}%
             </span>
           </div>
-          <div className="h-2 rounded-full" style={{ background: isFull ? "#DCFCE7" : "#FEF3C7" }}>
+          <div className="h-2 rounded-full" style={{ background: isFull ? "var(--green-100)" : "var(--yellow-100)" }}>
             <div
               className="h-2 rounded-full"
-              style={{ width: `${pct}%`, background: isFull ? "#16A34A" : "#F59E0B" }}
+              style={{ width: `${pct}%`, background: isFull ? "var(--green-600)" : "var(--yellow-500)" }}
             />
           </div>
         </div>
@@ -256,8 +256,8 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
                   "text-[12px]",
                   mono ? "font-mono" : "",
                   bold ? "font-bold text-gray-900" : "font-medium text-gray-700",
-                  green ? "text-green-600" : "",
                 ].join(" ")}
+                style={green ? { color: "var(--green-600)", fontWeight: 600 } : undefined}
               >
                 {value}
               </span>
@@ -273,7 +273,7 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
         </p>
         <div
           className="rounded-xl px-3 py-2.5"
-          style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}
+          style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}
         >
           <p className="text-[13px] font-semibold font-mono text-gray-800">{req.momoNumber}</p>
           <p className="text-[11px] text-gray-500 mt-0.5">{req.momoName}</p>
@@ -322,9 +322,9 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className="w-2 h-2 rounded-full"
-                  style={{ background: "#16A34A" }}
+                  style={{ background: "var(--green-600)" }}
                 />
-                <span className="text-[11px] font-bold text-green-700 uppercase tracking-wider">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--green-700)" }}>
                   {isFull ? `All received (${received.length})` : `Received support (${received.length})`}
                 </span>
               </div>
@@ -373,20 +373,20 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
             <div className="flex items-center gap-2 mb-2">
               <span
                 className="w-2 h-2 rounded-full"
-                style={{ background: "#F59E0B" }}
+                style={{ background: "var(--yellow-500)" }}
               />
-              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#D97706" }}>
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--yellow-600)" }}>
                 Opted out ({optedOut.length})
               </span>
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #FDE68A", background: "#FFFBEB" }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--yellow-200)", background: "var(--yellow-50)" }}>
               {optedOut.map((f, idx) => {
                 const color = avatarColor(f.name);
                 return (
                   <div
                     key={f.id}
                     className="flex items-center gap-3 px-4 py-3"
-                    style={{ borderTop: idx > 0 ? "1px solid #FDE68A" : undefined }}
+                    style={{ borderTop: idx > 0 ? "1px solid var(--yellow-200)" : undefined }}
                   >
                     <span
                       className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
@@ -400,7 +400,7 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
                     </div>
                     <span
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0"
-                      style={{ background: "#FEF3C7", color: "#D97706" }}
+                      style={{ background: "var(--yellow-100)", color: "var(--yellow-600)" }}
                     >
                       <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
                         <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.3"/>
@@ -503,7 +503,7 @@ export default function FulfillmentSlideOver({
           <div className="lg:hidden border-t border-gray-100 px-4 py-3 shrink-0 bg-gray-50">
             <div className="flex items-center justify-between text-[12px] text-gray-500">
               <span className="font-semibold">{req.community}</span>
-              <span className="font-mono text-green-600">{req.transactionId}</span>
+              <span className="font-mono" style={{ color: "var(--green-600)" }}>{req.transactionId}</span>
               <span className="font-bold text-gray-900">GHS {req.disbursedAmount.toLocaleString()}</span>
             </div>
           </div>

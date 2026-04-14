@@ -10,11 +10,11 @@ function EmptyColState() {
     <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center"
-        style={{ background: "#F3F4F6" }}
+        style={{ background: "var(--gray-100)" }}
       >
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="3" y="3" width="16" height="16" rx="3" stroke="#D1D5DB" strokeWidth="1.5" strokeDasharray="3 2" />
-          <path d="M11 8v6M8 11h6" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" />
+          <rect x="3" y="3" width="16" height="16" rx="3" stroke="var(--gray-300)" strokeWidth="1.5" strokeDasharray="3 2" />
+          <path d="M11 8v6M8 11h6" stroke="var(--gray-300)" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
       <div className="text-center">
@@ -29,7 +29,7 @@ export default function RecoveriesBoard() {
   const [mobileColId, setMobileColId] = useState(RECOVERIES_COLUMNS[0].id);
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#F9FAFB" }}>
+    <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "var(--gray-50)" }}>
 
       {/* ── Mobile: column tab strip ── */}
       <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
@@ -42,7 +42,7 @@ export default function RecoveriesBoard() {
               className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
               style={isActive
                 ? { background: col.dotColor, color: "white" }
-                : { background: "#F3F4F6", color: "#6B7280" }}
+                : { background: "var(--gray-100)", color: "var(--gray-500)" }}
             >
               {col.label} (0)
             </button>

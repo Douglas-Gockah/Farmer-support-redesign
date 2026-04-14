@@ -48,7 +48,7 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
   return (
     <div
       className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
-      style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
+      style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
       <div>
@@ -61,10 +61,10 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
       {card.approvedSupportType && (
         <div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Approved Support</p>
-          <div className="rounded-xl p-3 space-y-1.5" style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}>
+          <div className="rounded-xl p-3 space-y-1.5" style={{ background: "var(--green-25)", border: "1.5px solid var(--green-200)" }}>
             <span
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold"
-              style={isCash ? { background: "#DCFCE7", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+              style={isCash ? { background: "var(--green-100)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}
             >
               {card.approvedSupportType}
             </span>
@@ -93,14 +93,14 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest }) {
 
       {/* Stats */}
       <div className="flex gap-3">
-        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
         {card.score !== null && (
-          <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+          <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
             <p className="text-[10px] text-gray-400 mb-0.5">Score</p>
-            <p className="text-[20px] font-bold" style={{ color: "#16A34A" }}>{card.score}%</p>
+            <p className="text-[20px] font-bold" style={{ color: "var(--green-600)" }}>{card.score}%</p>
           </div>
         )}
       </div>
@@ -230,12 +230,12 @@ function VerifyStep({
 
               {/* Verified result */}
               {verified && !hasMismatch && (
-                <div className="rounded-xl border border-green-200 p-4 space-y-2" style={{ background: "#F0FDF4" }}>
+                <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 rounded-full bg-[#16A34A] flex items-center justify-center shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
-                    <p className="text-[13px] font-semibold text-[#16A34A]">Account verified</p>
+                    <p className="text-[13px] font-semibold text-[var(--green-600)]">Account verified</p>
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-400">Account name</span>
@@ -250,9 +250,9 @@ function VerifyStep({
 
               {/* Mismatch warning */}
               {showMismatch && (
-                <div className="rounded-xl border border-yellow-300 p-4 space-y-3" style={{ background: "#FFFBEB" }}>
+                <div className="rounded-xl border border-yellow-300 p-4 space-y-3" style={{ background: "var(--yellow-50)" }}>
                   <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="var(--yellow-600)" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11v.5" stroke="var(--yellow-600)" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     <p className="text-[13px] font-semibold text-amber-700">Name mismatch detected</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -279,7 +279,7 @@ function VerifyStep({
                         <Label className="text-[11px] text-gray-400 mb-1 block">Reason for update</Label>
                         <Textarea placeholder="Explain the discrepancy..." value={updateReason} onChange={(e) => setUpdateReason(e.target.value)} className="text-[13px] min-h-[60px] resize-none" />
                       </div>
-                      <Button size="sm" className="bg-[#D97706] hover:bg-[#B45309] text-white text-[12px]"
+                      <Button size="sm" className="bg-[var(--yellow-600)] hover:bg-[#B45309] text-white text-[12px]"
                         disabled={!updateReason.trim()}
                         onClick={() => { setShowUpdateForm(false); setVerified(true); setShowMismatch(false); }}>
                         Save update
@@ -293,7 +293,7 @@ function VerifyStep({
             {/* Footer */}
             <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
               <Button
-                className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-10 text-[14px] font-bold"
+                className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-10 text-[14px] font-bold"
                 disabled={!verified}
                 onClick={onProceed}
               >
@@ -379,7 +379,7 @@ function ConfirmStep({
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
               {/* MTN MoMo Balance */}
-              <div className="rounded-xl border p-4" style={{ background: "#FEFCE8", borderColor: "#FDE047" }}>
+              <div className="rounded-xl border p-4" style={{ background: "var(--yellow-50)", borderColor: "var(--yellow-300)" }}>
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[11px] text-yellow-700 font-medium">Current balance</p>
@@ -398,7 +398,7 @@ function ConfirmStep({
                   { label: "Account name",  value: card.momoName ?? card.groupName },
                 ].map((row, i, arr) => (
                   <div key={row.label} className="flex items-center justify-between px-4 py-3"
-                    style={{ borderBottom: i < arr.length - 1 ? "1px solid #F3F4F6" : "none" }}>
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}>
                     <span className="text-[13px] text-gray-400">{row.label}</span>
                     <span className="text-[13px] font-semibold text-gray-900">{row.value}</span>
                   </div>
@@ -425,17 +425,17 @@ function ConfirmStep({
                           key={c.id}
                           htmlFor={`charge-${c.id}`}
                           className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
-                          style={{ background: chargeType === c.id ? "#F0FDF4" : "transparent" }}
+                          style={{ background: chargeType === c.id ? "var(--green-25)" : "transparent" }}
                         >
                           <div className="flex items-center gap-3">
                             <RadioGroupItem
                               value={c.id}
                               id={`charge-${c.id}`}
-                              className="border-[#16A34A] data-[state=checked]:bg-[#16A34A] data-[state=checked]:text-white shrink-0"
+                              className="border-[var(--green-600)] data-[state=checked]:bg-[var(--green-600)] data-[state=checked]:text-white shrink-0"
                             />
                             <div>
                               <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
-                              <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>{c.sublabel}</p>
+                              <p className="text-[11px] font-medium" style={{ color: "var(--green-600)" }}>{c.sublabel}</p>
                             </div>
                           </div>
                           <span className="text-[13px] font-bold text-gray-900 shrink-0">
@@ -453,8 +453,8 @@ function ConfirmStep({
                   <div
                     className="flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-colors"
                     style={{
-                      borderColor: addTransport ? "#16A34A" : "#E5E7EB",
-                      background:  addTransport ? "#F0FDF4" : "transparent",
+                      borderColor: addTransport ? "var(--green-600)" : "var(--gray-200)",
+                      background:  addTransport ? "var(--green-25)" : "transparent",
                     }}
                     onClick={() => setAddTransport(!addTransport)}
                   >
@@ -462,8 +462,8 @@ function ConfirmStep({
                       <div
                         className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0"
                         style={{
-                          borderColor: addTransport ? "#16A34A" : "#D1D5DB",
-                          background:  addTransport ? "#16A34A" : "transparent",
+                          borderColor: addTransport ? "var(--green-600)" : "var(--gray-300)",
+                          background:  addTransport ? "var(--green-600)" : "transparent",
                         }}
                       >
                         {addTransport && (
@@ -474,7 +474,7 @@ function ConfirmStep({
                       </div>
                       <div>
                         <p className="text-[13px] font-semibold text-gray-900">Transportation allowance</p>
-                        <p className="text-[11px] font-medium" style={{ color: "#16A34A" }}>Fixed allowance of GHS 50.00 — added on top of withdrawal charge</p>
+                        <p className="text-[11px] font-medium" style={{ color: "var(--green-600)" }}>Fixed allowance of GHS 50.00 — added on top of withdrawal charge</p>
                       </div>
                     </div>
                     <span className="text-[13px] font-bold text-gray-900 shrink-0">{formatGHS(TRANSPORT_ALLOWANCE)}</span>
@@ -509,7 +509,7 @@ function ConfirmStep({
 
             {/* Footer */}
             <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
-              <Button onClick={onDisburse} className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-11 text-[14px] font-bold">
+              <Button onClick={onDisburse} className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-11 text-[14px] font-bold">
                 Disburse funds
               </Button>
             </div>
@@ -540,7 +540,7 @@ function ProcessingStep({ open, onSuccess }: { open: boolean; onSuccess: () => v
     <Dialog open={open}>
       <DialogContent className="max-w-[360px] p-0" showCloseButton={false}>
         <div className="flex flex-col items-center justify-center px-8 py-12 text-center gap-5">
-          <div className="w-16 h-16 rounded-full border-4 border-gray-200" style={{ borderTopColor: "#16A34A", animation: "spin 0.9s linear infinite" }} />
+          <div className="w-16 h-16 rounded-full border-4 border-gray-200" style={{ borderTopColor: "var(--green-600)", animation: "spin 0.9s linear infinite" }} />
           <div>
             <h2 className="text-[18px] font-bold text-gray-900">Processing disbursement</h2>
             <p className="text-[13px] text-gray-400 mt-1">Your transaction is currently being processed.</p>
@@ -571,11 +571,11 @@ function SuccessStep({ open, card, txId, amount, onClose }: { open: boolean; car
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-[400px] p-0">
         <div className="flex flex-col items-center px-8 py-10 text-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7 17l6 6 12-12" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="w-16 h-16 rounded-full bg-[var(--green-100)] flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M7 17l6 6 12-12" stroke="var(--green-600)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
-          <h2 className="text-[20px] font-bold text-[#16A34A]">Disbursement successful</h2>
-          <div className="w-full rounded-xl p-5 space-y-3 text-left" style={{ background: "#F0FDF4" }}>
+          <h2 className="text-[20px] font-bold text-[var(--green-600)]">Disbursement successful</h2>
+          <div className="w-full rounded-xl p-5 space-y-3 text-left" style={{ background: "var(--green-25)" }}>
             {[
               { label: "Amount paid",  value: formatGHS(amount) },
               { label: "Recipient",    value: card.groupName },
@@ -588,10 +588,10 @@ function SuccessStep({ open, card, txId, amount, onClose }: { open: boolean; car
             ))}
             <div className="flex justify-between">
               <span className="text-[13px] text-gray-400">Transaction ID</span>
-              <span className="text-[13px] font-semibold text-[#16A34A]">{txId}</span>
+              <span className="text-[13px] font-semibold text-[var(--green-600)]">{txId}</span>
             </div>
           </div>
-          <Button onClick={onClose} className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white h-11 text-[14px] font-bold">
+          <Button onClick={onClose} className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-11 text-[14px] font-bold">
             Okay
           </Button>
         </div>

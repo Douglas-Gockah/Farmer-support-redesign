@@ -59,7 +59,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           {/* Avatar — always visible */}
           <div
             className="flex items-center justify-center rounded-full text-white font-bold text-[13px] select-none shrink-0"
-            style={{ width: 36, height: 36, background: "#16A34A" }}
+            style={{ width: 36, height: 36, background: "var(--green-600)" }}
           >
             DG
           </div>
@@ -72,7 +72,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
           {/* Chevron — desktop only */}
           <svg className="hidden lg:block" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 4.5l3 3 3-3" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3 4.5l3 3 3-3" stroke="var(--gray-400)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>

@@ -59,10 +59,10 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
       {card.approvedSupportType && (
         <div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Approved Support</p>
-          <div className="rounded-xl p-3 space-y-2" style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--green-25)", border: "1.5px solid var(--green-200)" }}>
             <span
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold"
-              style={isCash ? { background: "#DCFCE7", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+              style={isCash ? { background: "var(--green-100)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}
             >
               {isCash ? (
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
@@ -103,14 +103,14 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
 
       {/* Stats row */}
       <div className="flex gap-3">
-        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Interested farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
         {card.score !== null && (
-          <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+          <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
             <p className="text-[10px] text-gray-400 mb-0.5">Score</p>
-            <p className="text-[20px] font-bold" style={{ color: "#16A34A" }}>{card.score}%</p>
+            <p className="text-[20px] font-bold" style={{ color: "var(--green-600)" }}>{card.score}%</p>
           </div>
         )}
       </div>
@@ -212,7 +212,7 @@ export default function ManagerConfirmationModal({
               <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
             </div>
             {card.approvedSupportType && (
-              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "#DCFCE7", color: "#16A34A" }}>
+              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--green-100)", color: "var(--green-600)" }}>
                 {card.approvedSupportType}
               </span>
             )}
@@ -239,7 +239,7 @@ export default function ManagerConfirmationModal({
                         <Checkbox
                           checked={farmer.selected}
                           onCheckedChange={() => toggleFarmer(idx)}
-                          className="shrink-0 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
+                          className="shrink-0 data-[state=checked]:bg-[var(--green-600)] data-[state=checked]:border-[var(--green-600)]"
                           onClick={(e) => e.stopPropagation()}
                         />
                         <div
@@ -278,7 +278,7 @@ export default function ManagerConfirmationModal({
                       disabled={!canAdvance}
                       onClick={() => setStep(2)}
                       className="h-9 px-5 rounded-lg text-[13px] font-bold text-white transition-colors"
-                      style={{ background: canAdvance ? "#16A34A" : "#D1D5DB", cursor: canAdvance ? "pointer" : "not-allowed" }}
+                      style={{ background: canAdvance ? "var(--green-600)" : "var(--gray-300)", cursor: canAdvance ? "pointer" : "not-allowed" }}
                     >
                       Confirm selection
                     </button>
@@ -294,11 +294,11 @@ export default function ManagerConfirmationModal({
                   {/* Confirmation summary */}
                   <div
                     className="rounded-lg p-3 flex items-center gap-2"
-                    style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}
+                    style={{ background: "var(--green-25)", border: "1.5px solid var(--green-200)" }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <circle cx="8" cy="8" r="7" stroke="#16A34A" strokeWidth="1.5"/>
-                      <path d="M5 8l2 2 4-4" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="8" cy="8" r="7" stroke="var(--green-600)" strokeWidth="1.5"/>
+                      <path d="M5 8l2 2 4-4" stroke="var(--green-600)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <div>
                       <p className="text-[13px] font-bold text-green-700">{selectedCount} farmers confirmed</p>
@@ -341,7 +341,7 @@ export default function ManagerConfirmationModal({
                     disabled={!canConfirm}
                     onClick={handleConfirm}
                     className="h-9 px-6 rounded-lg text-[13px] font-bold text-white transition-colors"
-                    style={{ background: canConfirm ? "#16A34A" : "#D1D5DB", cursor: canConfirm ? "pointer" : "not-allowed" }}
+                    style={{ background: canConfirm ? "var(--green-600)" : "var(--gray-300)", cursor: canConfirm ? "pointer" : "not-allowed" }}
                   >
                     Confirm &amp; submit
                   </button>

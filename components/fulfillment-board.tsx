@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FulfillmentCard } from "@/components/kanban/fulfillment-card";
 import { ColumnHeader } from "@/components/kanban/column-header";
@@ -14,19 +14,19 @@ import type { FulfillmentRequest, FulfillmentStage } from "@/components/kanban/t
 // Filter types
 // ---------------------------------------------------------------------------
 interface FulfillmentFilters {
-  datePreset:  string | null;
-  region:      string | null;
-  district:    string | null;
-  community:   string | null;
-  agent:       string | null;
-  status:      FulfillmentStage | null;
+  datePreset: string | null;
+  region:     string | null;
+  district:   string | null;
+  community:  string | null;
+  agent:      string | null;
+  status:     FulfillmentStage | null;
 }
 
 const STATUS_OPTIONS: { value: FulfillmentStage; label: string }[] = [
-  { value: "pending_fulfillment", label: "Pending Fulfilment" },
+  { value: "pending_fulfillment", label: "Pending Fulfilment"  },
   { value: "partially_fulfilled", label: "Partially Fulfilled" },
-  { value: "fully_fulfilled",     label: "Fully Fulfilled"    },
-  { value: "opted_out",           label: "Cash Opt-Outs"      },
+  { value: "fully_fulfilled",     label: "Fully Fulfilled"     },
+  { value: "opted_out",           label: "Cash Opt-Outs"       },
 ];
 
 const DATE_PRESETS = ["Today", "Yesterday", "This Week", "Last Week", "This Month", "Last Month"];
@@ -37,9 +37,185 @@ const REGIONS = [
   "Upper East", "Upper West", "Volta", "Western", "Western North",
 ];
 
-const DISTRICTS = [
-  "Tamale Metro", "Sawla-Tuna-Kalba", "Bole", "Wa East",
-];
+const DISTRICTS = ["Tamale Metro", "Sawla-Tuna-Kalba", "Bole", "Wa East"];
+
+// ---------------------------------------------------------------------------
+// Shared pill-button + dropdown filter component
+// ---------------------------------------------------------------------------
+function FilterPill<T extends string>({
+  label,
+  value,
+  options,
+  onSelect,
+  searchable = false,
+}: {
+  label: string;
+  value: T | null;
+  options: { value: T; label: string }[];
+  onSelect: (v: T | null) => void;
+  searchable?: boolean;
+}) {
+  const [open, setOpen]     = useState(false);
+  const [query, setQuery]   = useState("");
+  const ref                 = useRef<HTMLDivElement>(null);
+  const isActive            = value !== null;
+  const displayLabel        = isActive
+    ? options.find((o) => o.value === value)?.label ?? label
+    : label;
+  const filtered            = searchable
+    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const pillStyle: React.CSSProperties = isActive
+    ? {
+        height: 32, padding: "0 12px",
+        borderRadius: 999,
+        border: "1.5px solid var(--green-500)",
+        background: "var(--green-50)",
+        color: "var(--green-600)",
+        fontSize: "0.75rem", fontWeight: 600,
+        display: "flex", alignItems: "center", gap: 6,
+        cursor: "pointer", whiteSpace: "nowrap",
+        transition: "all 0.15s",
+      }
+    : {
+        height: 32, padding: "0 12px",
+        borderRadius: 999,
+        border: "1px solid var(--gray-200)",
+        background: "#ffffff",
+        color: "var(--gray-600)",
+        fontSize: "0.75rem", fontWeight: 500,
+        display: "flex", alignItems: "center", gap: 6,
+        cursor: "pointer", whiteSpace: "nowrap",
+        transition: "all 0.15s",
+      };
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        style={pillStyle}
+        onClick={() => { setOpen((v) => !v); setQuery(""); }}
+        onMouseEnter={(e) => {
+          if (!isActive) e.currentTarget.style.borderColor = "var(--gray-300)";
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.borderColor = "var(--gray-200)";
+        }}
+      >
+        {displayLabel}
+        <svg
+          width="10" height="10" viewBox="0 0 10 10" fill="none"
+          style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }}
+        >
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-9 z-50 py-1 overflow-hidden"
+          style={{
+            minWidth: 180,
+            background: "#ffffff",
+            border: "1px solid var(--gray-200)",
+            borderRadius: 10,
+            boxShadow: "0px 8px 24px rgba(16,24,40,0.12)",
+          }}
+        >
+          {/* Search box */}
+          {searchable && (
+            <div className="px-2 pt-1 pb-1">
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: 30,
+                  borderRadius: 6,
+                  border: "1px solid var(--gray-300)",
+                  padding: "0 8px",
+                  fontSize: "0.75rem",
+                  color: "var(--gray-700)",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--green-500)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(26,179,115,0.12)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--gray-300)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+            </div>
+          )}
+
+          {/* Clear */}
+          {isActive && (
+            <button
+              className="flex items-center gap-1.5 w-full text-left px-3 py-1.5 transition-colors"
+              style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--error-600)" }}
+              onClick={() => { onSelect(null); setOpen(false); setQuery(""); }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-50)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              Clear
+            </button>
+          )}
+
+          {/* Options */}
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-[11px]" style={{ color: "var(--gray-400)" }}>No results</p>
+            ) : filtered.map((o) => {
+              const isSelected = value === o.value;
+              return (
+                <button
+                  key={o.value}
+                  className="flex items-center justify-between w-full text-left px-3 py-1.5 transition-colors"
+                  style={{
+                    fontSize: "0.8125rem",
+                    fontWeight: isSelected ? 600 : 400,
+                    color: isSelected ? "var(--green-600)" : "var(--gray-700)",
+                    background: isSelected ? "var(--green-25)" : "transparent",
+                  }}
+                  onClick={() => { onSelect(o.value); setOpen(false); setQuery(""); }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--gray-50)"; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {o.label}
+                  {isSelected && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Filter bar
@@ -55,117 +231,83 @@ function FulfillmentFilterBar({
   agents: string[];
   onChange: (f: FulfillmentFilters) => void;
 }) {
-  function set(key: keyof FulfillmentFilters, value: string | null) {
+  function set<K extends keyof FulfillmentFilters>(key: K, value: FulfillmentFilters[K]) {
     onChange({ ...filters, [key]: value });
   }
 
-  const activeCount = Object.values(filters).filter(Boolean).length;
-
-  const selectCls =
-    "h-8 pl-2.5 pr-7 text-[12px] font-medium rounded-lg border border-gray-200 bg-white text-gray-700 appearance-none cursor-pointer hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/30";
+  const activeCount  = Object.values(filters).filter(Boolean).length;
+  const dateOptions  = DATE_PRESETS.map((d) => ({ value: d, label: d }));
+  const regionOpts   = REGIONS.map((r)    => ({ value: r, label: r }));
+  const districtOpts = DISTRICTS.map((d)  => ({ value: d, label: d }));
+  const communityOpts = communities.map((c) => ({ value: c, label: c }));
+  const agentOpts    = agents.map((a)     => ({ value: a, label: a }));
 
   return (
-    <div className="shrink-0 flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-white border-b border-gray-100 overflow-x-auto scrollbar-none">
-      {/* Date */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.datePreset ?? ""}
-          onChange={(e) => set("datePreset", e.target.value || null)}
-        >
-          <option value="">All time</option>
-          {DATE_PRESETS.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <ChevronIcon />
-      </div>
-
-      {/* Region */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.region ?? ""}
-          onChange={(e) => set("region", e.target.value || null)}
-        >
-          <option value="">All Regions</option>
-          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <ChevronIcon />
-      </div>
-
-      {/* District */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.district ?? ""}
-          onChange={(e) => set("district", e.target.value || null)}
-        >
-          <option value="">All Districts</option>
-          {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <ChevronIcon />
-      </div>
-
-      {/* Community */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.community ?? ""}
-          onChange={(e) => set("community", e.target.value || null)}
-        >
-          <option value="">All Communities</option>
-          {communities.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <ChevronIcon />
-      </div>
-
-      {/* Agent */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.agent ?? ""}
-          onChange={(e) => set("agent", e.target.value || null)}
-        >
-          <option value="">All Agents</option>
-          {agents.map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-        <ChevronIcon />
-      </div>
-
-      {/* Status */}
-      <div className="relative shrink-0">
-        <select
-          className={selectCls}
-          value={filters.status ?? ""}
-          onChange={(e) => set("status", (e.target.value as FulfillmentStage) || null)}
-        >
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <ChevronIcon />
-      </div>
+    <div
+      className="shrink-0 flex items-center gap-2 px-4 sm:px-6 py-2.5 overflow-x-auto scrollbar-none"
+      style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-100)" }}
+    >
+      <FilterPill
+        label="All time"
+        value={filters.datePreset}
+        options={dateOptions}
+        onSelect={(v) => set("datePreset", v)}
+      />
+      <FilterPill
+        label="All Regions"
+        value={filters.region}
+        options={regionOpts}
+        onSelect={(v) => set("region", v)}
+        searchable
+      />
+      <FilterPill
+        label="All Districts"
+        value={filters.district}
+        options={districtOpts}
+        onSelect={(v) => set("district", v)}
+      />
+      <FilterPill
+        label="All Communities"
+        value={filters.community}
+        options={communityOpts}
+        onSelect={(v) => set("community", v)}
+        searchable
+      />
+      <FilterPill
+        label="All Agents"
+        value={filters.agent}
+        options={agentOpts}
+        onSelect={(v) => set("agent", v)}
+        searchable
+      />
+      <FilterPill
+        label="Fulfilment Status"
+        value={filters.status}
+        options={STATUS_OPTIONS}
+        onSelect={(v) => set("status", v)}
+      />
 
       {/* Clear all */}
       {activeCount > 0 && (
         <button
+          className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-full whitespace-nowrap transition-colors"
+          style={{
+            fontSize: "0.75rem", fontWeight: 600,
+            color: "var(--error-600)",
+            background: "var(--error-50)",
+            border: "1px solid var(--error-200)",
+          }}
           onClick={() => onChange({ datePreset: null, region: null, district: null, community: null, agent: null, status: null })}
-          className="shrink-0 h-8 px-3 rounded-lg text-[12px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 transition-colors whitespace-nowrap"
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-100)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-50)")}
         >
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
           Clear ({activeCount})
         </button>
       )}
     </div>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    </span>
   );
 }
 
@@ -177,27 +319,27 @@ function EmptyColState() {
     <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center"
-        style={{ background: "#F3F4F6" }}
+        style={{ background: "var(--gray-100)" }}
       >
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <rect
             x="3" y="6" width="16" height="13" rx="2.5"
-            stroke="#D1D5DB" strokeWidth="1.5" strokeDasharray="3 2"
+            stroke="var(--gray-300)" strokeWidth="1.5" strokeDasharray="3 2"
           />
           <path
             d="M8 6V5a3 3 0 016 0v1"
-            stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round"
+            stroke="var(--gray-300)" strokeWidth="1.5" strokeLinecap="round"
           />
         </svg>
       </div>
-      <div className="text-center">
-        <p className="text-[12px] text-gray-400">No items here yet</p>
-      </div>
+      <p style={{ fontSize: "0.75rem", color: "var(--gray-400)" }}>No items here yet</p>
     </div>
   );
 }
 
-// Map column ids to FulfillmentStage values
+// ---------------------------------------------------------------------------
+// Stage → column map
+// ---------------------------------------------------------------------------
 const COL_STAGE_MAP: Record<string, FulfillmentRequest["fulfillmentStage"]> = {
   pending_fulfillment: "pending_fulfillment",
   partially_fulfilled: "partially_fulfilled",
@@ -210,13 +352,15 @@ const DEFAULT_FILTERS: FulfillmentFilters = {
   community: null, agent: null, status: null,
 };
 
+// ---------------------------------------------------------------------------
+// FulfillmentBoard
+// ---------------------------------------------------------------------------
 export default function FulfillmentBoard() {
   const [mobileColId, setMobileColId] = useState(FULFILLMENT_COLUMNS[0].id);
   const [selectedReq, setSelectedReq] = useState<FulfillmentRequest | null>(null);
-  const [optOutReq, setOptOutReq] = useState<FulfillmentRequest | null>(null);
-  const [filters, setFilters] = useState<FulfillmentFilters>(DEFAULT_FILTERS);
+  const [optOutReq,   setOptOutReq]   = useState<FulfillmentRequest | null>(null);
+  const [filters,     setFilters]     = useState<FulfillmentFilters>(DEFAULT_FILTERS);
 
-  // Derive unique communities and agents from mock data
   const communities = useMemo(
     () => Array.from(new Set(MOCK_FULFILLMENT_REQUESTS.map((r) => r.community))).sort(),
     [],
@@ -226,18 +370,14 @@ export default function FulfillmentBoard() {
     [],
   );
 
-  // Apply filters (community, agent, status are functional; date/region/district are UI-only)
   const filtered = useMemo(() => {
     return MOCK_FULFILLMENT_REQUESTS.filter((r) => {
-      if (filters.community && r.community !== filters.community) return false;
-      if (filters.agent    && r.agent    !== filters.agent)        return false;
-      if (filters.status   && r.fulfillmentStage !== filters.status) return false;
+      if (filters.community && r.community          !== filters.community)   return false;
+      if (filters.agent     && r.agent              !== filters.agent)        return false;
+      if (filters.status    && r.fulfillmentStage   !== filters.status)       return false;
       return true;
     });
   }, [filters]);
-
-  // All four columns are shown
-  const displayCols = FULFILLMENT_COLUMNS;
 
   function cardsForCol(colId: string): FulfillmentRequest[] {
     const stage = COL_STAGE_MAP[colId];
@@ -254,21 +394,13 @@ export default function FulfillmentBoard() {
   }
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "#F9FAFB" }}>
-      {/* Slide-over panel — pending / partial / full */}
-      {selectedReq && (
-        <FulfillmentSlideOver
-          req={selectedReq}
-          onClose={() => setSelectedReq(null)}
-        />
-      )}
+    <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "var(--gray-50)" }}>
 
-      {/* Opt-out modal */}
+      {selectedReq && (
+        <FulfillmentSlideOver req={selectedReq} onClose={() => setSelectedReq(null)} />
+      )}
       {optOutReq && (
-        <FulfillmentOptOutModal
-          req={optOutReq}
-          onClose={() => setOptOutReq(null)}
-        />
+        <FulfillmentOptOutModal req={optOutReq} onClose={() => setOptOutReq(null)} />
       )}
 
       {/* ── Filter bar ── */}
@@ -280,20 +412,21 @@ export default function FulfillmentBoard() {
       />
 
       {/* ── Mobile: column tab strip ── */}
-      <div className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 bg-white border-b border-gray-200 scrollbar-none">
-        {displayCols.map((col) => {
-          const count = cardsForCol(col.id).length;
+      <div
+        className="lg:hidden shrink-0 flex overflow-x-auto gap-2 px-4 py-2.5 scrollbar-none"
+        style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}
+      >
+        {FULFILLMENT_COLUMNS.map((col) => {
+          const count    = cardsForCol(col.id).length;
           const isActive = mobileColId === col.id;
           return (
             <button
               key={col.id}
               onClick={() => setMobileColId(col.id)}
-              className="shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
-              style={
-                isActive
-                  ? { background: col.dotColor, color: "white" }
-                  : { background: "#F3F4F6", color: "#6B7280" }
-              }
+              className="shrink-0 h-8 px-3 rounded-full whitespace-nowrap transition-colors"
+              style={isActive
+                ? { background: col.dotColor, color: "#ffffff", fontSize: "0.75rem", fontWeight: 600 }
+                : { background: "var(--gray-100)", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
             >
               {col.label} ({count})
             </button>
@@ -319,37 +452,16 @@ export default function FulfillmentBoard() {
         className="hidden lg:block"
         style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: 12,
-            padding: "16px 20px",
-            height: "100%",
-            minWidth: "max-content",
-          }}
-        >
-          {displayCols.map((col) => {
+        <div style={{ display: "flex", flexDirection: "row", gap: 12, padding: "16px 20px", height: "100%", minWidth: "max-content" }}>
+          {FULFILLMENT_COLUMNS.map((col) => {
             const cards = cardsForCol(col.id);
             return (
               <div
                 key={col.id}
-                style={{
-                  width: 288,
-                  minWidth: 288,
-                  flexShrink: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  overflow: "hidden",
-                }}
+                style={{ width: 288, minWidth: 288, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}
               >
                 <div style={{ flexShrink: 0 }}>
-                  <ColumnHeader
-                    label={col.label}
-                    dotColor={col.dotColor}
-                    count={cards.length}
-                  />
+                  <ColumnHeader label={col.label} dotColor={col.dotColor} count={cards.length} />
                 </div>
                 <ScrollArea className="flex-1 min-h-0">
                   <div style={{ paddingBottom: 16 }}>
@@ -357,11 +469,7 @@ export default function FulfillmentBoard() {
                       <EmptyColState />
                     ) : (
                       cards.map((r) => (
-                        <FulfillmentCard
-                          key={r.id}
-                          req={r}
-                          onView={() => handleCardClick(r)}
-                        />
+                        <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} />
                       ))
                     )}
                   </div>
