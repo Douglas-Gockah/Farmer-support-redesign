@@ -1,10 +1,44 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { FarmerRequest, Stage, SupportType, ScoreSort } from "./types";
+import type { FarmerRequest, Stage, SupportType, ScoreSort, ActionRecord, DisbursementBreakdown } from "./types";
 import type { ToastMessage } from "@/components/toast-notification";
 import type { ActiveFilters } from "./filter-bar";
 import { MOCK_REQUESTS } from "./mock-data";
+
+// ---------------------------------------------------------------------------
+// Action record helpers
+// ---------------------------------------------------------------------------
+const CURRENT_USER = "Douglas Gockah";
+
+function makeRecord(
+  stage: Stage,
+  actor: string,
+  action: string,
+  reason?: string,
+): ActionRecord {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    stage,
+    actor,
+    action,
+    reason: reason || undefined,
+    timestamp: new Date().toLocaleString("en-GH", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    }),
+  };
+}
+
+function appendRecord(
+  requests: FarmerRequest[],
+  id: string,
+  record: ActionRecord,
+): FarmerRequest[] {
+  return requests.map((r) =>
+    r.id !== id ? r : { ...r, actionHistory: [...(r.actionHistory ?? []), record] },
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Hook — manages all request state and workflow transitions
@@ -66,8 +100,11 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     amountPerFarmer?: number,
     landSizePerFarmer?: number,
   ) {
-    setRequests((prev) =>
-      prev.map((r) =>
+    const actionText = approvedType === "Cash"
+      ? `Approved for Cash support — GHS ${amountPerFarmer?.toLocaleString() ?? "—"} per farmer`
+      : `Approved for Ploughing support — ${landSizePerFarmer} acres per farmer`;
+    setRequests((prev) => {
+      let next = prev.map((r) =>
         r.id !== id ? r : {
           ...r,
           stage: "agent_confirmation" as Stage,
@@ -75,48 +112,75 @@ export function useKanbanState(activeFilters: ActiveFilters) {
           approvedAmountPerFarmer: amountPerFarmer,
           approvedLandSizePerFarmer: landSizePerFarmer,
         },
-      ),
-    );
+      );
+      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, actionText));
+      return next;
+    });
     setReviewCard(null);
     showToast("Request moved to Manager Confirmation");
   }
 
   function handleManagerConfirmed(id: string, momoNumber: string, momoName: string) {
-    setRequests((prev) =>
-      prev.map((r) =>
+    setRequests((prev) => {
+      let next = prev.map((r) =>
         r.id !== id ? r : { ...r, stage: "finance_disbursement" as Stage, momoNumber, momoName },
-      ),
-    );
+      );
+      next = appendRecord(next, id, makeRecord(
+        "agent_confirmation", CURRENT_USER,
+        `Confirmed participating farmers and MoMo account (${momoNumber})`,
+      ));
+      return next;
+    });
     setManagerCard(null);
     showToast("Manager confirmation complete — request moved to Finance & Disbursement");
   }
 
   function handleHeld(id: string, comment: string) {
-    setRequests((prev) =>
-      prev.map((r) => (r.id !== id ? r : { ...r, onHold: true, holdComment: comment })),
-    );
+    setRequests((prev) => {
+      let next = prev.map((r) => (r.id !== id ? r : { ...r, onHold: true, holdComment: comment }));
+      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, "Placed request on hold", comment));
+      return next;
+    });
     setReviewCard(null);
     showToast("Request placed on hold");
   }
 
   function handleRejected(id: string, comment: string) {
-    setRequests((prev) =>
-      prev.map((r) =>
+    setRequests((prev) => {
+      let next = prev.map((r) =>
         r.id !== id ? r : { ...r, stage: "rejected" as Stage, rejectionComment: comment },
-      ),
-    );
+      );
+      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, "Rejected request", comment));
+      return next;
+    });
     setReviewCard(null);
     showToast("Request moved to Rejected");
   }
 
   function handleScored(id: string, score: number) {
-    setRequests((prev) =>
-      prev.map((r) =>
+    setRequests((prev) => {
+      let next = prev.map((r) =>
         r.id !== id ? r : { ...r, score, stage: "pending_approval" as Stage },
-      ),
-    );
+      );
+      next = appendRecord(next, id, makeRecord("synced", CURRENT_USER, `Scored request — ${score}%`));
+      return next;
+    });
     setScoreCard(null);
     showToast("Score submitted — moved to Pending Approval");
+  }
+
+  function handleAmountEdited(
+    id: string,
+    field: "Cash" | "Land",
+    oldValue: number,
+    newValue: number,
+    reason: string,
+  ) {
+    const fmt = (v: number) => field === "Cash" ? `GHS ${v.toLocaleString()}` : `${v} acres`;
+    const action = `Updated ${field === "Cash" ? "cash amount per farmer" : "land size per farmer"} from ${fmt(oldValue)} to ${fmt(newValue)}`;
+    setRequests((prev) =>
+      appendRecord(prev, id, makeRecord("pending_approval", CURRENT_USER, action, reason || undefined)),
+    );
   }
 
   function archiveRequest(id: string) {
@@ -124,20 +188,27 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     showToast("Request archived");
   }
 
-  function handleDisbursed(id: string, txId: string, amount: number) {
-    setRequests((prev) =>
-      prev.map((r) =>
+  function handleDisbursed(id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown) {
+    const date = new Date().toLocaleDateString("en-GH", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+    setRequests((prev) => {
+      let next = prev.map((r) =>
         r.id !== id ? r : {
           ...r,
           stage: "disbursed" as Stage,
           transactionId: txId,
           disbursedAmount: amount,
-          disbursedDate: new Date().toLocaleDateString("en-GH", {
-            day: "2-digit", month: "short", year: "numeric",
-          }),
+          disbursedDate: date,
+          disbursementBreakdown: breakdown,
         },
-      ),
-    );
+      );
+      next = appendRecord(next, id, makeRecord(
+        "finance_disbursement", CURRENT_USER,
+        `Disbursed GHS ${amount.toLocaleString()} via MoMo · ${txId}`,
+      ));
+      return next;
+    });
     setDisburseCard(null);
     showToast("Funds disbursed successfully");
   }
@@ -166,5 +237,6 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     handleRejected,
     handleScored,
     handleDisbursed,
+    handleAmountEdited,
   };
 }

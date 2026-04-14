@@ -13,6 +13,28 @@ export type Stage =
   | "disbursed"
   | "opted_out";
 
+// ---------------------------------------------------------------------------
+// Action timeline record — one entry per significant action taken
+// ---------------------------------------------------------------------------
+export interface ActionRecord {
+  id: string;
+  stage: Stage;
+  actor: string;
+  action: string;
+  reason?: string;
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// Disbursement charge breakdown — stored on disbursed requests
+// ---------------------------------------------------------------------------
+export interface DisbursementBreakdown {
+  baseAmount: number;
+  withdrawalCharge: number;
+  transportAllowance: number;
+  total: number;
+}
+
 export interface SupportInterest {
   rank: "Primary" | "Secondary";
   type: SupportType;
@@ -48,6 +70,8 @@ export interface FarmerRequest {
   wantsDouble?: boolean;
   farmersList?: Array<{ id: string; name: string }>;
   groupScore?: number;
+  actionHistory?: ActionRecord[];
+  disbursementBreakdown?: DisbursementBreakdown;
 }
 
 export interface ColDef {

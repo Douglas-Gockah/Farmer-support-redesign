@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { FarmerRequest } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // Mock farmer list
@@ -131,6 +132,13 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
           </div>
         </div>
       </div>
+
+      {/* Action timeline */}
+      {(card.actionHistory ?? []).length > 0 && (
+        <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16 }}>
+          <ActionTimeline records={card.actionHistory ?? []} />
+        </div>
+      )}
     </div>
   );
 }

@@ -15,94 +15,7 @@ import {
 } from "@/components/ui/select";
 import type { FarmerRequest, SupportInterest, SupportType } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
-
-// ---------------------------------------------------------------------------
-// Amount edit history types
-// ---------------------------------------------------------------------------
-interface AmountEdit {
-  id: number;
-  field: "Cash" | "Land";
-  oldValue: number;
-  newValue: number;
-  reason: string;
-  author: string;
-  timestamp: Date;
-}
-
-// ---------------------------------------------------------------------------
-// EditTimeline — vertical timeline of amount changes
-// ---------------------------------------------------------------------------
-function EditTimeline({ edits }: { edits: AmountEdit[] }) {
-  if (edits.length === 0) return null;
-
-  function formatTime(d: Date) {
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function formatValue(field: AmountEdit["field"], v: number) {
-    return field === "Cash" ? `GHS ${v.toLocaleString()}` : `${v} acres`;
-  }
-
-  return (
-    <section>
-      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-3">
-        Amount Update History
-      </p>
-      <div className="space-y-0">
-        {edits.map((edit, idx) => {
-          const ini = initials(edit.author);
-          const bg  = avatarColor(edit.author);
-          const isLast = idx === edits.length - 1;
-          return (
-            <div key={edit.id} className="flex gap-3">
-              {/* Timeline spine */}
-              <div className="flex flex-col items-center shrink-0" style={{ width: 28 }}>
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ background: bg }}
-                >
-                  {ini}
-                </div>
-                {!isLast && (
-                  <div className="flex-1 w-px mt-1" style={{ background: "var(--gray-200)", minHeight: 16 }} />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className={`flex-1 pb-4 ${isLast ? "" : ""}`}>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-[12px] font-semibold text-gray-900">{edit.author}</span>
-                  <span className="text-[11px] text-gray-400">{formatTime(edit.timestamp)}</span>
-                </div>
-                <p className="text-[12px] text-gray-600 mt-0.5">
-                  Updated <span className="font-medium">{edit.field === "Cash" ? "cash amount" : "land size"}</span> from{" "}
-                  <span
-                    className="font-semibold line-through"
-                    style={{ color: "var(--gray-400)" }}
-                  >
-                    {formatValue(edit.field, edit.oldValue)}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-semibold" style={{ color: "var(--green-600)" }}>
-                    {formatValue(edit.field, edit.newValue)}
-                  </span>
-                </p>
-                {edit.reason && (
-                  <p
-                    className="text-[11px] mt-1 px-2 py-1 rounded-md"
-                    style={{ background: "var(--gray-50)", color: "var(--gray-500)", border: "1px solid var(--gray-100)" }}
-                  >
-                    "{edit.reason}"
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // ScoreBar
@@ -578,12 +491,14 @@ export default function ApprovalModal({
   onApproved,
   onHeld,
   onRejected,
+  onAmountEdited,
 }: {
   card: FarmerRequest;
   onClose: () => void;
   onApproved: (id: string, type: SupportType, amountPerFarmer?: number, landSizePerFarmer?: number) => void;
   onHeld: (id: string, comment: string) => void;
   onRejected: (id: string, comment: string) => void;
+  onAmountEdited?: (id: string, field: "Cash" | "Land", oldValue: number, newValue: number, reason: string) => void;
 }) {
   const primaryInterest    = card.supportInterests.find((si) => si.rank === "Primary")!;
   const [selectedType, setSelectedType] = useState<SupportType>(primaryInterest.type);
@@ -594,7 +509,6 @@ export default function ApprovalModal({
   const [cashDouble,   setCashDouble]   = useState(card.wantsDouble ?? false);
   const [cashQty,      setCashQty]      = useState(50);
   const [ploughLand,   setPloughLand]   = useState(selectedPloughInterest?.landSizePerFarmer ?? 1.5);
-  const [edits,        setEdits]        = useState<AmountEdit[]>([]);
   const [provider,     setProvider]     = useState("FieldTech Ghana");
   const [payment,      setPayment]      = useState("Full payment");
 
@@ -699,18 +613,13 @@ export default function ApprovalModal({
                         const oldVal = si.type === "Cash" ? cashAmount : ploughLand;
                         if (si.type === "Cash") setCashAmount(amount);
                         else setPloughLand(amount);
-                        setEdits((prev) => [
-                          ...prev,
-                          {
-                            id: Date.now(),
-                            field: si.type === "Cash" ? "Cash" : "Land",
-                            oldValue: oldVal,
-                            newValue: amount,
-                            reason: reason ?? "",
-                            author: "Douglas Gockah",
-                            timestamp: new Date(),
-                          },
-                        ]);
+                        onAmountEdited?.(
+                          card.id,
+                          si.type === "Cash" ? "Cash" : "Land",
+                          oldVal,
+                          amount,
+                          reason ?? "",
+                        );
                       }}
                       isDouble={si.type === "Cash" ? cashDouble : false}
                       onToggleDouble={si.type === "Cash" ? () => setCashDouble(!cashDouble) : undefined}
@@ -740,8 +649,8 @@ export default function ApprovalModal({
                 />
               )}
 
-              {/* Amount edit timeline */}
-              <EditTimeline edits={edits} />
+              {/* Action timeline */}
+              <ActionTimeline records={card.actionHistory ?? []} />
 
               <div className="h-px bg-gray-100" />
 

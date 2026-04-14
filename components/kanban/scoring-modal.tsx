@@ -189,6 +189,7 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
 }
 
 // NativeVoiceNote is imported from ./native-voice-note
+import { ActionTimeline } from "./action-timeline";
 
 // ---------------------------------------------------------------------------
 // Group score widget
@@ -481,6 +482,9 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
                   </div>
                 )}
               </div>
+
+              {/* Action timeline */}
+              <ActionTimeline records={card.actionHistory ?? []} />
 
               {/* Confirmation checkbox */}
               <div

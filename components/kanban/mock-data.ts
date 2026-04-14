@@ -118,9 +118,16 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     approvedAmountPerFarmer: 120,
     momoNumber: "0244-555-666", momoName: "Metro Food Security",
     transactionId: "TXN-4F8A2B1C", disbursedAmount: 4080, disbursedDate: "30 Jan 2024",
+    disbursementBreakdown: { baseAmount: 4080, withdrawalCharge: 0, transportAllowance: 0, total: 4080 },
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0244-555-666", momoName: "Metro Food Security" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
+    ],
+    actionHistory: [
+      { id: "008-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 88%",                                                            timestamp: "28 Jan 2024, 09:15" },
+      { id: "008-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 120 per farmer",                                 timestamp: "28 Jan 2024, 10:42" },
+      { id: "008-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0244-555-666)",                timestamp: "29 Jan 2024, 08:30" },
+      { id: "008-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 4,080 via MoMo · TXN-4F8A2B1C",                                  timestamp: "30 Jan 2024, 11:00" },
     ],
   },
   {
@@ -129,9 +136,17 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
     approvedAmountPerFarmer: 180,
     momoNumber: "0244-999-000", momoName: "WE Food Coalition",
-    transactionId: "TXN-7C3D9E2A", disbursedAmount: 7200, disbursedDate: "28 Jan 2024",
+    transactionId: "TXN-7C3D9E2A", disbursedAmount: 7250, disbursedDate: "28 Jan 2024",
+    disbursementBreakdown: { baseAmount: 7200, withdrawalCharge: 20, transportAllowance: 30, total: 7250 },
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 180, momoNumber: "0244-999-000", momoName: "WE Food Coalition" },
+    ],
+    actionHistory: [
+      { id: "010-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 95%",                                                            timestamp: "25 Jan 2024, 14:05" },
+      { id: "010-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Updated cash amount per farmer from GHS 150 to GHS 180", reason: "Revised upward to match prevailing market rate for the season", timestamp: "26 Jan 2024, 09:20" },
+      { id: "010-3", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 180 per farmer",                                 timestamp: "26 Jan 2024, 09:35" },
+      { id: "010-4", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0244-999-000)",                timestamp: "27 Jan 2024, 10:00" },
+      { id: "010-5", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 7,250 via MoMo · TXN-7C3D9E2A",                                  timestamp: "28 Jan 2024, 13:22" },
     ],
   },
   {
@@ -140,9 +155,16 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
     approvedAmountPerFarmer: 150,
     momoNumber: "0246-601-432", momoName: "Nanumba Agri Group",
-    transactionId: "TXN-2B4E6A8C", disbursedAmount: 2850, disbursedDate: "01 Feb 2024",
+    transactionId: "TXN-2B4E6A8C", disbursedAmount: 2900, disbursedDate: "01 Feb 2024",
+    disbursementBreakdown: { baseAmount: 2850, withdrawalCharge: 0, transportAllowance: 50, total: 2900 },
     supportInterests: [
       { rank: "Primary", type: "Cash", amountPerFarmer: 150, momoNumber: "0246-601-432", momoName: "Nanumba Agri Group" },
+    ],
+    actionHistory: [
+      { id: "014-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 80%",                                                            timestamp: "29 Jan 2024, 11:00" },
+      { id: "014-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 150 per farmer",                                 timestamp: "30 Jan 2024, 09:10" },
+      { id: "014-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0246-601-432)",                timestamp: "31 Jan 2024, 08:45" },
+      { id: "014-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 2,900 via MoMo · TXN-2B4E6A8C",                                  timestamp: "01 Feb 2024, 10:30" },
     ],
   },
   {
@@ -151,10 +173,17 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
     approvedAmountPerFarmer: 120,
     momoNumber: "0551-882-015", momoName: "Tolon Coop Society",
-    transactionId: "TXN-9D1F3H5J", disbursedAmount: 3360, disbursedDate: "03 Feb 2024",
+    transactionId: "TXN-9D1F3H5J", disbursedAmount: 3380, disbursedDate: "03 Feb 2024",
+    disbursementBreakdown: { baseAmount: 3360, withdrawalCharge: 20, transportAllowance: 0, total: 3380 },
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0551-882-015", momoName: "Tolon Coop Society" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
+    ],
+    actionHistory: [
+      { id: "015-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 87%",                                                            timestamp: "01 Feb 2024, 09:00" },
+      { id: "015-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 120 per farmer",                                 timestamp: "01 Feb 2024, 11:30" },
+      { id: "015-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0551-882-015)",                timestamp: "02 Feb 2024, 09:15" },
+      { id: "015-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 3,380 via MoMo · TXN-9D1F3H5J",                                  timestamp: "03 Feb 2024, 10:05" },
     ],
   },
   {
