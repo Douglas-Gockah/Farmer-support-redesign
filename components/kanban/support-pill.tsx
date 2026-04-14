@@ -11,8 +11,8 @@ export function SupportPill({ type }: { type: SupportType }) {
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
       style={isCash
-        ? { background: "#ECFDF5", color: "#16A34A" }
-        : { background: "#FFF7ED", color: "#C2410C" }}
+        ? { background: "var(--green-50)", color: "var(--green-600)" }
+        : { background: "var(--yellow-50)", color: "var(--yellow-700)" }}
     >
       {isCash ? (
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
@@ -38,10 +38,11 @@ export function SupportPill({ type }: { type: SupportType }) {
 // ---------------------------------------------------------------------------
 export function ScoreBadge({ score }: { score: number }) {
   const pct = Math.max(0, Math.min(100, score));
-  let bg = "#FEE2E2", color = "#DC2626";
-  if (pct >= 90)      { bg = "#BBF7D0"; color = "#166534"; }
-  else if (pct >= 70) { bg = "#DCFCE7"; color = "#16A34A"; }
-  else if (pct >= 40) { bg = "#FEF3C7"; color = "#D97706"; }
+  let bg    = "var(--error-50)";
+  let color = "var(--error-500)";
+  if (pct >= 90)      { bg = "var(--green-200)"; color = "var(--green-800)"; }
+  else if (pct >= 70) { bg = "var(--green-100)"; color = "var(--green-600)"; }
+  else if (pct >= 40) { bg = "var(--yellow-100)"; color = "var(--yellow-600)"; }
   return (
     <span
       className="inline-flex items-center h-5 px-1.5 rounded-full text-[11px] font-bold shrink-0"

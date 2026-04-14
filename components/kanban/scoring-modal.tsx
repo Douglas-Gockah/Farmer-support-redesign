@@ -15,8 +15,8 @@ function scoreLabel(s: number) {
 }
 function scoreColor(s: number) {
   if (s < 40) return "#DC2626";
-  if (s < 60) return "#D97706";
-  if (s < 80) return "#16A34A";
+  if (s < 60) return "var(--yellow-600)";
+  if (s < 80) return "var(--green-600)";
   return "#059669";
 }
 
@@ -42,12 +42,12 @@ function ImageCarousel({ index, setIndex, total = 2 }: {
         </button>
         <div
           className="flex-1 rounded-xl flex flex-col items-center justify-center"
-          style={{ height: 200, background: "#F8FAFC", border: "1.5px solid #E2E8F0" }}
+          style={{ height: 200, background: "var(--gray-50)", border: "1.5px solid var(--gray-200)" }}
         >
           <svg width="36" height="36" viewBox="0 0 40 40" fill="none" className="mb-2">
-            <rect x="3" y="7" width="34" height="26" rx="4" stroke="#CBD5E1" strokeWidth="1.8" />
-            <circle cx="13" cy="17" r="3.5" stroke="#CBD5E1" strokeWidth="1.5" />
-            <path d="M3 27l9-7 7 6 6-5 12 9" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="3" y="7" width="34" height="26" rx="4" stroke="var(--gray-300)" strokeWidth="1.8" />
+            <circle cx="13" cy="17" r="3.5" stroke="var(--gray-300)" strokeWidth="1.5" />
+            <path d="M3 27l9-7 7 6 6-5 12 9" stroke="var(--gray-300)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <p className="text-[12px] font-medium text-gray-400">Document {index + 1} of {total}</p>
         </div>
@@ -66,7 +66,7 @@ function ImageCarousel({ index, setIndex, total = 2 }: {
           <button
             key={i}
             className="w-2 h-2 rounded-full transition-colors"
-            style={{ background: i === index ? "#16A34A" : "#CBD5E1" }}
+            style={{ background: i === index ? "var(--green-600)" : "var(--gray-300)" }}
             onClick={() => setIndex(i)}
           />
         ))}
@@ -100,7 +100,7 @@ function ScoreSlider({ label, value, onChange }: {
             {[1, 2, 3, 4].map((n) => <span key={n} className="w-6 text-center">{n}</span>)}
           </div>
           <div className="relative h-2 rounded-full bg-gray-200">
-            <div className="absolute left-0 top-0 h-2 rounded-full transition-all" style={{ width: `${trackFill}%`, background: "#16A34A" }} />
+            <div className="absolute left-0 top-0 h-2 rounded-full transition-all" style={{ width: `${trackFill}%`, background: "var(--green-600)" }} />
             <input
               type="range" min={1} max={4} step={1}
               value={initialized ? value : 1}
@@ -111,7 +111,7 @@ function ScoreSlider({ label, value, onChange }: {
             {initialized && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-[2.5px] shadow-sm pointer-events-none"
-                style={{ borderColor: "#16A34A", left: `calc(${trackFill}% - 10px)`, transition: "left 80ms ease" }}
+                style={{ borderColor: "var(--green-600)", left: `calc(${trackFill}% - 10px)`, transition: "left 80ms ease" }}
               />
             )}
           </div>
@@ -127,9 +127,9 @@ function ScoreSlider({ label, value, onChange }: {
             onChange={(e) => handleInput(e.target.value)}
             className="w-14 h-14 rounded-xl text-center text-[22px] font-bold outline-none transition-colors"
             style={{
-              border: `2px solid ${initialized ? "#16A34A" : "#E2E8F0"}`,
-              color: initialized ? "#16A34A" : "#9CA3AF",
-              background: initialized ? "#F0FDF4" : "#F8FAFC",
+              border: `2px solid ${initialized ? "var(--green-600)" : "var(--gray-200)"}`,
+              color: initialized ? "var(--green-600)" : "#9CA3AF",
+              background: initialized ? "var(--green-25)" : "var(--gray-50)",
               MozAppearance: "textfield",
             }}
           />
@@ -154,7 +154,7 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
         <span className="text-[11px] font-bold text-gray-400 shrink-0">{rankLabel}</span>
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-          style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+          style={isCash ? { background: "var(--green-50)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}
         >
           {isCash ? (
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
@@ -201,15 +201,15 @@ function VoiceNotePlayer({ title, duration }: { title: string; duration: string 
   return (
     <div
       className="flex items-center gap-3 rounded-xl px-4 py-3.5"
-      style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB" }}
+      style={{ background: "var(--gray-50)", border: "1.5px solid var(--gray-200)" }}
     >
       {/* Play / Pause button */}
       <button
         onClick={() => setPlaying((p) => !p)}
         className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all"
         style={{
-          background: playing ? "#16A34A" : "#F0FDF4",
-          border: `2px solid ${playing ? "#16A34A" : "#BBF7D0"}`,
+          background: playing ? "var(--green-600)" : "var(--green-25)",
+          border: `2px solid ${playing ? "var(--green-600)" : "var(--green-200)"}`,
         }}
         aria-label={playing ? "Pause" : "Play"}
       >
@@ -220,7 +220,7 @@ function VoiceNotePlayer({ title, duration }: { title: string; duration: string 
           </svg>
         ) : (
           <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
-            <path d="M1 1.5l9 5-9 5V1.5z" fill="#16A34A" />
+            <path d="M1 1.5l9 5-9 5V1.5z" fill="var(--green-600)" />
           </svg>
         )}
       </button>
@@ -236,7 +236,7 @@ function VoiceNotePlayer({ title, duration }: { title: string; duration: string 
               style={{
                 width: 3,
                 height: Math.max(3, Math.round((h / BAR_MAX) * 28)),
-                background: i < playedCount ? "#16A34A" : "#D1D5DB",
+                background: i < playedCount ? "var(--green-600)" : "var(--gray-300)",
               }}
             />
           ))}
@@ -267,10 +267,10 @@ function GroupScoreWidget({ score }: { score: number }) {
           <span className="text-[12px] font-semibold mb-0.5" style={{ color }}>{label}</span>
         </div>
         {/* Gradient track */}
-        <div className="relative h-2.5 rounded-full overflow-hidden" style={{ background: "linear-gradient(to right, #EF4444 0%, #F59E0B 45%, #16A34A 100%)" }}>
+        <div className="relative h-2.5 rounded-full overflow-hidden" style={{ background: "linear-gradient(to right, #EF4444 0%, #F59E0B 45%, var(--green-600) 100%)" }}>
           <div
             className="absolute top-0 right-0 h-full"
-            style={{ width: unfilledWidth, background: "#E5E7EB", opacity: 0.88 }}
+            style={{ width: unfilledWidth, background: "var(--gray-200)", opacity: 0.88 }}
           />
         </div>
         <div className="flex justify-between text-[10px] text-gray-400 mt-1.5">
@@ -291,7 +291,7 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
   return (
     <div
       className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
-      style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
+      style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
       <div>
@@ -302,11 +302,11 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
 
       {/* Key stats — horizontal row */}
       <div className="flex gap-3">
-        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
-        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Submitted</p>
           <p className="text-[12px] font-bold text-gray-900 leading-tight mt-1">{card.date}</p>
         </div>
@@ -373,7 +373,7 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
 
       {/* On-hold notice */}
       {card.onHold && card.holdComment && (
-        <div className="rounded-xl border border-amber-200 px-3 py-2.5" style={{ background: "#FFFBEB" }}>
+        <div className="rounded-xl border border-amber-200 px-3 py-2.5" style={{ background: "var(--yellow-50)" }}>
           <p className="text-[11px] font-bold text-amber-700 mb-0.5">On Hold</p>
           <p className="text-[11px] text-amber-600 leading-relaxed">{card.holdComment}</p>
         </div>
@@ -443,7 +443,7 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
             {card.groupScore != null && (
               <span
                 className="text-[13px] font-bold px-2.5 py-1 rounded-lg"
-                style={{ background: "#F0FDF4", color: scoreColor(card.groupScore) }}
+                style={{ background: "var(--green-25)", color: scoreColor(card.groupScore) }}
               >
                 {card.groupScore}%
               </span>
@@ -459,13 +459,13 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
             {/* Warning banner */}
             <div
               className="flex items-start gap-3 px-6 py-3 shrink-0"
-              style={{ background: "#FFFBEB", borderBottom: "1px solid #FDE68A" }}
+              style={{ background: "var(--yellow-50)", borderBottom: "1px solid var(--yellow-200)" }}
             >
               <svg width="15" height="15" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5">
-                <path d="M10 3L18 17H2L10 3Z" stroke="#D97706" strokeWidth="1.6" strokeLinejoin="round" />
-                <path d="M10 8v4M10 13.5v.5" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round" />
+                <path d="M10 3L18 17H2L10 3Z" stroke="var(--yellow-600)" strokeWidth="1.6" strokeLinejoin="round" />
+                <path d="M10 8v4M10 13.5v.5" stroke="var(--yellow-600)" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
-              <p className="text-[12px] font-medium" style={{ color: "#92400E" }}>
+              <p className="text-[12px] font-medium" style={{ color: "var(--yellow-800)" }}>
                 Scores cannot be changed after confirmation. Review all records carefully before assigning.
               </p>
             </div>
@@ -525,10 +525,10 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "#F0FDF4" }}>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "var(--green-25)" }}>
                       <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-                        <rect x="4" y="2" width="20" height="24" rx="3" stroke="#16A34A" strokeWidth="1.6" />
-                        <path d="M9 9h10M9 13h10M9 17h6" stroke="#16A34A" strokeWidth="1.6" strokeLinecap="round" />
+                        <rect x="4" y="2" width="20" height="24" rx="3" stroke="var(--green-600)" strokeWidth="1.6" />
+                        <path d="M9 9h10M9 13h10M9 17h6" stroke="var(--green-600)" strokeWidth="1.6" strokeLinecap="round" />
                       </svg>
                     </div>
                     <p className="text-[13px] font-semibold text-gray-700 max-w-[280px] mb-1.5">
@@ -544,7 +544,7 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
               {/* Confirmation checkbox */}
               <div
                 className="rounded-xl p-4 flex items-start gap-3"
-                style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0" }}
+                style={{ background: "var(--green-25)", border: "1.5px solid var(--green-200)" }}
               >
                 <input
                   id="score-confirm"
@@ -552,7 +552,7 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
                   checked={confirmed}
                   onChange={(e) => setConfirmed(e.target.checked)}
                   className="mt-0.5 w-4 h-4 rounded cursor-pointer shrink-0"
-                  style={{ accentColor: "#16A34A" }}
+                  style={{ accentColor: "var(--green-600)" }}
                 />
                 <label htmlFor="score-confirm" className="text-[13px] font-medium text-gray-700 leading-relaxed cursor-pointer">
                   I have carefully reviewed the evidence records and confirm the scores are accurate.
@@ -574,7 +574,7 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
                 onClick={handleConfirm}
                 className="h-9 px-6 rounded-lg text-[13px] font-bold text-white transition-colors"
                 style={{
-                  background: canConfirm ? "#16A34A" : "#D1D5DB",
+                  background: canConfirm ? "var(--green-600)" : "var(--gray-300)",
                   cursor: canConfirm ? "pointer" : "not-allowed",
                 }}
               >

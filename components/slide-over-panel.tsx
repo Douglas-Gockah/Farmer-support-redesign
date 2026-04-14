@@ -169,7 +169,7 @@ export default function SlideOverPanel({
                 </span>
               </div>
               {/* Phone number display */}
-              <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3" style={{ background: "#F3F4F6" }}>
+              <div className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3" style={{ background: "var(--gray-100)" }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <rect x="4" y="1" width="8" height="14" rx="2" stroke="#6B7280" strokeWidth="1.3"/>
                   <circle cx="8" cy="12" r="0.8" fill="#6B7280"/>
@@ -179,7 +179,7 @@ export default function SlideOverPanel({
               {!disbursed && (
                 <button
                   className="w-full h-9 rounded-lg border-2 text-[13px] font-semibold transition-colors hover:bg-green-50"
-                  style={{ borderColor: "#16A34A", color: "#16A34A", background: "transparent" }}
+                  style={{ borderColor: "var(--green-600)", color: "var(--green-600)", background: "transparent" }}
                 >
                   Check Wallet Name against Database →
                 </button>
@@ -235,9 +235,9 @@ export default function SlideOverPanel({
             <button
               onClick={handleCta}
               className="w-full h-11 rounded-xl text-[14px] font-bold text-white flex items-center justify-center gap-2 transition-colors"
-              style={{ background: "#16A34A" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#15803D")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#16A34A")}
+              style={{ background: "var(--green-600)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-700)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-600)")}
             >
               {isFinance && (
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -251,7 +251,7 @@ export default function SlideOverPanel({
             <button
               disabled
               className="w-full h-11 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 cursor-not-allowed"
-              style={{ background: "#E5E7EB", color: "#9CA3AF" }}
+              style={{ background: "var(--gray-200)", color: "var(--gray-400)" }}
             >
               {disbursed ? "Funds disbursed" : "Awaiting confirmation"}
             </button>

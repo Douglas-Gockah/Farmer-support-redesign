@@ -51,7 +51,8 @@ export function HoldModal({
           <Button
             disabled={comment.trim() === ""}
             onClick={() => onConfirm(card.id)}
-            className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white disabled:bg-[#D1FAE5] disabled:text-[#6B7280]"
+            style={{ background: "var(--green-600)" }}
+            className="flex-1 text-white disabled:opacity-50"
           >
             Place on hold
           </Button>
@@ -95,7 +96,7 @@ function EvidenceSection({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[12px] text-muted-foreground">Score (0–10)</span>
-          <span className="text-[15px] font-bold text-[#16A34A]">{score}</span>
+          <span className="text-[15px] font-bold text-[var(--green-600)]">{score}</span>
         </div>
         <input
           type="range"
@@ -106,8 +107,8 @@ function EvidenceSection({
           onChange={(e) => onScoreChange(Number(e.target.value))}
           className="w-full h-2 rounded-full appearance-none cursor-pointer"
           style={{
-            accentColor: "#16A34A",
-            background: `linear-gradient(to right, #16A34A ${score * 10}%, #E5E7EB ${score * 10}%)`,
+            accentColor: "var(--green-600)",
+            background: `linear-gradient(to right, var(--green-600) ${score * 10}%, #E5E7EB ${score * 10}%)`,
           }}
         />
         <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -165,7 +166,7 @@ export function ScoringModal({
             id="confirm-score"
             checked={confirmed}
             onCheckedChange={(v) => setConfirmed(Boolean(v))}
-            className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
+            className="mt-0.5 data-[state=checked]:bg-[var(--green-600)] data-[state=checked]:border-[var(--green-600)]"
           />
           <Label htmlFor="confirm-score" className="text-[13px] text-muted-foreground leading-relaxed cursor-pointer">
             I have reviewed all evidence and confirm these scores are accurate.
@@ -175,7 +176,8 @@ export function ScoringModal({
         <Button
           disabled={!confirmed}
           onClick={() => onConfirm(card.id, avgScore)}
-          className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white disabled:bg-[#D1FAE5] disabled:text-[#6B7280]"
+          style={{ background: "var(--green-600)" }}
+        className="w-full text-white disabled:opacity-50"
         >
           Confirm scores
         </Button>

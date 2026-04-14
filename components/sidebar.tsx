@@ -38,7 +38,7 @@ export default function Sidebar({
         <div style={{ marginTop: 16, marginBottom: 12 }}>
           <div
             className="flex items-center justify-center rounded-lg font-bold text-white select-none"
-            style={{ width: 36, height: 36, background: "#16A34A", fontSize: 18 }}
+            style={{ width: 36, height: 36, background: "var(--green-600)", fontSize: 18 }}
             aria-label="TreeSyt"
           >
             T
@@ -58,17 +58,17 @@ export default function Sidebar({
                     width: 44,
                     height: 44,
                     borderRadius: 8,
-                    background: active ? "#F0FDF4" : "transparent",
-                    color: active ? "#16A34A" : "#6B7280",
+                    background: active ? "var(--green-25)" : "transparent",
+                    color: active ? "var(--green-600)" : "var(--gray-500)",
                   }}
                   onClick={onClose}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#F3F4F6"; }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--gray-100)"; }}
                   onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
                 >
                   {active && (
                     <span
                       className="absolute left-0 top-2 bottom-2 rounded-r-full"
-                      style={{ width: 3, background: "#16A34A" }}
+                      style={{ width: 3, background: "var(--green-600)" }}
                       aria-hidden="true"
                     />
                   )}

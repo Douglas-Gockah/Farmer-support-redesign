@@ -23,7 +23,7 @@ function ScoreBar({ score }: { score: number }) {
   const pct = Math.max(0, Math.min(100, score));
   return (
     <div className="w-full">
-      <div className="relative h-2 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, #16A34A)" }}>
+      <div className="relative h-2 rounded-full" style={{ background: "linear-gradient(to right, #EF4444, #F59E0B, var(--green-600))" }}>
         <div className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-zinc-500 shadow" style={{ left: `calc(${pct}% - 7px)` }} />
       </div>
       <div className="flex justify-between text-[10px] text-gray-400 mt-1">
@@ -47,7 +47,7 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
         <span className="text-[11px] font-bold text-gray-400 shrink-0">{rankLabel}</span>
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-          style={isCash ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFF7ED", color: "#C2410C" }}
+          style={isCash ? { background: "var(--green-50)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}
         >
           {isCash ? (
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
@@ -90,7 +90,7 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
   return (
     <div
       className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
-      style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
+      style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
       <div>
@@ -101,14 +101,14 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
 
       {/* Stats row */}
       <div className="flex gap-3">
-        <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
           <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
           <p className="text-[20px] font-bold text-gray-900">{card.farmers}</p>
         </div>
         {card.score !== null && (
-          <div className="flex-1 rounded-xl p-3" style={{ background: "#F9FAFB" }}>
+          <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
             <p className="text-[10px] text-gray-400 mb-0.5">Score</p>
-            <p className="text-[20px] font-bold" style={{ color: "#16A34A" }}>{card.score}%</p>
+            <p className="text-[20px] font-bold" style={{ color: "var(--green-600)" }}>{card.score}%</p>
           </div>
         )}
       </div>
@@ -145,7 +145,7 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
 
       {/* On-hold notice */}
       {card.onHold && card.holdComment && (
-        <div className="rounded-xl border border-amber-200 px-3 py-2.5" style={{ background: "#FFFBEB" }}>
+        <div className="rounded-xl border border-amber-200 px-3 py-2.5" style={{ background: "var(--yellow-50)" }}>
           <p className="text-[11px] font-bold text-amber-700 mb-0.5">On Hold</p>
           <p className="text-[11px] text-amber-600 leading-relaxed">{card.holdComment}</p>
         </div>
@@ -203,8 +203,8 @@ function SupportOptionCard({
     <div
       className="relative rounded-xl border-2 p-4 transition-all"
       style={{
-        borderColor: selected ? "#16A34A" : "#E5E7EB",
-        background:  selected ? "#F0FDF4" : "#FAFAFA",
+        borderColor: selected ? "var(--green-600)" : "var(--gray-200)",
+        background:  selected ? "var(--green-25)" : "#FAFAFA",
         opacity:     selected ? 1 : 0.65,
         cursor:      editing  ? "default" : "pointer",
       }}
@@ -217,7 +217,7 @@ function SupportOptionCard({
         </span>
         <div
           className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0"
-          style={{ borderColor: selected ? "#16A34A" : "#D1D5DB", background: selected ? "#16A34A" : "transparent" }}
+          style={{ borderColor: selected ? "var(--green-600)" : "var(--gray-300)", background: selected ? "var(--green-600)" : "transparent" }}
         >
           {selected && (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -250,7 +250,7 @@ function SupportOptionCard({
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditing(true); setEditValue(String(editableAmount)); }}
                   className="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-bold transition-colors hover:brightness-95"
-                  style={{ background: "#DCFCE7", color: "#16A34A" }}
+                  style={{ background: "var(--green-100)", color: "var(--green-600)" }}
                 >
                   <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
                     <path d="M7.5 1L9 2.5 3.5 8H2V6.5L7.5 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -269,7 +269,7 @@ function SupportOptionCard({
                     onChange={(e) => setEditValue(e.target.value)}
                     autoFocus
                     className="w-20 h-7 rounded-md text-[13px] font-semibold px-2 outline-none"
-                    style={{ border: "1.5px solid #16A34A", background: "white" }}
+                    style={{ border: "1.5px solid var(--green-600)", background: "white" }}
                   />
                 </div>
                 <textarea
@@ -283,7 +283,7 @@ function SupportOptionCard({
                   <button
                     onClick={handleSave}
                     className="text-[11px] font-bold text-white rounded-md px-2.5 py-1 transition-colors"
-                    style={{ background: "#16A34A" }}
+                    style={{ background: "var(--green-600)" }}
                   >
                     Save
                   </button>
@@ -299,7 +299,7 @@ function SupportOptionCard({
               <div className="flex items-center gap-1.5">
                 <p className="text-[13px] font-semibold text-gray-900">GHS {effectiveAmount.toFixed(2)}</p>
                 {isDouble && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#16A34A" }}>×2</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--green-100)", color: "var(--green-600)" }}>×2</span>
                 )}
               </div>
             )}
@@ -333,8 +333,8 @@ function SupportOptionCard({
           <div
             className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0"
             style={{
-              borderColor: isDouble ? "#16A34A" : "#D1D5DB",
-              background:  isDouble ? "#16A34A" : "transparent",
+              borderColor: isDouble ? "var(--green-600)" : "var(--gray-300)",
+              background:  isDouble ? "var(--green-600)" : "transparent",
             }}
           >
             {isDouble && (
@@ -350,7 +350,7 @@ function SupportOptionCard({
           {isDouble && (
             <span
               className="text-[10px] font-bold shrink-0 px-2 py-0.5 rounded-full"
-              style={{ background: "#DCFCE7", color: "#16A34A" }}
+              style={{ background: "var(--green-100)", color: "var(--green-600)" }}
             >
               Active
             </span>
@@ -385,7 +385,7 @@ function CashQtyFields({
         {isDouble && (
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "#DCFCE7", color: "#16A34A" }}
+            style={{ background: "var(--green-100)", color: "var(--green-600)" }}
           >
             ×2 — double bags at recovery
           </span>
@@ -542,9 +542,9 @@ export default function ApprovalModal({
     "Confirm Rejection";
 
   const confirmStyle: React.CSSProperties =
-    decision === "approve" ? { background: canConfirm ? "#16A34A" : "#D1D5DB", color: "white" } :
-    decision === "hold"    ? { background: canConfirm ? "#D97706" : "#D1D5DB", color: "white" } :
-    { background: canConfirm ? "#DC2626" : "#D1D5DB", color: "white" };
+    decision === "approve" ? { background: canConfirm ? "var(--green-600)" : "var(--gray-300)", color: "white" } :
+    decision === "hold"    ? { background: canConfirm ? "var(--yellow-600)" : "var(--gray-300)", color: "white" } :
+    { background: canConfirm ? "#DC2626" : "var(--gray-300)", color: "white" };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
@@ -581,7 +581,7 @@ export default function ApprovalModal({
               <p className="text-[11px] text-gray-500">{card.community} · {card.farmers} farmers</p>
             </div>
             {card.score !== null && (
-              <span className="text-[13px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "#DCFCE7", color: "#16A34A" }}>
+              <span className="text-[13px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--green-100)", color: "var(--green-600)" }}>
                 {card.score}%
               </span>
             )}
@@ -650,8 +650,8 @@ export default function ApprovalModal({
                     const isActive = decision === d;
                     const label = d === "approve" ? "Approve" : d === "hold" ? "Put on Hold" : "Reject";
                     const activeStyle: React.CSSProperties =
-                      d === "approve" ? { background: "#F0FDF4", color: "#16A34A" } :
-                      d === "hold"    ? { background: "#FFFBEB", color: "#D97706" } :
+                      d === "approve" ? { background: "var(--green-25)", color: "var(--green-600)" } :
+                      d === "hold"    ? { background: "var(--yellow-50)", color: "var(--yellow-600)" } :
                       { background: "#FEF2F2", color: "#DC2626" };
                     return (
                       <button
@@ -672,7 +672,7 @@ export default function ApprovalModal({
                       id="confirm-approve"
                       checked={approveConfirmed}
                       onCheckedChange={(v) => setApproveConfirmed(Boolean(v))}
-                      className="mt-0.5 data-[state=checked]:bg-[#16A34A] data-[state=checked]:border-[#16A34A]"
+                      className="mt-0.5 data-[state=checked]:bg-[var(--green-600)] data-[state=checked]:border-[var(--green-600)]"
                     />
                     <Label htmlFor="confirm-approve" className="text-[12px] text-gray-500 leading-relaxed cursor-pointer">
                       I have reviewed and confirm this approval.
