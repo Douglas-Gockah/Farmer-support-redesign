@@ -51,6 +51,9 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     supportInterests: [
       { rank: "Primary", type: "Cash", amountPerFarmer: 120, momoNumber: "0244-321-654", momoName: "Nkoranza DY Group" },
     ],
+    actionHistory: [
+      { id: "013-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request — 72%", timestamp: "07 Feb 2024, 14:30" },
+    ],
   },
   {
     id: "FS-2024-003", date: "18 Jan 2024", agent: "Yaw Darko", community: "Bole",
@@ -59,6 +62,9 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 150, momoNumber: "0551-234-567", momoName: "Bole Alliance" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
+    ],
+    actionHistory: [
+      { id: "003-1", stage: "synced", actor: "Yaw Darko", action: "Scored request — 62%", timestamp: "17 Jan 2024, 10:00" },
     ],
   },
   {
@@ -69,6 +75,10 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 3.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 200, momoNumber: "0244-987-654", momoName: "WE Crop Circle" },
     ],
+    actionHistory: [
+      { id: "004-1", stage: "synced", actor: "Abena Asante", action: "Scored request — 78%", timestamp: "19 Jan 2024, 09:15" },
+      { id: "004-2", stage: "pending_approval", actor: "Abena Asante", action: "Placed on hold", reason: "MoMo account details need verification from field.", timestamp: "20 Jan 2024, 11:00" },
+    ],
   },
   {
     id: "FS-2024-005", date: "10 Jan 2024", agent: "Kwame Boateng", community: "Tamale Metro",
@@ -77,6 +87,10 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 80,  momoNumber: "0200-000-001", momoName: "Metro Harvest" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 0.5 },
+    ],
+    actionHistory: [
+      { id: "005-1", stage: "synced", actor: "Kwame Boateng", action: "Scored request — 38%", timestamp: "09 Jan 2024, 15:00" },
+      { id: "005-2", stage: "pending_approval", actor: "Kwame Boateng", action: "Rejected — score below minimum threshold", reason: "Score too low to meet minimum eligibility threshold of 50.", timestamp: "10 Jan 2024, 09:30" },
     ],
   },
   {
@@ -87,6 +101,10 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0244-111-222", momoName: "Kalba Green" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
+    ],
+    actionHistory: [
+      { id: "006-1", stage: "synced", actor: "Efua Nkrumah", action: "Scored request — 84%", timestamp: "21 Jan 2024, 13:00" },
+      { id: "006-2", stage: "pending_approval", actor: "Efua Nkrumah", action: "Approved for Cash support — GHS 120 per farmer", timestamp: "22 Jan 2024, 10:15" },
     ],
   },
   {
@@ -99,6 +117,11 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 2.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 180, momoNumber: "0551-777-888", momoName: "Bole Collective" },
     ],
+    actionHistory: [
+      { id: "007-1", stage: "synced", actor: "Nana Adjei", action: "Scored request — 91%", timestamp: "24 Jan 2024, 11:00" },
+      { id: "007-2", stage: "pending_approval", actor: "Nana Adjei", action: "Approved for Ploughing support — 2.0 ac per farmer", timestamp: "25 Jan 2024, 09:00" },
+      { id: "007-3", stage: "agent_confirmation", actor: "Nana Adjei", action: "Confirmed participating farmers and MoMo account (0551-777-888)", timestamp: "26 Jan 2024, 08:30" },
+    ],
   },
   {
     id: "FS-2024-009", date: "26 Jan 2024", agent: "Kofi Mensah", community: "Tamale Metro",
@@ -109,6 +132,11 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 150, momoNumber: "0244-333-444", momoName: "Tamale Pioneer" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.2 },
+    ],
+    actionHistory: [
+      { id: "009-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request — 75%", timestamp: "25 Jan 2024, 14:00" },
+      { id: "009-2", stage: "pending_approval", actor: "Kofi Mensah", action: "Approved for Cash support — GHS 150 per farmer", timestamp: "26 Jan 2024, 10:00" },
+      { id: "009-3", stage: "agent_confirmation", actor: "Kofi Mensah", action: "Confirmed participating farmers and MoMo account (0244-333-444)", timestamp: "27 Jan 2024, 09:00" },
     ],
   },
   {
