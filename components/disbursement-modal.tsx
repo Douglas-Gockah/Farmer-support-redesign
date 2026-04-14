@@ -142,26 +142,45 @@ function VerifyStep({
   onClose,
 }: {
   card: FarmerRequest;
-  onProceed: () => void;
+  onProceed: (momoNumber: string) => void;
   onClose: () => void;
 }) {
-  const submittedMomo = card.momoNumber ?? "055 000 0000";
+  const initialMomo   = card.momoNumber ?? "055 000 0000";
   const submittedName = card.momoName ?? card.groupName;
-  const resolvedName  = submittedName;
   const hasMismatch   = false;
 
+  const [currentMomo,    setCurrentMomo]   = useState(initialMomo);
   const [checking,       setChecking]      = useState(false);
   const [verified,       setVerified]      = useState(false);
   const [showMismatch,   setShowMismatch]  = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [newMomo,        setNewMomo]       = useState(submittedMomo);
+  const [newMomo,        setNewMomo]       = useState(initialMomo);
   const [updateReason,   setUpdateReason]  = useState("");
+  // After check passes, allow updating the number
+  const [editingMomo,    setEditingMomo]   = useState(false);
+  const [editMomoInput,  setEditMomoInput] = useState("");
+
+  const resolvedName = submittedName;
 
   function handleCheck() {
     setChecking(true);
     setTimeout(() => {
       setChecking(false);
       if (hasMismatch) { setShowMismatch(true); } else { setVerified(true); }
+    }, 1500);
+  }
+
+  function handleUpdateNumber() {
+    if (!editMomoInput.trim()) return;
+    setCurrentMomo(editMomoInput.trim());
+    setVerified(false);
+    setEditingMomo(false);
+    setEditMomoInput("");
+    // Trigger check automatically with new number
+    setChecking(true);
+    setTimeout(() => {
+      setChecking(false);
+      setVerified(true);
     }, 1500);
   }
 
@@ -213,7 +232,7 @@ function VerifyStep({
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[11px] text-gray-400">MoMo Number</p>
-                    <p className="text-[15px] font-bold font-mono mt-0.5">{submittedMomo}</p>
+                    <p className="text-[15px] font-bold font-mono mt-0.5">{currentMomo}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] text-gray-400">Submitted Name</p>
@@ -239,11 +258,21 @@ function VerifyStep({
               {/* Verified result */}
               {verified && !hasMismatch && (
                 <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                      <p className="text-[13px] font-semibold text-[var(--green-600)]">Account verified</p>
                     </div>
-                    <p className="text-[13px] font-semibold text-[var(--green-600)]">Account verified</p>
+                    {!editingMomo && (
+                      <button
+                        className="text-[12px] font-medium text-gray-400 hover:text-gray-700 underline transition-colors"
+                        onClick={() => { setEditingMomo(true); setEditMomoInput(currentMomo); }}
+                      >
+                        Update number
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-400">Account name</span>
@@ -251,8 +280,39 @@ function VerifyStep({
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-400">MoMo number</span>
-                    <span className="font-semibold font-mono">{submittedMomo}</span>
+                    <span className="font-semibold font-mono">{currentMomo}</span>
                   </div>
+
+                  {/* Inline edit form — shown when "Update number" is clicked */}
+                  {editingMomo && (
+                    <div className="mt-3 pt-3 space-y-2.5" style={{ borderTop: "1px solid var(--green-200)" }}>
+                      <p className="text-[11px] font-semibold text-gray-500">Enter new MoMo number</p>
+                      <Input
+                        value={editMomoInput}
+                        onChange={(e) => setEditMomoInput(e.target.value)}
+                        placeholder="e.g. 0244-123-456"
+                        className="h-9 text-[13px] font-mono"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white text-[12px]"
+                          disabled={!editMomoInput.trim() || editMomoInput.trim() === currentMomo}
+                          onClick={handleUpdateNumber}
+                        >
+                          Re-run check
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-[12px]"
+                          onClick={() => { setEditingMomo(false); setEditMomoInput(""); }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -302,8 +362,8 @@ function VerifyStep({
             <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
               <Button
                 className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-10 text-[14px] font-bold"
-                disabled={!verified}
-                onClick={onProceed}
+                disabled={!verified || editingMomo}
+                onClick={() => onProceed(currentMomo)}
               >
                 Proceed to disbursement
               </Button>
@@ -320,14 +380,18 @@ function VerifyStep({
 // ---------------------------------------------------------------------------
 function ConfirmStep({
   card,
+  momoOverride,
   onDisburse,
   onClose,
 }: {
   card: FarmerRequest;
+  momoOverride?: string;
   onDisburse: (breakdown: DisbursementBreakdown) => void;
   onClose: () => void;
 }) {
   const totalAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
+  const activeMomo = momoOverride ?? card.momoNumber ?? "055 000 0000";
+  const activeName = card.momoName ?? card.groupName;
   const [chargeType,   setChargeType]   = useState<ChargeType>("none");
   const [addTransport, setAddTransport] = useState(false);
 
@@ -402,8 +466,8 @@ function ConfirmStep({
               <div className="rounded-xl border border-gray-200 overflow-hidden">
                 {[
                   { label: "Recipient",     value: card.groupName },
-                  { label: "MoMo number",   value: card.momoNumber ?? "055 000 0000" },
-                  { label: "Account name",  value: card.momoName ?? card.groupName },
+                  { label: "MoMo number",   value: activeMomo },
+                  { label: "Account name",  value: activeName },
                 ].map((row, i, arr) => (
                   <div key={row.label} className="flex items-center justify-between px-4 py-3"
                     style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}>
@@ -667,9 +731,10 @@ export default function DisbursementModal({
   onClose: () => void;
   onDisbursed: (id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown) => void;
 }) {
-  const [step,      setStep]      = useState<DisburseStep>("verify");
-  const [txId]                    = useState(generateTxId);
-  const [breakdown, setBreakdown] = useState<DisbursementBreakdown | undefined>(undefined);
+  const [step,         setStep]        = useState<DisburseStep>("verify");
+  const [txId]                         = useState(generateTxId);
+  const [breakdown,    setBreakdown]   = useState<DisbursementBreakdown | undefined>(undefined);
+  const [verifiedMomo, setVerifiedMomo] = useState<string | undefined>(undefined);
   const baseAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
 
   function handleDisbursed() {
@@ -679,12 +744,19 @@ export default function DisbursementModal({
   }
 
   if (step === "verify") {
-    return <VerifyStep card={card} onProceed={() => setStep("confirm")} onClose={onClose} />;
+    return (
+      <VerifyStep
+        card={card}
+        onProceed={(momo) => { setVerifiedMomo(momo); setStep("confirm"); }}
+        onClose={onClose}
+      />
+    );
   }
   if (step === "confirm") {
     return (
       <ConfirmStep
         card={card}
+        momoOverride={verifiedMomo}
         onDisburse={(bd) => { setBreakdown(bd); setStep("processing"); }}
         onClose={onClose}
       />

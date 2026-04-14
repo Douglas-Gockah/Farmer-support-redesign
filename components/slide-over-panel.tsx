@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // Types — re-exported from canonical location for backwards compatibility
@@ -225,6 +226,13 @@ export default function SlideOverPanel({
             <div className="rounded-xl border border-red-200 px-4 py-3" style={{ background: "#FEF2F2" }}>
               <p className="text-[11px] font-bold text-red-700 mb-0.5">Rejected</p>
               <p className="text-[12px] text-red-600">{card.rejectionComment}</p>
+            </div>
+          )}
+
+          {/* Action timeline */}
+          {(card.actionHistory ?? []).length > 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <ActionTimeline records={card.actionHistory ?? []} />
             </div>
           )}
         </div>
