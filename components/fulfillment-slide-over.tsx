@@ -3,68 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FulfillmentRequest, FarmerFulfillmentRecord } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
-
-// ---------------------------------------------------------------------------
-// Voice proof player — simulates playback with waveform bars
-// ---------------------------------------------------------------------------
-function VoicePlayer({
-  duration,
-  farmerName,
-}: {
-  duration: string;
-  farmerName: string;
-}) {
-  const [playing, setPlaying] = useState(false);
-
-  // Deterministic bar heights seeded by farmer name
-  const bars = Array.from({ length: 28 }, (_, i) => {
-    const seed = (farmerName.charCodeAt(i % farmerName.length) * 3 + i * 13) % 10;
-    return 20 + seed * 8; // 20%–92% height
-  });
-
-  return (
-    <button
-      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors"
-      style={{ background: "var(--green-25)", border: "1px solid var(--green-100)" }}
-      onClick={() => setPlaying((p) => !p)}
-    >
-      {/* Play / Pause icon */}
-      <span
-        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-        style={{ background: "var(--green-600)", color: "white" }}
-      >
-        {playing ? (
-          <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor">
-            <rect x="0" y="0" width="3" height="9" rx="1" />
-            <rect x="5" y="0" width="3" height="9" rx="1" />
-          </svg>
-        ) : (
-          <svg width="8" height="9" viewBox="0 0 10 11" fill="currentColor">
-            <path d="M2 1.5l7 4L2 9.5V1.5z" />
-          </svg>
-        )}
-      </span>
-
-      {/* Waveform */}
-      <div className="flex items-center gap-[2px] h-6 flex-1">
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-full"
-            style={{
-              height: `${h}%`,
-              background: playing && i < 10 ? "var(--green-600)" : "#86EFAC",
-              minWidth: 2,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Duration */}
-      <span className="text-[11px] font-mono shrink-0" style={{ color: "var(--green-700)" }}>{duration}</span>
-    </button>
-  );
-}
+import { NativeVoiceNote } from "@/components/kanban/native-voice-note";
 
 // ---------------------------------------------------------------------------
 // Farmer row — received (with voice proof) or pending
@@ -103,10 +42,7 @@ function FarmerRow({
           {/* Voice proof (received only) */}
           {farmer.received && farmer.voiceRecordingDuration && (
             <div className="mt-1.5">
-              <VoicePlayer
-                duration={farmer.voiceRecordingDuration}
-                farmerName={farmer.name}
-              />
+              <NativeVoiceNote duration={farmer.voiceRecordingDuration} />
               {farmer.receivedDate && (
                 <p className="text-[10px] text-gray-400 mt-1 pl-1">
                   Confirmed {farmer.receivedDate}

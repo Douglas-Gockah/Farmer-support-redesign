@@ -55,16 +55,24 @@ function FilterPill<T extends string>({
   onSelect: (v: T | null) => void;
   searchable?: boolean;
 }) {
-  const [open, setOpen]     = useState(false);
-  const [query, setQuery]   = useState("");
-  const ref                 = useRef<HTMLDivElement>(null);
-  const isActive            = value !== null;
-  const displayLabel        = isActive
+  const [open, setOpen]   = useState(false);
+  const [query, setQuery] = useState("");
+  const [coords, setCoords] = useState({ top: 0, left: 0, minWidth: 180 });
+  const ref        = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const isActive   = value !== null;
+  const displayLabel = isActive
     ? options.find((o) => o.value === value)?.label ?? label
     : label;
-  const filtered            = searchable
+  const filtered = searchable
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
+
+  function calcCoords() {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setCoords({ top: r.bottom + 6, left: r.left, minWidth: Math.max(180, r.width) });
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -76,6 +84,18 @@ function FilterPill<T extends string>({
     }
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Reposition on scroll / resize while open
+  useEffect(() => {
+    if (!open) return;
+    function reposition() { calcCoords(); }
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
   }, [open]);
 
   const pillStyle: React.CSSProperties = isActive
@@ -105,8 +125,9 @@ function FilterPill<T extends string>({
   return (
     <div ref={ref} className="relative shrink-0">
       <button
+        ref={triggerRef}
         style={pillStyle}
-        onClick={() => { setOpen((v) => !v); setQuery(""); }}
+        onClick={() => { calcCoords(); setOpen((v) => !v); setQuery(""); }}
         onMouseEnter={(e) => {
           if (!isActive) e.currentTarget.style.borderColor = "var(--gray-300)";
         }}
@@ -125,9 +146,13 @@ function FilterPill<T extends string>({
 
       {open && (
         <div
-          className="absolute left-0 top-9 z-50 py-1 overflow-hidden"
+          className="py-1 overflow-hidden"
           style={{
-            minWidth: 180,
+            position: "fixed",
+            top: coords.top,
+            left: coords.left,
+            minWidth: coords.minWidth,
+            zIndex: 9999,
             background: "#ffffff",
             border: "1px solid var(--gray-200)",
             borderRadius: 10,

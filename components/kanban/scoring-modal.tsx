@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FarmerRequest, SupportInterest } from "./types";
 import { initials, avatarColor } from "./helpers";
+import { NativeVoiceNote } from "./native-voice-note";
 
 // ---------------------------------------------------------------------------
 // Score helpers
@@ -187,67 +188,7 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
   );
 }
 
-// ---------------------------------------------------------------------------
-// Voice note player — mock audio player with waveform visualization
-// ---------------------------------------------------------------------------
-const WAVEFORM_BARS = [3, 5, 9, 14, 8, 16, 20, 12, 6, 18, 11, 7, 15, 20, 10, 5, 13, 17, 9, 6, 12, 10, 16, 8, 5, 11, 14, 9, 4, 8, 6, 3];
-const BAR_MAX = 20;
-
-function VoiceNotePlayer({ title, duration }: { title: string; duration: string }) {
-  const [playing, setPlaying] = useState(false);
-  // Mock: show first 40% of bars as "played" when active
-  const playedCount = playing ? Math.floor(WAVEFORM_BARS.length * 0.4) : 0;
-
-  return (
-    <div
-      className="flex items-center gap-3 rounded-xl px-4 py-3.5"
-      style={{ background: "var(--gray-50)", border: "1.5px solid var(--gray-200)" }}
-    >
-      {/* Play / Pause button */}
-      <button
-        onClick={() => setPlaying((p) => !p)}
-        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all"
-        style={{
-          background: playing ? "var(--green-600)" : "var(--green-25)",
-          border: `2px solid ${playing ? "var(--green-600)" : "var(--green-200)"}`,
-        }}
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? (
-          <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
-            <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="white" />
-            <rect x="7.5" y="0.5" width="3" height="12" rx="1" fill="white" />
-          </svg>
-        ) : (
-          <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
-            <path d="M1 1.5l9 5-9 5V1.5z" fill="var(--green-600)" />
-          </svg>
-        )}
-      </button>
-
-      {/* Label + waveform */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-gray-800 mb-2 truncate">{title}</p>
-        <div className="flex items-end gap-[2px]" style={{ height: 28 }}>
-          {WAVEFORM_BARS.map((h, i) => (
-            <div
-              key={i}
-              className="rounded-full flex-shrink-0 transition-colors"
-              style={{
-                width: 3,
-                height: Math.max(3, Math.round((h / BAR_MAX) * 28)),
-                background: i < playedCount ? "var(--green-600)" : "var(--gray-300)",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Duration */}
-      <span className="text-[11px] font-medium text-gray-400 shrink-0 tabular-nums">{duration}</span>
-    </div>
-  );
-}
+// NativeVoiceNote is imported from ./native-voice-note
 
 // ---------------------------------------------------------------------------
 // Group score widget
@@ -489,8 +430,8 @@ export function ScoringModal({ card, onClose, onScored }: ScoringModalProps) {
                   Voice notes captured during the field visit confirming the group's request for support.
                 </p>
                 <div className="space-y-3">
-                  <VoiceNotePlayer title="Group leader's voice note" duration="0:42" />
-                  <VoiceNotePlayer title="Witness's voice note" duration="0:31" />
+                  <NativeVoiceNote title="Group leader's voice note" duration="0:42" />
+                  <NativeVoiceNote title="Witness's voice note" duration="0:31" />
                 </div>
               </div>
 
