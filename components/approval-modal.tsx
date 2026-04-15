@@ -87,6 +87,7 @@ function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) 
 function GroupContextPanel({ card }: { card: FarmerRequest }) {
   const agentInitials = initials(card.agent);
   const agentColor    = avatarColor(card.agent);
+  const hasHistory    = (card.actionHistory ?? []).length > 0;
 
   return (
     <div
@@ -149,6 +150,13 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
         <div className="rounded-xl border border-amber-200 px-3 py-2.5" style={{ background: "var(--yellow-50)" }}>
           <p className="text-[11px] font-bold text-amber-700 mb-0.5">On Hold</p>
           <p className="text-[11px] text-amber-600 leading-relaxed">{card.holdComment}</p>
+        </div>
+      )}
+
+      {/* Action timeline */}
+      {hasHistory && (
+        <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16 }}>
+          <ActionTimeline records={card.actionHistory ?? []} />
         </div>
       )}
     </div>
@@ -648,9 +656,6 @@ export default function ApprovalModal({
                   setPayment={setPayment}
                 />
               )}
-
-              {/* Action timeline */}
-              <ActionTimeline records={card.actionHistory ?? []} />
 
               <div className="h-px bg-gray-100" />
 

@@ -100,7 +100,8 @@ export interface FarmerFulfillmentRecord {
   id: string;
   name: string;
   received: boolean;
-  voiceRecordingDuration?: string; // e.g. "0:32" — proof of receipt
+  voiceRecordingDuration?: string;  // farmer recording — proof of receipt
+  witnessRecordingDuration?: string; // witness recording — corroboration
   receivedDate?: string;
 }
 
