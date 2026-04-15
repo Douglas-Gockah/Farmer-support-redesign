@@ -39,12 +39,15 @@ function FarmerRow({
             </span>
           </div>
 
-          {/* Voice proof (received only) */}
+          {/* Voice proof (received only) — two recordings: farmer + witness */}
           {farmer.received && farmer.voiceRecordingDuration && (
-            <div className="mt-1.5">
-              <NativeVoiceNote duration={farmer.voiceRecordingDuration} />
+            <div className="mt-2 space-y-2">
+              <NativeVoiceNote title="Farmer" duration={farmer.voiceRecordingDuration} />
+              {farmer.witnessRecordingDuration && (
+                <NativeVoiceNote title="Witness" duration={farmer.witnessRecordingDuration} />
+              )}
               {farmer.receivedDate && (
-                <p className="text-[10px] text-gray-400 mt-1 pl-1">
+                <p className="text-[10px] text-gray-400 mt-0.5 pl-1">
                   Confirmed {farmer.receivedDate}
                 </p>
               )}
