@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { FarmerRequest, DisbursementBreakdown } from "@/components/kanban/types";
+import type { FarmerRequest, DisbursementBreakdown, ActionRecord } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 import { ActionTimeline } from "@/components/kanban/action-timeline";
 
@@ -142,7 +142,7 @@ function VerifyStep({
   onClose,
 }: {
   card: FarmerRequest;
-  onProceed: (momoNumber: string) => void;
+  onProceed: (momoNumber: string, momoUpdateRecord?: ActionRecord) => void;
   onClose: () => void;
 }) {
   const initialMomo   = card.momoNumber ?? "055 000 0000";
@@ -159,20 +159,68 @@ function VerifyStep({
   // After check passes, allow updating the number
   const [editingMomo,    setEditingMomo]   = useState(false);
   const [editMomoInput,  setEditMomoInput] = useState("");
+  // Not-registered failure (simulated)
+  const [notRegistered,           setNotRegistered]           = useState(false);
+  const [showNotRegUpdateForm,    setShowNotRegUpdateForm]    = useState(false);
+  const [notRegMomoInput,         setNotRegMomoInput]         = useState("");
+  // Record created when the MoMo number is corrected after a not-registered failure
+  const [momoUpdateRecord,        setMomoUpdateRecord]        = useState<ActionRecord | undefined>(undefined);
 
   const resolvedName = submittedName;
+
+  function makeUpdateRecord(oldMomo: string, updatedMomo: string): ActionRecord {
+    return {
+      id: `${Date.now()}-momo-update`,
+      stage: "finance_disbursement",
+      actor: "Douglas Gockah",
+      action: "Updated MoMo number",
+      summary: `Douglas Gockah updated the MoMo number from ${oldMomo} to ${updatedMomo} before disbursement`,
+      timestamp: new Date().toLocaleString("en-GH", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }),
+    };
+  }
 
   function handleCheck() {
     setChecking(true);
     setTimeout(() => {
       setChecking(false);
-      if (hasMismatch) { setShowMismatch(true); } else { setVerified(true); }
+      // Simulate "not registered" failure on the first check if flag is set and no update has been made
+      if (card.simulateMomoNotRegistered && !momoUpdateRecord) {
+        setNotRegistered(true);
+      } else if (hasMismatch) {
+        setShowMismatch(true);
+      } else {
+        setVerified(true);
+      }
+    }, 1500);
+  }
+
+  function handleNotRegUpdate() {
+    if (!notRegMomoInput.trim()) return;
+    const oldMomo = currentMomo;
+    const updatedMomo = notRegMomoInput.trim();
+    const record = makeUpdateRecord(oldMomo, updatedMomo);
+    setMomoUpdateRecord(record);
+    setCurrentMomo(updatedMomo);
+    setNotRegistered(false);
+    setShowNotRegUpdateForm(false);
+    setNotRegMomoInput("");
+    setChecking(true);
+    setTimeout(() => {
+      setChecking(false);
+      setVerified(true);
     }, 1500);
   }
 
   function handleUpdateNumber() {
     if (!editMomoInput.trim()) return;
-    setCurrentMomo(editMomoInput.trim());
+    const oldMomo = currentMomo;
+    const updatedMomo = editMomoInput.trim();
+    const record = makeUpdateRecord(oldMomo, updatedMomo);
+    setMomoUpdateRecord(record);
+    setCurrentMomo(updatedMomo);
     setVerified(false);
     setEditingMomo(false);
     setEditMomoInput("");
@@ -243,7 +291,7 @@ function VerifyStep({
                 <Button
                   variant="outline"
                   className="w-full h-9 text-[13px] font-semibold"
-                  disabled={checking || verified}
+                  disabled={checking || verified || notRegistered}
                   onClick={handleCheck}
                 >
                   {checking ? (
@@ -254,6 +302,60 @@ function VerifyStep({
                   ) : verified ? "Wallet verified" : "Check wallet name"}
                 </Button>
               </div>
+
+              {/* Not-registered failure */}
+              {notRegistered && (
+                <div className="rounded-xl border border-red-300 p-4 space-y-3" style={{ background: "#FEF2F2" }}>
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6.5" stroke="#DC2626" strokeWidth="1.5" />
+                      <path d="M8 5v3.5M8 10.5v.5" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    <p className="text-[13px] font-semibold text-red-700">{currentMomo} is not registered for mobile payments</p>
+                  </div>
+                  <p className="text-[12px] text-red-500 leading-relaxed">
+                    The mobile wallet could not be found. Please update the MoMo number and re-run the check before proceeding.
+                  </p>
+                  {!showNotRegUpdateForm ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-[12px] border-red-300 text-red-700 hover:bg-red-50"
+                      onClick={() => { setShowNotRegUpdateForm(true); setNotRegMomoInput(""); }}
+                    >
+                      Update MoMo number
+                    </Button>
+                  ) : (
+                    <div className="space-y-2.5 pt-1">
+                      <Label className="text-[11px] text-gray-500 font-semibold">Enter correct MoMo number</Label>
+                      <Input
+                        value={notRegMomoInput}
+                        onChange={(e) => setNotRegMomoInput(e.target.value)}
+                        placeholder="e.g. 0244-123-456"
+                        className="h-9 text-[13px] font-mono"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[12px]"
+                          disabled={!notRegMomoInput.trim() || notRegMomoInput.trim() === currentMomo}
+                          onClick={handleNotRegUpdate}
+                        >
+                          Re-run check
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-[12px]"
+                          onClick={() => setShowNotRegUpdateForm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Verified result */}
               {verified && !hasMismatch && (
@@ -363,7 +465,7 @@ function VerifyStep({
               <Button
                 className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-10 text-[14px] font-bold"
                 disabled={!verified || editingMomo}
-                onClick={() => onProceed(currentMomo)}
+                onClick={() => onProceed(currentMomo, momoUpdateRecord)}
               >
                 Proceed to disbursement
               </Button>
@@ -729,17 +831,18 @@ export default function DisbursementModal({
 }: {
   card: FarmerRequest;
   onClose: () => void;
-  onDisbursed: (id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown) => void;
+  onDisbursed: (id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown, momoUpdateRecord?: ActionRecord) => void;
 }) {
-  const [step,         setStep]        = useState<DisburseStep>("verify");
-  const [txId]                         = useState(generateTxId);
-  const [breakdown,    setBreakdown]   = useState<DisbursementBreakdown | undefined>(undefined);
-  const [verifiedMomo, setVerifiedMomo] = useState<string | undefined>(undefined);
+  const [step,             setStep]            = useState<DisburseStep>("verify");
+  const [txId]                                 = useState(generateTxId);
+  const [breakdown,        setBreakdown]       = useState<DisbursementBreakdown | undefined>(undefined);
+  const [verifiedMomo,     setVerifiedMomo]    = useState<string | undefined>(undefined);
+  const [momoUpdateRecord, setMomoUpdateRecord] = useState<ActionRecord | undefined>(undefined);
   const baseAmount = (card.approvedAmountPerFarmer ?? AMOUNT_PER_FARMER) * card.farmers;
 
   function handleDisbursed() {
     const total = breakdown?.total ?? baseAmount;
-    onDisbursed(card.id, txId, total, breakdown);
+    onDisbursed(card.id, txId, total, breakdown, momoUpdateRecord);
     onClose();
   }
 
@@ -747,7 +850,7 @@ export default function DisbursementModal({
     return (
       <VerifyStep
         card={card}
-        onProceed={(momo) => { setVerifiedMomo(momo); setStep("confirm"); }}
+        onProceed={(momo, updateRecord) => { setVerifiedMomo(momo); setMomoUpdateRecord(updateRecord); setStep("confirm"); }}
         onClose={onClose}
       />
     );

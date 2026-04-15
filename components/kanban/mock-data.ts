@@ -52,7 +52,7 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary", type: "Cash", amountPerFarmer: 120, momoNumber: "0244-321-654", momoName: "Nkoranza DY Group" },
     ],
     actionHistory: [
-      { id: "013-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request — 72%", timestamp: "07 Feb 2024, 14:30" },
+      { id: "013-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request", summary: "Kofi Mensah assigned a score of 72% to the group", timestamp: "07 Feb 2024, 14:30" },
     ],
   },
   {
@@ -64,7 +64,7 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
     ],
     actionHistory: [
-      { id: "003-1", stage: "synced", actor: "Yaw Darko", action: "Scored request — 62%", timestamp: "17 Jan 2024, 10:00" },
+      { id: "003-1", stage: "synced", actor: "Yaw Darko", action: "Scored request", summary: "Yaw Darko assigned a score of 62% to the group", timestamp: "17 Jan 2024, 10:00" },
     ],
   },
   {
@@ -76,8 +76,8 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 200, momoNumber: "0244-987-654", momoName: "WE Crop Circle" },
     ],
     actionHistory: [
-      { id: "004-1", stage: "synced", actor: "Abena Asante", action: "Scored request — 78%", timestamp: "19 Jan 2024, 09:15" },
-      { id: "004-2", stage: "pending_approval", actor: "Abena Asante", action: "Placed on hold", reason: "MoMo account details need verification from field.", timestamp: "20 Jan 2024, 11:00" },
+      { id: "004-1", stage: "synced", actor: "Abena Asante", action: "Scored request", summary: "Abena Asante assigned a score of 78% to the group", timestamp: "19 Jan 2024, 09:15" },
+      { id: "004-2", stage: "pending_approval", actor: "Abena Asante", action: "Placed on hold", summary: "Abena Asante placed the request on hold", reason: "MoMo account details need verification from field.", timestamp: "20 Jan 2024, 11:00" },
     ],
   },
   {
@@ -89,8 +89,8 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 0.5 },
     ],
     actionHistory: [
-      { id: "005-1", stage: "synced", actor: "Kwame Boateng", action: "Scored request — 38%", timestamp: "09 Jan 2024, 15:00" },
-      { id: "005-2", stage: "pending_approval", actor: "Kwame Boateng", action: "Rejected — score below minimum threshold", reason: "Score too low to meet minimum eligibility threshold of 50.", timestamp: "10 Jan 2024, 09:30" },
+      { id: "005-1", stage: "synced", actor: "Kwame Boateng", action: "Scored request", summary: "Kwame Boateng assigned a score of 38% to the group", timestamp: "09 Jan 2024, 15:00" },
+      { id: "005-2", stage: "pending_approval", actor: "Kwame Boateng", action: "Rejected request", summary: "Kwame Boateng rejected the request — score too low to meet minimum eligibility threshold", reason: "Score too low to meet minimum eligibility threshold of 50.", timestamp: "10 Jan 2024, 09:30" },
     ],
   },
   {
@@ -103,8 +103,8 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
     ],
     actionHistory: [
-      { id: "006-1", stage: "synced", actor: "Efua Nkrumah", action: "Scored request — 84%", timestamp: "21 Jan 2024, 13:00" },
-      { id: "006-2", stage: "pending_approval", actor: "Efua Nkrumah", action: "Approved for Cash support — GHS 120 per farmer", timestamp: "22 Jan 2024, 10:15" },
+      { id: "006-1", stage: "synced", actor: "Efua Nkrumah", action: "Scored request", summary: "Efua Nkrumah assigned a score of 84% to the group", timestamp: "21 Jan 2024, 13:00" },
+      { id: "006-2", stage: "pending_approval", actor: "Efua Nkrumah", action: "Approved cash support", summary: "Efua Nkrumah approved Cash support for 27 farmers at GHS 120/farmer, totalling GHS 3,240", timestamp: "22 Jan 2024, 10:15" },
     ],
   },
   {
@@ -118,9 +118,9 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 180, momoNumber: "0551-777-888", momoName: "Bole Collective" },
     ],
     actionHistory: [
-      { id: "007-1", stage: "synced", actor: "Nana Adjei", action: "Scored request — 91%", timestamp: "24 Jan 2024, 11:00" },
-      { id: "007-2", stage: "pending_approval", actor: "Nana Adjei", action: "Approved for Ploughing support — 2.0 ac per farmer", timestamp: "25 Jan 2024, 09:00" },
-      { id: "007-3", stage: "agent_confirmation", actor: "Nana Adjei", action: "Confirmed participating farmers and MoMo account (0551-777-888)", timestamp: "26 Jan 2024, 08:30" },
+      { id: "007-1", stage: "synced", actor: "Nana Adjei", action: "Scored request", summary: "Nana Adjei assigned a score of 91% to the group", timestamp: "24 Jan 2024, 11:00" },
+      { id: "007-2", stage: "pending_approval", actor: "Nana Adjei", action: "Approved ploughing support", summary: "Nana Adjei approved Ploughing support for 16 farmers at 2.0 ac/farmer, totalling 32.0 ac", timestamp: "25 Jan 2024, 09:00" },
+      { id: "007-3", stage: "agent_confirmation", actor: "Nana Adjei", action: "Confirmed participating farmers", summary: "Nana Adjei confirmed 16 interested farmers and submitted MoMo 0551-777-888 (Bole Collective) for disbursement", timestamp: "26 Jan 2024, 08:30" },
     ],
   },
   {
@@ -134,9 +134,9 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.2 },
     ],
     actionHistory: [
-      { id: "009-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request — 75%", timestamp: "25 Jan 2024, 14:00" },
-      { id: "009-2", stage: "pending_approval", actor: "Kofi Mensah", action: "Approved for Cash support — GHS 150 per farmer", timestamp: "26 Jan 2024, 10:00" },
-      { id: "009-3", stage: "agent_confirmation", actor: "Kofi Mensah", action: "Confirmed participating farmers and MoMo account (0244-333-444)", timestamp: "27 Jan 2024, 09:00" },
+      { id: "009-1", stage: "synced", actor: "Kofi Mensah", action: "Scored request", summary: "Kofi Mensah assigned a score of 75% to the group", timestamp: "25 Jan 2024, 14:00" },
+      { id: "009-2", stage: "pending_approval", actor: "Kofi Mensah", action: "Approved cash support", summary: "Kofi Mensah approved Cash support for 20 farmers at GHS 150/farmer, totalling GHS 3,000", timestamp: "26 Jan 2024, 10:00" },
+      { id: "009-3", stage: "agent_confirmation", actor: "Kofi Mensah", action: "Confirmed participating farmers", summary: "Kofi Mensah confirmed 20 interested farmers and submitted MoMo 0244-333-444 (Tamale Pioneer) for disbursement", timestamp: "27 Jan 2024, 09:00" },
     ],
   },
   {
@@ -152,10 +152,10 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
     ],
     actionHistory: [
-      { id: "008-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 88%",                                                            timestamp: "28 Jan 2024, 09:15" },
-      { id: "008-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 120 per farmer",                                 timestamp: "28 Jan 2024, 10:42" },
-      { id: "008-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0244-555-666)",                timestamp: "29 Jan 2024, 08:30" },
-      { id: "008-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 4,080 via MoMo · TXN-4F8A2B1C",                                  timestamp: "30 Jan 2024, 11:00" },
+      { id: "008-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request",                 summary: "Douglas Gockah assigned a score of 88% to the group",                                                                     timestamp: "28 Jan 2024, 09:15" },
+      { id: "008-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved cash support",          summary: "Douglas Gockah approved Cash support for 34 farmers at GHS 120/farmer, totalling GHS 4,080",                              timestamp: "28 Jan 2024, 10:42" },
+      { id: "008-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 34 interested farmers and submitted MoMo 0244-555-666 (Metro Food Security) for disbursement",  timestamp: "29 Jan 2024, 08:30" },
+      { id: "008-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed funds",               summary: "Douglas Gockah disbursed GHS 4,080 to Metro Food Security via MoMo · TXN-4F8A2B1C",                                      timestamp: "30 Jan 2024, 11:00" },
     ],
   },
   {
@@ -170,11 +170,11 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 180, momoNumber: "0244-999-000", momoName: "WE Food Coalition" },
     ],
     actionHistory: [
-      { id: "010-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 95%",                                                            timestamp: "25 Jan 2024, 14:05" },
-      { id: "010-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Updated cash amount per farmer from GHS 150 to GHS 180", reason: "Revised upward to match prevailing market rate for the season", timestamp: "26 Jan 2024, 09:20" },
-      { id: "010-3", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 180 per farmer",                                 timestamp: "26 Jan 2024, 09:35" },
-      { id: "010-4", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0244-999-000)",                timestamp: "27 Jan 2024, 10:00" },
-      { id: "010-5", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 7,250 via MoMo · TXN-7C3D9E2A",                                  timestamp: "28 Jan 2024, 13:22" },
+      { id: "010-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request",                 summary: "Douglas Gockah assigned a score of 95% to the group",                                                                          timestamp: "25 Jan 2024, 14:05" },
+      { id: "010-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Updated support amount",         summary: "Douglas Gockah updated the cash amount per farmer from GHS 150 to GHS 180", reason: "Revised upward to match prevailing market rate for the season", timestamp: "26 Jan 2024, 09:20" },
+      { id: "010-3", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved cash support",          summary: "Douglas Gockah approved Cash support for 40 farmers at GHS 180/farmer, totalling GHS 7,200",                                  timestamp: "26 Jan 2024, 09:35" },
+      { id: "010-4", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 40 interested farmers and submitted MoMo 0244-999-000 (WE Food Coalition) for disbursement",        timestamp: "27 Jan 2024, 10:00" },
+      { id: "010-5", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed funds",               summary: "Douglas Gockah disbursed GHS 7,250 to WE Food Coalition via MoMo · TXN-7C3D9E2A",                                            timestamp: "28 Jan 2024, 13:22" },
     ],
   },
   {
@@ -189,10 +189,10 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Primary", type: "Cash", amountPerFarmer: 150, momoNumber: "0246-601-432", momoName: "Nanumba Agri Group" },
     ],
     actionHistory: [
-      { id: "014-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 80%",                                                            timestamp: "29 Jan 2024, 11:00" },
-      { id: "014-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 150 per farmer",                                 timestamp: "30 Jan 2024, 09:10" },
-      { id: "014-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0246-601-432)",                timestamp: "31 Jan 2024, 08:45" },
-      { id: "014-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 2,900 via MoMo · TXN-2B4E6A8C",                                  timestamp: "01 Feb 2024, 10:30" },
+      { id: "014-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request",                 summary: "Douglas Gockah assigned a score of 80% to the group",                                                                        timestamp: "29 Jan 2024, 11:00" },
+      { id: "014-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved cash support",          summary: "Douglas Gockah approved Cash support for 19 farmers at GHS 150/farmer, totalling GHS 2,850",                              timestamp: "30 Jan 2024, 09:10" },
+      { id: "014-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 19 interested farmers and submitted MoMo 0246-601-432 (Nanumba Agri Group) for disbursement",   timestamp: "31 Jan 2024, 08:45" },
+      { id: "014-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed funds",               summary: "Douglas Gockah disbursed GHS 2,900 to Nanumba Agri Group via MoMo · TXN-2B4E6A8C",                                        timestamp: "01 Feb 2024, 10:30" },
     ],
   },
   {
@@ -208,10 +208,26 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
     ],
     actionHistory: [
-      { id: "015-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request — 87%",                                                            timestamp: "01 Feb 2024, 09:00" },
-      { id: "015-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved for Cash support — GHS 120 per farmer",                                 timestamp: "01 Feb 2024, 11:30" },
-      { id: "015-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers and MoMo account (0551-882-015)",                timestamp: "02 Feb 2024, 09:15" },
-      { id: "015-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed GHS 3,380 via MoMo · TXN-9D1F3H5J",                                  timestamp: "03 Feb 2024, 10:05" },
+      { id: "015-1", stage: "synced",               actor: "Douglas Gockah", action: "Scored request",                 summary: "Douglas Gockah assigned a score of 87% to the group",                                                                        timestamp: "01 Feb 2024, 09:00" },
+      { id: "015-2", stage: "pending_approval",      actor: "Douglas Gockah", action: "Approved cash support",          summary: "Douglas Gockah approved Cash support for 28 farmers at GHS 120/farmer, totalling GHS 3,360",                              timestamp: "01 Feb 2024, 11:30" },
+      { id: "015-3", stage: "agent_confirmation",    actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 28 interested farmers and submitted MoMo 0551-882-015 (Tolon Coop Society) for disbursement",    timestamp: "02 Feb 2024, 09:15" },
+      { id: "015-4", stage: "finance_disbursement",  actor: "Douglas Gockah", action: "Disbursed funds",               summary: "Douglas Gockah disbursed GHS 3,380 to Tolon Coop Society via MoMo · TXN-9D1F3H5J",                                         timestamp: "03 Feb 2024, 10:05" },
+    ],
+  },
+  {
+    id: "FS-2024-030", date: "10 Feb 2024", agent: "Yaw Darko", community: "Sissala East",
+    groupName: "Sissala East Grain Growers", score: 79, stage: "finance_disbursement", farmers: 22,
+    onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
+    approvedAmountPerFarmer: 140,
+    momoNumber: "0551-999-000", momoName: "Sissala Grain Growers",
+    simulateMomoNotRegistered: true,
+    supportInterests: [
+      { rank: "Primary", type: "Cash", amountPerFarmer: 140, momoNumber: "0551-999-000", momoName: "Sissala Grain Growers" },
+    ],
+    actionHistory: [
+      { id: "030-1", stage: "synced",             actor: "Yaw Darko", action: "Scored request",                 summary: "Yaw Darko assigned a score of 79% to the group",                                                                    timestamp: "08 Feb 2024, 10:30" },
+      { id: "030-2", stage: "pending_approval",    actor: "Yaw Darko", action: "Approved cash support",          summary: "Yaw Darko approved Cash support for 22 farmers at GHS 140/farmer, totalling GHS 3,080",                          timestamp: "09 Feb 2024, 09:15" },
+      { id: "030-3", stage: "agent_confirmation",  actor: "Yaw Darko", action: "Confirmed participating farmers", summary: "Yaw Darko confirmed 22 interested farmers and submitted MoMo 0551-999-000 (Sissala Grain Growers) for disbursement", timestamp: "10 Feb 2024, 08:00" },
     ],
   },
   {

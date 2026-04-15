@@ -21,6 +21,7 @@ export interface ActionRecord {
   stage: Stage;
   actor: string;
   action: string;
+  summary?: string;
   reason?: string;
   timestamp: string;
 }
@@ -72,6 +73,7 @@ export interface FarmerRequest {
   groupScore?: number;
   actionHistory?: ActionRecord[];
   disbursementBreakdown?: DisbursementBreakdown;
+  simulateMomoNotRegistered?: boolean;
 }
 
 export interface ColDef {

@@ -70,15 +70,17 @@ export function ActionTimeline({
 
               {/* Content */}
               <div className="flex-1 pb-5 min-w-0">
-                {/* Action — primary text */}
+                {/* Action — short label (bold) */}
                 <p className="text-[13px] font-semibold text-gray-900 leading-snug">
                   {rec.action}
                 </p>
 
-                {/* Actor */}
-                <p className="text-[12px] text-gray-500 mt-0.5">
-                  by {rec.actor}
-                </p>
+                {/* Summary narrative or actor fallback */}
+                {rec.summary ? (
+                  <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{rec.summary}</p>
+                ) : (
+                  <p className="text-[12px] text-gray-500 mt-0.5">by {rec.actor}</p>
+                )}
 
                 {/* Comment / reason */}
                 {rec.reason && (

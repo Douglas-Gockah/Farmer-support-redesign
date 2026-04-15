@@ -16,12 +16,14 @@ function makeRecord(
   actor: string,
   action: string,
   reason?: string,
+  summary?: string,
 ): ActionRecord {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     stage,
     actor,
     action,
+    summary,
     reason: reason || undefined,
     timestamp: new Date().toLocaleString("en-GH", {
       day: "2-digit", month: "short", year: "numeric",
@@ -100,10 +102,13 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     amountPerFarmer?: number,
     landSizePerFarmer?: number,
   ) {
-    const actionText = approvedType === "Cash"
-      ? `Approved for Cash support — GHS ${amountPerFarmer?.toLocaleString() ?? "—"} per farmer`
-      : `Approved for Ploughing support — ${landSizePerFarmer} acres per farmer`;
     setRequests((prev) => {
+      const card = prev.find((r) => r.id === id);
+      const farmers = card?.farmers ?? 0;
+      const short = approvedType === "Cash" ? "Approved cash support" : "Approved ploughing support";
+      const narrative = approvedType === "Cash"
+        ? `${CURRENT_USER} approved Cash support for ${farmers} farmers at GHS ${amountPerFarmer?.toLocaleString() ?? "—"}/farmer, totalling GHS ${((amountPerFarmer ?? 0) * farmers).toLocaleString()}`
+        : `${CURRENT_USER} approved Ploughing support for ${farmers} farmers at ${landSizePerFarmer} ac/farmer, totalling ${((landSizePerFarmer ?? 0) * farmers).toFixed(1)} ac`;
       let next = prev.map((r) =>
         r.id !== id ? r : {
           ...r,
@@ -113,7 +118,7 @@ export function useKanbanState(activeFilters: ActiveFilters) {
           approvedLandSizePerFarmer: landSizePerFarmer,
         },
       );
-      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, actionText));
+      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, short, undefined, narrative));
       return next;
     });
     setReviewCard(null);
@@ -122,12 +127,16 @@ export function useKanbanState(activeFilters: ActiveFilters) {
 
   function handleManagerConfirmed(id: string, momoNumber: string, momoName: string) {
     setRequests((prev) => {
+      const card = prev.find((r) => r.id === id);
+      const farmers = card?.farmers ?? 0;
       let next = prev.map((r) =>
         r.id !== id ? r : { ...r, stage: "finance_disbursement" as Stage, momoNumber, momoName },
       );
       next = appendRecord(next, id, makeRecord(
         "agent_confirmation", CURRENT_USER,
-        `Confirmed participating farmers and MoMo account (${momoNumber})`,
+        "Confirmed participating farmers",
+        undefined,
+        `${CURRENT_USER} confirmed ${farmers} interested farmers and submitted MoMo ${momoNumber} (${momoName}) for disbursement`,
       ));
       return next;
     });
@@ -138,7 +147,12 @@ export function useKanbanState(activeFilters: ActiveFilters) {
   function handleHeld(id: string, comment: string) {
     setRequests((prev) => {
       let next = prev.map((r) => (r.id !== id ? r : { ...r, onHold: true, holdComment: comment }));
-      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, "Placed request on hold", comment));
+      next = appendRecord(next, id, makeRecord(
+        "pending_approval", CURRENT_USER,
+        "Placed on hold",
+        comment,
+        `${CURRENT_USER} placed the request on hold`,
+      ));
       return next;
     });
     setReviewCard(null);
@@ -150,7 +164,12 @@ export function useKanbanState(activeFilters: ActiveFilters) {
       let next = prev.map((r) =>
         r.id !== id ? r : { ...r, stage: "rejected" as Stage, rejectionComment: comment },
       );
-      next = appendRecord(next, id, makeRecord("pending_approval", CURRENT_USER, "Rejected request", comment));
+      next = appendRecord(next, id, makeRecord(
+        "pending_approval", CURRENT_USER,
+        "Rejected request",
+        comment,
+        `${CURRENT_USER} rejected the request`,
+      ));
       return next;
     });
     setReviewCard(null);
@@ -162,7 +181,12 @@ export function useKanbanState(activeFilters: ActiveFilters) {
       let next = prev.map((r) =>
         r.id !== id ? r : { ...r, score, stage: "pending_approval" as Stage },
       );
-      next = appendRecord(next, id, makeRecord("synced", CURRENT_USER, `Scored request — ${score}%`));
+      next = appendRecord(next, id, makeRecord(
+        "synced", CURRENT_USER,
+        "Scored request",
+        undefined,
+        `${CURRENT_USER} assigned a score of ${score}% to the group`,
+      ));
       return next;
     });
     setScoreCard(null);
@@ -177,9 +201,10 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     reason: string,
   ) {
     const fmt = (v: number) => field === "Cash" ? `GHS ${v.toLocaleString()}` : `${v} acres`;
-    const action = `Updated ${field === "Cash" ? "cash amount per farmer" : "land size per farmer"} from ${fmt(oldValue)} to ${fmt(newValue)}`;
+    const short = field === "Cash" ? "Updated support amount" : "Updated land size";
+    const narrative = `${CURRENT_USER} updated the ${field === "Cash" ? "cash amount" : "land size"} per farmer from ${fmt(oldValue)} to ${fmt(newValue)}`;
     setRequests((prev) =>
-      appendRecord(prev, id, makeRecord("pending_approval", CURRENT_USER, action, reason || undefined)),
+      appendRecord(prev, id, makeRecord("pending_approval", CURRENT_USER, short, reason || undefined, narrative)),
     );
   }
 
@@ -188,7 +213,7 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     showToast("Request archived");
   }
 
-  function handleDisbursed(id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown) {
+  function handleDisbursed(id: string, txId: string, amount: number, breakdown?: DisbursementBreakdown, momoUpdateRecord?: ActionRecord) {
     const date = new Date().toLocaleDateString("en-GH", {
       day: "2-digit", month: "short", year: "numeric",
     });
@@ -203,9 +228,15 @@ export function useKanbanState(activeFilters: ActiveFilters) {
           disbursementBreakdown: breakdown,
         },
       );
+      // Append MoMo update record first (if number was corrected during verification)
+      if (momoUpdateRecord) {
+        next = appendRecord(next, id, momoUpdateRecord);
+      }
       next = appendRecord(next, id, makeRecord(
         "finance_disbursement", CURRENT_USER,
-        `Disbursed GHS ${amount.toLocaleString()} via MoMo · ${txId}`,
+        "Disbursed funds",
+        undefined,
+        `${CURRENT_USER} disbursed GHS ${amount.toLocaleString()} via MoMo · ${txId}`,
       ));
       return next;
     });
