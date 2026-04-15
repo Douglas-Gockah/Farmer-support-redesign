@@ -107,6 +107,11 @@ export interface FarmerFulfillmentRecord {
   receivedDate?: string;
 }
 
+export interface FulfillmentDocument {
+  label: string;
+  images: string[];  // placeholder identifiers for prototype
+}
+
 export interface FulfillmentRequest {
   id: string;
   groupName: string;
@@ -122,4 +127,5 @@ export interface FulfillmentRequest {
   momoNumber: string;
   momoName: string;
   optedOutFarmers?: Array<{ id: string; name: string }>;
+  documents?: FulfillmentDocument[];
 }

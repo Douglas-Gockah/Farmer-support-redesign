@@ -39,13 +39,11 @@ function ScoreBar({ score }: { score: number }) {
 // ---------------------------------------------------------------------------
 function InterestRow({ si, farmers }: { si: SupportInterest; farmers: number }) {
   const isCash = si.type === "Cash";
-  const rankLabel = si.rank === "Primary" ? "1°" : "2°";
 
   return (
     <div className="py-2.5 px-3 border-b border-gray-100 last:border-0">
       {/* Badge row */}
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-[11px] font-bold text-gray-400 shrink-0">{rankLabel}</span>
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
           style={isCash ? { background: "var(--green-50)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}

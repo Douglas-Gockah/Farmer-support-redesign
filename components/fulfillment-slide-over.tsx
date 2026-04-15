@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { FulfillmentRequest, FarmerFulfillmentRecord } from "@/components/kanban/types";
+import type { FulfillmentRequest, FarmerFulfillmentRecord, FulfillmentDocument } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 import { NativeVoiceNote } from "@/components/kanban/native-voice-note";
 
@@ -94,6 +94,152 @@ function FarmerRow({
 }
 
 // ---------------------------------------------------------------------------
+// Document image lightbox
+// ---------------------------------------------------------------------------
+function DocLightbox({
+  doc,
+  startIndex,
+  onClose,
+}: {
+  doc: FulfillmentDocument;
+  startIndex: number;
+  onClose: () => void;
+}) {
+  const [idx, setIdx] = useState(startIndex);
+  const total = doc.images.length;
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape")     onClose();
+      if (e.key === "ArrowRight") setIdx((i) => Math.min(i + 1, total - 1));
+      if (e.key === "ArrowLeft")  setIdx((i) => Math.max(i - 1, 0));
+    }
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose, total]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.80)" }}
+      onClick={onClose}
+    >
+      <div
+        className="relative flex flex-col items-center gap-4"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 480, width: "100%" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between w-full">
+          <span className="text-white text-[13px] font-semibold">{doc.label}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-white/60 text-[12px]">{idx + 1} / {total}</span>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(255,255,255,0.15)" }}
+              aria-label="Close"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Document placeholder — large */}
+        <div
+          className="w-full rounded-xl flex flex-col"
+          style={{
+            background: "#F9FAFB",
+            border: "1px solid rgba(255,255,255,0.15)",
+            aspectRatio: "3/4",
+            padding: "32px 28px",
+            gap: 8,
+          }}
+        >
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                height: 10,
+                borderRadius: 3,
+                background: i < 3 ? "var(--gray-400)" : i < 8 ? "var(--gray-300)" : "var(--gray-200)",
+                width: i % 3 === 0 ? "90%" : i % 3 === 1 ? "75%" : "60%",
+              }}
+            />
+          ))}
+          <div style={{ marginTop: 16, height: 80, borderRadius: 8, background: "var(--gray-200)" }} />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={`b${i}`}
+              style={{
+                height: 10,
+                borderRadius: 3,
+                background: "var(--gray-200)",
+                width: i % 2 === 0 ? "80%" : "65%",
+              }}
+            />
+          ))}
+          <div
+            style={{
+              marginTop: "auto", alignSelf: "flex-end", fontSize: "0.6875rem",
+              fontFamily: "monospace", color: "var(--gray-400)", fontWeight: 700,
+            }}
+          >
+            Page {idx + 1}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIdx((i) => Math.max(i - 1, 0))}
+            disabled={idx === 0}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity"
+            style={{ background: "rgba(255,255,255,0.15)", opacity: idx === 0 ? 0.3 : 1 }}
+            aria-label="Previous"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 2L4 7l5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {/* Dot strip */}
+          <div className="flex items-center gap-1.5">
+            {doc.images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className="rounded-full transition-all"
+                style={{
+                  width: i === idx ? 20 : 6,
+                  height: 6,
+                  background: i === idx ? "white" : "rgba(255,255,255,0.35)",
+                }}
+                aria-label={`Go to image ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => setIdx((i) => Math.min(i + 1, total - 1))}
+            disabled={idx === total - 1}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity"
+            style={{ background: "rgba(255,255,255,0.15)", opacity: idx === total - 1 ? 0.3 : 1 }}
+            aria-label="Next"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 2l5 5-5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Left info panel — group + disbursement summary
 // ---------------------------------------------------------------------------
 function InfoPanel({ req }: { req: FulfillmentRequest }) {
@@ -103,6 +249,7 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
   const isFull = req.fulfillmentStage === "fully_fulfilled";
   const isPartial = req.fulfillmentStage === "partially_fulfilled";
   const agentColor = avatarColor(req.agent);
+  const [lightbox, setLightbox] = useState<{ doc: FulfillmentDocument; idx: number } | null>(null);
 
   const stageLabel =
     isFull ? "Fully Fulfilled" :
@@ -218,6 +365,87 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
           <p className="text-[11px] text-gray-500 mt-0.5">{req.momoName}</p>
         </div>
       </div>
+
+      {/* Documents */}
+      {req.documents && req.documents.length > 0 && (
+        <div>
+          <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-2">
+            Documents
+          </p>
+          {req.documents.map((doc) => (
+            <div key={doc.label} className="mb-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="1" width="10" height="14" rx="1.5" stroke="var(--gray-400)" strokeWidth="1.4" />
+                  <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--gray-400)" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--gray-600)" }}>{doc.label}</span>
+                <span style={{ marginLeft: "auto", fontSize: "0.6875rem", color: "var(--gray-400)" }}>
+                  {doc.images.length} image{doc.images.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                {doc.images.map((img, idx) => (
+                  <button
+                    key={img}
+                    onClick={() => setLightbox({ doc, idx })}
+                    className="shrink-0 rounded-lg flex flex-col items-stretch overflow-hidden transition-all hover:shadow-md"
+                    style={{
+                      width: 68, height: 90,
+                      background: "var(--gray-50)",
+                      border: "1px solid var(--gray-200)",
+                      position: "relative",
+                      cursor: "pointer",
+                    }}
+                    aria-label={`View ${doc.label} page ${idx + 1}`}
+                  >
+                    {/* Document lines */}
+                    <div style={{ flex: 1, padding: "7px 6px", display: "flex", flexDirection: "column", gap: 3.5 }}>
+                      {[80, 65, 75, 55, 70, 60].map((w, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            height: 3.5, borderRadius: 2,
+                            background: i < 2 ? "var(--gray-400)" : "var(--gray-300)",
+                            width: `${w}%`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {/* Footer */}
+                    <div
+                      style={{
+                        background: "var(--gray-100)",
+                        borderTop: "1px solid var(--gray-200)",
+                        padding: "2px 5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.5rem", fontFamily: "monospace", color: "var(--gray-400)", fontWeight: 700 }}>
+                        {idx + 1}/{doc.images.length}
+                      </span>
+                      <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                        <path d="M1 5V1h4M11 5V1H7M1 7v4h4M11 7v4H7" stroke="var(--gray-400)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <DocLightbox
+          doc={lightbox.doc}
+          startIndex={lightbox.idx}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
   );
 }

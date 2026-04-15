@@ -597,6 +597,9 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
       { id: "OPT-N-002", name: "Awabla Bugri"  },
       { id: "OPT-N-003", name: "Asibi Yalpak"  },
     ],
+    documents: [
+      { label: "Signed agreement", images: ["doc-nanumba-agr-p1", "doc-nanumba-agr-p2", "doc-nanumba-agr-p3"] },
+    ],
   },
   {
     id: "FS-2024-015",
@@ -645,6 +648,9 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
       { id: "OPT-T-001", name: "Kusohuba Duku"  },
       { id: "OPT-T-002", name: "Mercy Bakanyin" },
     ],
+    documents: [
+      { label: "Signed agreement", images: ["doc-tolon-agr-p1", "doc-tolon-agr-p2"] },
+    ],
   },
 
   // ── Fully Fulfilled ─────────────────────────────────────────────────────
@@ -683,6 +689,9 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
       { id: "K019", name: "Kofi Opoku",      received: true, voiceRecordingDuration: "0:39", witnessRecordingDuration: "0:34", receivedDate: "13 Feb 2024" },
       { id: "K020", name: "Esi Adusei",      received: true, voiceRecordingDuration: "0:26", witnessRecordingDuration: "0:22", receivedDate: "14 Feb 2024" },
       { id: "K021", name: "Kwame Kwarteng",  received: true, voiceRecordingDuration: "0:33", witnessRecordingDuration: "0:28", receivedDate: "14 Feb 2024" },
+    ],
+    documents: [
+      { label: "Image of thumbprints", images: ["doc-kumbungu-tp-p1", "doc-kumbungu-tp-p2", "doc-kumbungu-tp-p3", "doc-kumbungu-tp-p4"] },
     ],
   },
 
