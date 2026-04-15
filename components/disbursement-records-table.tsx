@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { FarmerRequest } from "@/components/kanban/types";
-import { initials, avatarColor } from "@/components/kanban/helpers";
+import { initials, avatarColor, makeRefCode } from "@/components/kanban/helpers";
 import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 function formatGHS(n: number) {
@@ -85,9 +85,10 @@ function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose
   const agentColor    = avatarColor(record.agent);
   const agentInitials = initials(record.agent);
   const bd            = record.disbursementBreakdown;
+  const refCode       = makeRefCode(record.date, record.id, record.agent);
 
   const rows: Array<{ label: string; value: React.ReactNode }> = [
-    { label: "Request ID",      value: <span className="font-mono text-[13px] text-green-700">{record.id}</span> },
+    { label: "Reference",       value: <span className="font-mono text-[13px] text-green-700">{refCode}</span> },
     { label: "Group Name",      value: record.groupName },
     { label: "Community",       value: record.community },
     { label: "No. of Farmers",  value: record.farmers },
@@ -401,9 +402,8 @@ export default function DisbursementRecordsTable({ records }: Props) {
               </thead>
               <tbody>
                 {pageRecords.map((r, idx) => {
-                  const agentColor    = avatarColor(r.agent);
-                  const agentInitials = initials(r.agent);
-                  const rowBg         = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
+                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#FAFAFA";
+                  const refCode = makeRefCode(r.date, r.id, r.agent);
 
                   return (
                     <tr
@@ -414,7 +414,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
                       {/* Reference — sticky left */}
                       <Td sticky bg={rowBg}>
                         <span className="font-mono text-[12px] font-semibold whitespace-nowrap" style={{ color: "#16A34A" }}>
-                          {r.id}
+                          {refCode}
                         </span>
                       </Td>
 
@@ -464,15 +464,7 @@ export default function DisbursementRecordsTable({ records }: Props) {
 
                       {/* Agent */}
                       <Td>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <span
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                            style={{ background: agentColor }}
-                          >
-                            {agentInitials}
-                          </span>
-                          <span className="text-gray-700">{r.agent}</span>
-                        </div>
+                        <span className="text-gray-700 whitespace-nowrap">{r.agent}</span>
                       </Td>
 
                       {/* Action */}

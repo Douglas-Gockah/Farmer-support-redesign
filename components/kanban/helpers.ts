@@ -13,6 +13,30 @@ export function avatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+// ---------------------------------------------------------------------------
+// Reference code: PF-YYMM-NNNNN-AGT
+// PF = pre-financing prefix
+// YYMM = 2-digit year + 2-digit month from record date ("12 Jan 2024" → "2401")
+// NNNNN = 5-digit zero-padded trailing number from the record ID
+// AGT = all-word initials of agent name uppercased
+// ---------------------------------------------------------------------------
+const MONTH_NUM: Record<string, string> = {
+  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
+};
+
+export function makeRefCode(date: string, id: string, agent: string): string {
+  const parts = date.split(" ");                              // ["12", "Jan", "2024"]
+  const year  = (parts[2] ?? "").slice(-2);                  // "24"
+  const month = MONTH_NUM[parts[1] ?? ""] ?? "00";           // "01"
+  const yymm  = year + month;                                // "2401"
+  const idParts = id.split("-");
+  const num   = parseInt(idParts[idParts.length - 1] ?? "0", 10);
+  const numStr = isNaN(num) ? "00000" : num.toString().padStart(5, "0");
+  const agt   = agent.split(" ").map((w) => w[0] ?? "").join("").toUpperCase();
+  return `PF-${yymm}-${numStr}-${agt}`;
+}
+
 export function fmtDate(d: Date | null): string {
   if (!d) return "—";
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
