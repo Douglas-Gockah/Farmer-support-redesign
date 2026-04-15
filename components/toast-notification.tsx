@@ -30,7 +30,7 @@ export function Toast({ message, onDone }: { message: string; onDone: () => void
         padding: "12px 14px",
         boxShadow: "0px 4px 16px rgba(16,24,40,0.10)",
         opacity: visible ? 1 : 0,
-        transform: visible ? "none" : "translateY(4px)",
+        transform: visible ? "translateY(0)" : "translateY(-8px)",
         transition: "opacity 500ms ease, transform 500ms ease",
         pointerEvents: "none",
       }}
@@ -82,7 +82,7 @@ export function ToastContainer({
 }) {
   if (toasts.length === 0) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 items-end">
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2 items-end">
       {toasts.map((t) => (
         <Toast key={t.id} message={t.message} onDone={() => onRemove(t.id)} />
       ))}
