@@ -262,7 +262,7 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search groups…"
+            placeholder="Search by group name or reference code…"
             style={{
               width: "100%",
               paddingLeft: 32,

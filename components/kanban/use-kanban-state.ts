@@ -5,6 +5,7 @@ import type { FarmerRequest, Stage, SupportType, ScoreSort, ActionRecord, Disbur
 import type { ToastMessage } from "@/components/toast-notification";
 import type { ActiveFilters } from "./filter-bar";
 import { MOCK_REQUESTS } from "./mock-data";
+import { makeRefCode } from "./helpers";
 
 // ---------------------------------------------------------------------------
 // Action record helpers
@@ -61,8 +62,9 @@ export function useKanbanState(activeFilters: ActiveFilters) {
     return requests.filter((r) => {
       if (archivedIds.has(r.id)) return false;
       if (activeFilters.search) {
-        const q = activeFilters.search.toLowerCase();
-        if (!r.groupName.toLowerCase().includes(q) && !r.id.toLowerCase().includes(q)) return false;
+        const q       = activeFilters.search.toLowerCase();
+        const refCode = makeRefCode(r.date, r.id, r.agent).toLowerCase();
+        if (!r.groupName.toLowerCase().includes(q) && !refCode.includes(q)) return false;
       }
       if (activeFilters.community && r.community !== activeFilters.community) return false;
       if (activeFilters.agent     && r.agent     !== activeFilters.agent)     return false;

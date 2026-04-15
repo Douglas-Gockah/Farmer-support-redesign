@@ -77,7 +77,7 @@ export default function KanbanScreen() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 shrink-0" style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}>
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 shrink-0" style={{ background: "#ffffff" }}>
         <span style={{ fontSize: "0.8125rem", color: "var(--gray-400)", fontWeight: 500 }}>Farmer support</span>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M5 3l4 4-4 4" stroke="var(--gray-300)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -88,7 +88,7 @@ export default function KanbanScreen() {
       {/* ── Flow tabs ── */}
       <div
         className="shrink-0 flex overflow-x-auto scrollbar-none"
-        style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-200)" }}
+        style={{ background: "#ffffff" }}
       >
         {FLOWS.map((flow) => (
           <button
