@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FulfillmentRequest } from "./types";
+import type { FulfillmentRequest, FulfillmentDocument } from "./types";
 import { initials, avatarColor } from "./helpers";
 
 interface FulfillmentCardProps {
@@ -137,6 +137,53 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
         <span style={{ fontSize: "0.6875rem", fontWeight: 600, fontFamily: "monospace", color: "var(--gray-400)", letterSpacing: "0.05em" }}>
           {req.id}
         </span>
+
+        {/* Document image strips */}
+        {req.documents && req.documents.length > 0 && (
+          <div className="mt-3">
+            {req.documents.map((doc: FulfillmentDocument) => (
+              <div key={doc.label}>
+                <div className="flex items-center gap-1 mb-1.5">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="1" width="10" height="14" rx="1.5" stroke="var(--gray-400)" strokeWidth="1.4" />
+                    <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--gray-400)" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--gray-500)" }}>{doc.label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: "0.625rem", color: "var(--gray-400)" }}>{doc.images.length} image{doc.images.length !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+                  {doc.images.map((img, idx) => (
+                    <div
+                      key={img}
+                      className="shrink-0 rounded-md flex items-center justify-center"
+                      style={{
+                        width: 52, height: 68,
+                        background: "var(--gray-100)",
+                        border: "1px solid var(--gray-200)",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Document page lines — visual placeholder */}
+                      <div style={{ position: "absolute", inset: 0, padding: "6px 5px", display: "flex", flexDirection: "column", gap: 3 }}>
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-300)", width: "80%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-300)", width: "65%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-300)", width: "75%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-300)", width: "50%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-200)", width: "70%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-200)", width: "60%" }} />
+                        <div style={{ height: 3, borderRadius: 2, background: "var(--gray-200)", width: "75%" }} />
+                      </div>
+                      <span style={{ position: "absolute", bottom: 4, right: 5, fontSize: "0.5rem", fontWeight: 700, color: "var(--gray-400)", fontFamily: "monospace" }}>
+                        {idx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

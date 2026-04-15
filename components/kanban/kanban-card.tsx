@@ -344,11 +344,6 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
             <div className="flex flex-wrap gap-1.5" style={{ marginBottom: 12 }}>
               {r.supportInterests.map((si) => (
                 <div key={si.rank} className="flex items-center gap-1">
-                  {isPending && (
-                    <span style={{ fontSize: "0.625rem", fontWeight: 700, color: "var(--gray-400)" }}>
-                      {si.rank === "Primary" ? "1°" : "2°"}
-                    </span>
-                  )}
                   <SupportPill type={si.type} />
                 </div>
               ))}
