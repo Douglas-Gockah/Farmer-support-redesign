@@ -207,11 +207,7 @@ function VerifyStep({
     setNotRegistered(false);
     setShowNotRegUpdateForm(false);
     setNotRegMomoInput("");
-    setChecking(true);
-    setTimeout(() => {
-      setChecking(false);
-      setVerified(true);
-    }, 1500);
+    // Number saved — user must explicitly re-run the check
   }
 
   function handleUpdateNumber() {
@@ -224,12 +220,7 @@ function VerifyStep({
     setVerified(false);
     setEditingMomo(false);
     setEditMomoInput("");
-    // Trigger check automatically with new number
-    setChecking(true);
-    setTimeout(() => {
-      setChecking(false);
-      setVerified(true);
-    }, 1500);
+    // Number saved — user must explicitly re-run the check
   }
 
   return (
@@ -314,7 +305,7 @@ function VerifyStep({
                     <p className="text-[13px] font-semibold text-red-700">{currentMomo} is not registered for mobile payments</p>
                   </div>
                   <p className="text-[12px] text-red-500 leading-relaxed">
-                    The mobile wallet could not be found. Please update the MoMo number and re-run the check before proceeding.
+                    The mobile wallet could not be found. Enter the correct number and save it, then run the check again before proceeding.
                   </p>
                   {!showNotRegUpdateForm ? (
                     <Button
@@ -341,7 +332,7 @@ function VerifyStep({
                           disabled={!notRegMomoInput.trim() || notRegMomoInput.trim() === currentMomo}
                           onClick={handleNotRegUpdate}
                         >
-                          Re-run check
+                          Save number
                         </Button>
                         <Button
                           size="sm"
@@ -402,7 +393,7 @@ function VerifyStep({
                           disabled={!editMomoInput.trim() || editMomoInput.trim() === currentMomo}
                           onClick={handleUpdateNumber}
                         >
-                          Re-run check
+                          Save number
                         </Button>
                         <Button
                           size="sm"
