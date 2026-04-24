@@ -451,6 +451,69 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
 }
 
 // ---------------------------------------------------------------------------
+// Accordion section — collapsible farmer group
+// ---------------------------------------------------------------------------
+function AccordionSection({
+  label,
+  count,
+  dotColor,
+  labelColor,
+  defaultOpen = true,
+  children,
+}: {
+  label: string;
+  count: number;
+  dotColor: string;
+  labelColor: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-100)" }}>
+      {/* Header */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+        style={{ background: open ? "var(--gray-50)" : "#ffffff" }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
+          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: labelColor }}>
+            {label}
+          </span>
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+            style={{ background: dotColor + "22", color: labelColor }}
+          >
+            {count}
+          </span>
+        </div>
+        <svg
+          width="13" height="13" viewBox="0 0 13 13" fill="none"
+          style={{
+            color: "var(--gray-400)",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            flexShrink: 0,
+          }}
+        >
+          <path d="M2 4.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Content */}
+      {open && (
+        <div style={{ borderTop: "1px solid var(--gray-100)" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Right content panel — farmer list, segmented by receipt status
 // ---------------------------------------------------------------------------
 function FarmersPanel({ req }: { req: FulfillmentRequest }) {
@@ -481,80 +544,56 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
       </div>
 
       {/* Scrollable farmer list */}
-      <div className="flex-1 overflow-y-auto px-6">
-        {/* Received section */}
+      <div className="flex-1 overflow-y-auto px-6 pb-8">
+
+        {/* Received support */}
         {received.length > 0 && (
-          <div className="mt-4">
-            {!isPending && (
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: "var(--green-600)" }}
-                />
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--green-700)" }}>
-                  {isFull ? `All received (${received.length})` : `Received support (${received.length})`}
-                </span>
-              </div>
-            )}
-            <div>
+          <AccordionSection
+            label={isFull ? "All received" : "Received support"}
+            count={received.length}
+            dotColor="var(--green-600)"
+            labelColor="var(--green-700)"
+            defaultOpen
+          >
+            <div className="divide-y divide-gray-100 px-2">
               {received.map((f) => (
-                <FarmerRow
-                  key={f.id}
-                  farmer={f}
-                  amountPerFarmer={req.approvedAmountPerFarmer}
-                />
+                <FarmerRow key={f.id} farmer={f} amountPerFarmer={req.approvedAmountPerFarmer} />
               ))}
             </div>
-          </div>
+          </AccordionSection>
         )}
 
-        {/* Pending section */}
+        {/* Awaiting confirmation */}
         {pending.length > 0 && (
-          <div className="mt-4">
-            {received.length > 0 && (
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: "#9CA3AF" }}
-                />
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                  Awaiting confirmation ({pending.length})
-                </span>
-              </div>
-            )}
-            <div>
+          <AccordionSection
+            label="Awaiting confirmation"
+            count={pending.length}
+            dotColor="#9CA3AF"
+            labelColor="var(--gray-500)"
+            defaultOpen
+          >
+            <div className="divide-y divide-gray-100 px-2">
               {pending.map((f) => (
-                <FarmerRow
-                  key={f.id}
-                  farmer={f}
-                  amountPerFarmer={req.approvedAmountPerFarmer}
-                />
+                <FarmerRow key={f.id} farmer={f} amountPerFarmer={req.approvedAmountPerFarmer} />
               ))}
             </div>
-          </div>
+          </AccordionSection>
         )}
 
-        {/* Opted-out section */}
+        {/* Opted out */}
         {optedOut.length > 0 && (
-          <div className="mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ background: "var(--yellow-500)" }}
-              />
-              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--yellow-600)" }}>
-                Opted out ({optedOut.length})
-              </span>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--yellow-200)", background: "var(--yellow-50)" }}>
-              {optedOut.map((f, idx) => {
+          <AccordionSection
+            label="Opted out"
+            count={optedOut.length}
+            dotColor="var(--yellow-500)"
+            labelColor="var(--yellow-600)"
+            defaultOpen
+          >
+            <div className="divide-y" style={{ borderColor: "var(--yellow-100)" }}>
+              {optedOut.map((f) => {
                 const color = avatarColor(f.name);
                 return (
-                  <div
-                    key={f.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                    style={{ borderTop: idx > 0 ? "1px solid var(--yellow-200)" : undefined }}
-                  >
+                  <div key={f.id} className="flex items-center gap-3 px-4 py-3" style={{ background: "var(--yellow-50)" }}>
                     <span
                       className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                       style={{ background: color }}
@@ -570,8 +609,8 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
                       style={{ background: "var(--yellow-100)", color: "var(--yellow-600)" }}
                     >
                       <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                        <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.3"/>
-                        <path d="M5 3v2.5M5 7v.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                        <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.3" />
+                        <path d="M5 3v2.5M5 7v.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                       </svg>
                       Opted out
                     </span>
@@ -579,11 +618,8 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
                 );
               })}
             </div>
-          </div>
+          </AccordionSection>
         )}
-
-        {/* Bottom padding */}
-        <div className="h-8" />
       </div>
     </div>
   );
