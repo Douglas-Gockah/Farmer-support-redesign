@@ -152,21 +152,19 @@ function VerifyStep({
   const [currentMomo,    setCurrentMomo]   = useState(initialMomo);
   const [checking,       setChecking]      = useState(false);
   const [verified,       setVerified]      = useState(false);
+  const [notRegistered,  setNotRegistered] = useState(false);
   const [showMismatch,   setShowMismatch]  = useState(false);
+  // Mismatch form (name mismatch)
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [newMomo,        setNewMomo]       = useState(initialMomo);
   const [updateReason,   setUpdateReason]  = useState("");
-  // After check passes, allow updating the number
-  const [editingMomo,    setEditingMomo]   = useState(false);
-  const [editMomoInput,  setEditMomoInput] = useState("");
-  const [editMomoReason, setEditMomoReason] = useState("");
-  // Not-registered failure (simulated)
-  const [notRegistered,           setNotRegistered]           = useState(false);
-  const [showNotRegUpdateForm,    setShowNotRegUpdateForm]    = useState(false);
-  const [notRegMomoInput,         setNotRegMomoInput]         = useState("");
-  const [notRegMomoReason,        setNotRegMomoReason]        = useState("");
-  // Record created when the MoMo number is corrected after a not-registered failure
-  const [momoUpdateRecord,        setMomoUpdateRecord]        = useState<ActionRecord | undefined>(undefined);
+  // Unified edit panel (post-verified and not-registered)
+  const [editingMomo,    setEditingMomo]    = useState(false);
+  const [editInput,      setEditInput]      = useState("");
+  const [editCheckState, setEditCheckState] = useState<"idle"|"checking"|"verified"|"not_registered">("idle");
+  const [editReason,     setEditReason]     = useState("");
+  // Record created when a number update is saved
+  const [momoUpdateRecord, setMomoUpdateRecord] = useState<ActionRecord | undefined>(undefined);
 
   const resolvedName = submittedName;
 
@@ -200,32 +198,47 @@ function VerifyStep({
     }, 1500);
   }
 
-  function handleNotRegUpdate() {
-    if (!notRegMomoInput.trim() || !notRegMomoReason.trim()) return;
-    const oldMomo = currentMomo;
-    const updatedMomo = notRegMomoInput.trim();
-    const record = makeUpdateRecord(oldMomo, updatedMomo, notRegMomoReason.trim());
-    setMomoUpdateRecord(record);
-    setCurrentMomo(updatedMomo);
+  function handleOpenEdit() {
+    setEditInput(currentMomo);
+    setEditCheckState("idle");
+    setEditReason("");
+    setEditingMomo(true);
     setNotRegistered(false);
-    setShowNotRegUpdateForm(false);
-    setNotRegMomoInput("");
-    setNotRegMomoReason("");
-    // Number saved — user must explicitly re-run the check
+    setVerified(false);
   }
 
-  function handleUpdateNumber() {
-    if (!editMomoInput.trim() || !editMomoReason.trim()) return;
+  function handleEditCheck() {
+    setEditCheckState("checking");
+    setTimeout(() => {
+      const isKnownBad = card.simulateMomoNotRegistered
+        && !momoUpdateRecord
+        && editInput.trim() === initialMomo;
+      setEditCheckState(isKnownBad ? "not_registered" : "verified");
+    }, 1500);
+  }
+
+  function handleSaveEditedNumber() {
+    if (editCheckState !== "verified" || !editReason.trim()) return;
     const oldMomo = currentMomo;
-    const updatedMomo = editMomoInput.trim();
-    const record = makeUpdateRecord(oldMomo, updatedMomo, editMomoReason.trim());
+    const updatedMomo = editInput.trim();
+    const record = makeUpdateRecord(oldMomo, updatedMomo, editReason.trim());
     setMomoUpdateRecord(record);
     setCurrentMomo(updatedMomo);
-    setVerified(false);
+    setVerified(true);
     setEditingMomo(false);
-    setEditMomoInput("");
-    setEditMomoReason("");
-    // Number saved — user must explicitly re-run the check
+    setEditInput("");
+    setEditCheckState("idle");
+    setEditReason("");
+  }
+
+  function handleCancelEdit() {
+    setEditingMomo(false);
+    setEditInput("");
+    setEditCheckState("idle");
+    setEditReason("");
+    if (card.simulateMomoNotRegistered && !momoUpdateRecord) {
+      setNotRegistered(true);
+    }
   }
 
   return (
@@ -287,7 +300,7 @@ function VerifyStep({
                 <Button
                   variant="outline"
                   className="w-full h-9 text-[13px] font-semibold"
-                  disabled={checking || verified || notRegistered}
+                  disabled={checking || verified || notRegistered || editingMomo}
                   onClick={handleCheck}
                 >
                   {checking ? (
@@ -300,7 +313,7 @@ function VerifyStep({
               </div>
 
               {/* Not-registered failure */}
-              {notRegistered && (
+              {notRegistered && !editingMomo && (
                 <div className="rounded-xl border border-red-300 p-4 space-y-3" style={{ background: "#FEF2F2" }}>
                   <div className="flex items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -310,64 +323,21 @@ function VerifyStep({
                     <p className="text-[13px] font-semibold text-red-700">{currentMomo} is not registered for mobile payments</p>
                   </div>
                   <p className="text-[12px] text-red-500 leading-relaxed">
-                    The mobile wallet could not be found. Enter the correct number and save it, then run the check again before proceeding.
+                    The mobile wallet could not be found. Try checking a different number below.
                   </p>
-                  {!showNotRegUpdateForm ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-[12px] border-red-300 text-red-700 hover:bg-red-50"
-                      onClick={() => { setShowNotRegUpdateForm(true); setNotRegMomoInput(""); }}
-                    >
-                      Update MoMo number
-                    </Button>
-                  ) : (
-                    <div className="space-y-2.5 pt-1">
-                      <div>
-                        <Label className="text-[11px] text-gray-500 font-semibold">Correct MoMo number</Label>
-                        <Input
-                          value={notRegMomoInput}
-                          onChange={(e) => setNotRegMomoInput(e.target.value)}
-                          placeholder="e.g. 0244-123-456"
-                          className="h-9 text-[13px] font-mono mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-[11px] text-gray-500 font-semibold">
-                          Reason for update <span className="text-red-500">*</span>
-                        </Label>
-                        <Textarea
-                          value={notRegMomoReason}
-                          onChange={(e) => setNotRegMomoReason(e.target.value)}
-                          placeholder="Explain why the MoMo number is being changed…"
-                          className="text-[13px] min-h-[72px] resize-none mt-1"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[12px]"
-                          disabled={!notRegMomoInput.trim() || notRegMomoInput.trim() === currentMomo || !notRegMomoReason.trim()}
-                          onClick={handleNotRegUpdate}
-                        >
-                          Save number
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-[12px]"
-                          onClick={() => { setShowNotRegUpdateForm(false); setNotRegMomoInput(""); setNotRegMomoReason(""); }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[12px] border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={handleOpenEdit}
+                  >
+                    Update MoMo number
+                  </Button>
                 </div>
               )}
 
               {/* Verified result */}
-              {verified && !hasMismatch && (
+              {verified && !hasMismatch && !editingMomo && (
                 <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
@@ -376,14 +346,12 @@ function VerifyStep({
                       </div>
                       <p className="text-[13px] font-semibold text-[var(--green-600)]">Account verified</p>
                     </div>
-                    {!editingMomo && (
-                      <button
-                        className="text-[12px] font-medium text-gray-400 hover:text-gray-700 underline transition-colors"
-                        onClick={() => { setEditingMomo(true); setEditMomoInput(currentMomo); }}
-                      >
-                        Update number
-                      </button>
-                    )}
+                    <button
+                      className="text-[12px] font-medium text-gray-400 hover:text-gray-700 underline transition-colors"
+                      onClick={handleOpenEdit}
+                    >
+                      Update number
+                    </button>
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-400">Account name</span>
@@ -393,48 +361,81 @@ function VerifyStep({
                     <span className="text-gray-400">MoMo number</span>
                     <span className="font-semibold font-mono">{currentMomo}</span>
                   </div>
+                </div>
+              )}
 
-                  {/* Inline edit form — shown when "Update number" is clicked */}
-                  {editingMomo && (
-                    <div className="mt-3 pt-3 space-y-2.5" style={{ borderTop: "1px solid var(--green-200)" }}>
-                      <div>
-                        <p className="text-[11px] font-semibold text-gray-500">New MoMo number</p>
-                        <Input
-                          value={editMomoInput}
-                          onChange={(e) => setEditMomoInput(e.target.value)}
-                          placeholder="e.g. 0244-123-456"
-                          className="h-9 text-[13px] font-mono mt-1"
-                        />
+              {/* Unified edit panel */}
+              {editingMomo && (
+                <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[12px] font-semibold text-gray-600 uppercase tracking-wide">Check a different number</p>
+                    <button
+                      className="text-[12px] font-medium text-gray-400 hover:text-gray-700 underline transition-colors"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={editInput}
+                      onChange={(e) => { setEditInput(e.target.value); setEditCheckState("idle"); }}
+                      placeholder="e.g. 0244-123-456"
+                      className="h-9 text-[13px] font-mono flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 text-[12px] font-semibold"
+                      disabled={editCheckState === "checking" || !editInput.trim() || editInput.trim() === currentMomo}
+                      onClick={handleEditCheck}
+                    >
+                      {editCheckState === "checking" ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                          Checking…
+                        </span>
+                      ) : "Check number"}
+                    </Button>
+                  </div>
+
+                  {editCheckState === "not_registered" && (
+                    <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="6.5" stroke="#DC2626" strokeWidth="1.5" />
+                        <path d="M8 5v3.5M8 10.5v.5" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      <p className="text-[12px] font-medium text-red-700">Number not registered — try a different number</p>
+                    </div>
+                  )}
+
+                  {editCheckState === "verified" && (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
+                        <div className="w-4 h-4 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
+                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                        <p className="text-[12px] font-medium" style={{ color: "var(--green-700)" }}>Number verified — add a reason and save to proceed</p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-gray-500">
+                        <p className="text-[11px] font-semibold text-gray-500 mb-1">
                           Reason for update <span className="text-red-500">*</span>
                         </p>
                         <Textarea
-                          value={editMomoReason}
-                          onChange={(e) => setEditMomoReason(e.target.value)}
+                          value={editReason}
+                          onChange={(e) => setEditReason(e.target.value)}
                           placeholder="Explain why the MoMo number is being changed…"
-                          className="text-[13px] min-h-[72px] resize-none mt-1"
+                          className="text-[13px] min-h-[72px] resize-none"
                         />
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white text-[12px]"
-                          disabled={!editMomoInput.trim() || editMomoInput.trim() === currentMomo || !editMomoReason.trim()}
-                          onClick={handleUpdateNumber}
-                        >
-                          Save number
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-[12px]"
-                          onClick={() => { setEditingMomo(false); setEditMomoInput(""); setEditMomoReason(""); }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white text-[12px] font-semibold"
+                        disabled={!editReason.trim()}
+                        onClick={handleSaveEditedNumber}
+                      >
+                        Save this number and proceed
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -486,7 +487,7 @@ function VerifyStep({
             <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
               <Button
                 className="w-full bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white h-10 text-[14px] font-bold"
-                disabled={!verified || editingMomo}
+                disabled={!verified}
                 onClick={() => onProceed(currentMomo, momoUpdateRecord)}
               >
                 Proceed to disbursement
