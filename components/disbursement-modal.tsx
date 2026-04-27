@@ -364,6 +364,29 @@ function VerifyStep({
                 </div>
               )}
 
+              {/* Number update activity — shown after a number has been saved */}
+              {momoUpdateRecord && !editingMomo && (
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5"
+                    style={{ background: "var(--gray-50)", borderBottom: "1px solid var(--gray-100)" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="var(--gray-500)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Number update recorded</p>
+                    <span className="ml-auto text-[10px] text-gray-400 shrink-0">{momoUpdateRecord.timestamp}</span>
+                  </div>
+                  <div className="px-4 py-3 space-y-2">
+                    <p className="text-[12px] text-gray-600 leading-relaxed">{momoUpdateRecord.summary}</p>
+                    <div className="rounded-lg px-3 py-2" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-100)" }}>
+                      <p className="text-[10px] font-semibold text-gray-400 mb-0.5">Reason</p>
+                      <p className="text-[12px] font-medium text-gray-700">"{momoUpdateRecord.reason}"</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Unified edit panel */}
               {editingMomo && (
                 <div className="rounded-xl border border-gray-200 p-4 space-y-3">
@@ -411,11 +434,21 @@ function VerifyStep({
 
                   {editCheckState === "verified" && (
                     <div className="space-y-2.5">
-                      <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
-                        <div className="w-4 h-4 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
-                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--green-25)", border: "1px solid var(--green-200)" }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-[var(--green-600)] flex items-center justify-center shrink-0">
+                            <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
+                          <p className="text-[12px] font-semibold" style={{ color: "var(--green-700)" }}>Number verified</p>
                         </div>
-                        <p className="text-[12px] font-medium" style={{ color: "var(--green-700)" }}>Number verified — add a reason and save to proceed</p>
+                        <div className="flex items-center justify-between text-[12px]">
+                          <span className="text-gray-400">Account name</span>
+                          <span className="font-bold text-gray-900">{resolvedName}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[12px]">
+                          <span className="text-gray-400">MoMo number</span>
+                          <span className="font-semibold font-mono text-gray-900">{editInput}</span>
+                        </div>
                       </div>
                       <div>
                         <p className="text-[11px] font-semibold text-gray-500 mb-1">
