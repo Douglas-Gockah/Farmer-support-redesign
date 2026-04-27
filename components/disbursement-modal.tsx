@@ -159,21 +159,24 @@ function VerifyStep({
   // After check passes, allow updating the number
   const [editingMomo,    setEditingMomo]   = useState(false);
   const [editMomoInput,  setEditMomoInput] = useState("");
+  const [editMomoReason, setEditMomoReason] = useState("");
   // Not-registered failure (simulated)
   const [notRegistered,           setNotRegistered]           = useState(false);
   const [showNotRegUpdateForm,    setShowNotRegUpdateForm]    = useState(false);
   const [notRegMomoInput,         setNotRegMomoInput]         = useState("");
+  const [notRegMomoReason,        setNotRegMomoReason]        = useState("");
   // Record created when the MoMo number is corrected after a not-registered failure
   const [momoUpdateRecord,        setMomoUpdateRecord]        = useState<ActionRecord | undefined>(undefined);
 
   const resolvedName = submittedName;
 
-  function makeUpdateRecord(oldMomo: string, updatedMomo: string): ActionRecord {
+  function makeUpdateRecord(oldMomo: string, updatedMomo: string, reason: string): ActionRecord {
     return {
       id: `${Date.now()}-momo-update`,
       stage: "finance_disbursement",
       actor: "Douglas Gockah",
       action: "Updated MoMo number",
+      reason,
       summary: `Douglas Gockah updated the MoMo number from ${oldMomo} to ${updatedMomo} before disbursement`,
       timestamp: new Date().toLocaleString("en-GH", {
         day: "2-digit", month: "short", year: "numeric",
@@ -198,28 +201,30 @@ function VerifyStep({
   }
 
   function handleNotRegUpdate() {
-    if (!notRegMomoInput.trim()) return;
+    if (!notRegMomoInput.trim() || !notRegMomoReason.trim()) return;
     const oldMomo = currentMomo;
     const updatedMomo = notRegMomoInput.trim();
-    const record = makeUpdateRecord(oldMomo, updatedMomo);
+    const record = makeUpdateRecord(oldMomo, updatedMomo, notRegMomoReason.trim());
     setMomoUpdateRecord(record);
     setCurrentMomo(updatedMomo);
     setNotRegistered(false);
     setShowNotRegUpdateForm(false);
     setNotRegMomoInput("");
+    setNotRegMomoReason("");
     // Number saved — user must explicitly re-run the check
   }
 
   function handleUpdateNumber() {
-    if (!editMomoInput.trim()) return;
+    if (!editMomoInput.trim() || !editMomoReason.trim()) return;
     const oldMomo = currentMomo;
     const updatedMomo = editMomoInput.trim();
-    const record = makeUpdateRecord(oldMomo, updatedMomo);
+    const record = makeUpdateRecord(oldMomo, updatedMomo, editMomoReason.trim());
     setMomoUpdateRecord(record);
     setCurrentMomo(updatedMomo);
     setVerified(false);
     setEditingMomo(false);
     setEditMomoInput("");
+    setEditMomoReason("");
     // Number saved — user must explicitly re-run the check
   }
 
@@ -318,18 +323,31 @@ function VerifyStep({
                     </Button>
                   ) : (
                     <div className="space-y-2.5 pt-1">
-                      <Label className="text-[11px] text-gray-500 font-semibold">Enter correct MoMo number</Label>
-                      <Input
-                        value={notRegMomoInput}
-                        onChange={(e) => setNotRegMomoInput(e.target.value)}
-                        placeholder="e.g. 0244-123-456"
-                        className="h-9 text-[13px] font-mono"
-                      />
+                      <div>
+                        <Label className="text-[11px] text-gray-500 font-semibold">Correct MoMo number</Label>
+                        <Input
+                          value={notRegMomoInput}
+                          onChange={(e) => setNotRegMomoInput(e.target.value)}
+                          placeholder="e.g. 0244-123-456"
+                          className="h-9 text-[13px] font-mono mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-gray-500 font-semibold">
+                          Reason for update <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          value={notRegMomoReason}
+                          onChange={(e) => setNotRegMomoReason(e.target.value)}
+                          placeholder="Explain why the MoMo number is being changed…"
+                          className="text-[13px] min-h-[72px] resize-none mt-1"
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[12px]"
-                          disabled={!notRegMomoInput.trim() || notRegMomoInput.trim() === currentMomo}
+                          disabled={!notRegMomoInput.trim() || notRegMomoInput.trim() === currentMomo || !notRegMomoReason.trim()}
                           onClick={handleNotRegUpdate}
                         >
                           Save number
@@ -338,7 +356,7 @@ function VerifyStep({
                           size="sm"
                           variant="outline"
                           className="text-[12px]"
-                          onClick={() => setShowNotRegUpdateForm(false)}
+                          onClick={() => { setShowNotRegUpdateForm(false); setNotRegMomoInput(""); setNotRegMomoReason(""); }}
                         >
                           Cancel
                         </Button>
@@ -379,18 +397,31 @@ function VerifyStep({
                   {/* Inline edit form — shown when "Update number" is clicked */}
                   {editingMomo && (
                     <div className="mt-3 pt-3 space-y-2.5" style={{ borderTop: "1px solid var(--green-200)" }}>
-                      <p className="text-[11px] font-semibold text-gray-500">Enter new MoMo number</p>
-                      <Input
-                        value={editMomoInput}
-                        onChange={(e) => setEditMomoInput(e.target.value)}
-                        placeholder="e.g. 0244-123-456"
-                        className="h-9 text-[13px] font-mono"
-                      />
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500">New MoMo number</p>
+                        <Input
+                          value={editMomoInput}
+                          onChange={(e) => setEditMomoInput(e.target.value)}
+                          placeholder="e.g. 0244-123-456"
+                          className="h-9 text-[13px] font-mono mt-1"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500">
+                          Reason for update <span className="text-red-500">*</span>
+                        </p>
+                        <Textarea
+                          value={editMomoReason}
+                          onChange={(e) => setEditMomoReason(e.target.value)}
+                          placeholder="Explain why the MoMo number is being changed…"
+                          className="text-[13px] min-h-[72px] resize-none mt-1"
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           className="flex-1 bg-[var(--green-600)] hover:bg-[var(--green-700)] text-white text-[12px]"
-                          disabled={!editMomoInput.trim() || editMomoInput.trim() === currentMomo}
+                          disabled={!editMomoInput.trim() || editMomoInput.trim() === currentMomo || !editMomoReason.trim()}
                           onClick={handleUpdateNumber}
                         >
                           Save number
@@ -399,7 +430,7 @@ function VerifyStep({
                           size="sm"
                           variant="outline"
                           className="text-[12px]"
-                          onClick={() => { setEditingMomo(false); setEditMomoInput(""); }}
+                          onClick={() => { setEditingMomo(false); setEditMomoInput(""); setEditMomoReason(""); }}
                         >
                           Cancel
                         </Button>
