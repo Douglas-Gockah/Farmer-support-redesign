@@ -140,27 +140,37 @@ function fmtN(n: number) { return n.toLocaleString("en-GH"); }
 
 // ─── FilterDropdown ───────────────────────────────────────────────────────────
 
-function FilterDropdown({ label, options, value, onChange }: {
+function FilterDropdown({ label, options, value, onChange, searchable = false }: {
   label: string; options: string[]; value: string | null;
   onChange: (v: string | null) => void;
+  searchable?: boolean;
 }) {
   const [open,  setOpen]  = useState(false);
   const [hover, setHover] = useState(false);
+  const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const active = value !== null;
+  const active   = value !== null;
+  const filtered = searchable
+    ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  function handleOpen() { setOpen((v) => !v); setQuery(""); }
 
   return (
     <div ref={ref} className="relative">
-      {/* Pill container — splits into trigger + clear button when active */}
+      {/* Pill container */}
       <div
         className="flex items-center rounded-lg border overflow-hidden"
         style={{
@@ -174,7 +184,7 @@ function FilterDropdown({ label, options, value, onChange }: {
       >
         {/* Trigger */}
         <button
-          onClick={() => setOpen((v) => !v)}
+          onClick={handleOpen}
           className="flex items-center gap-1.5 pl-3 pr-2.5 h-full text-[13px] font-medium whitespace-nowrap"
           style={{ color: active ? "#15803d" : "#525252" }}
         >
@@ -196,7 +206,7 @@ function FilterDropdown({ label, options, value, onChange }: {
           <>
             <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: "7px 0", background: "#86efac" }} />
             <button
-              onClick={(e) => { e.stopPropagation(); onChange(null); setOpen(false); }}
+              onClick={(e) => { e.stopPropagation(); onChange(null); setOpen(false); setQuery(""); }}
               className="flex items-center justify-center px-2.5 h-full"
               style={{ color: "#15803d" }}
               aria-label={`Clear ${label}`}
@@ -210,29 +220,73 @@ function FilterDropdown({ label, options, value, onChange }: {
       {/* Dropdown panel */}
       {open && (
         <div
-          className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-y-auto"
-          style={{ minWidth: 180, maxHeight: 264 }}
+          className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
+          style={{ minWidth: 220, maxWidth: 280 }}
         >
-          <button
-            onClick={() => { onChange(null); setOpen(false); }}
-            className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-            style={{ color: !active ? "#15803d" : "#6b7280" }}
-          >
-            {label}
-            {!active && <Check size={12} style={{ color: "#16a34a" }} />}
-          </button>
-          <div style={{ height: 1, background: "#f3f4f6" }} />
-          {options.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-              style={{ color: value === opt ? "#15803d" : "#1f2937" }}
-            >
-              {opt}
-              {value === opt && <Check size={12} style={{ color: "#16a34a" }} />}
-            </button>
-          ))}
+          {/* Combobox search input */}
+          {searchable && (
+            <div style={{ position: "relative", borderBottom: "1px solid #f3f4f6" }}>
+              <svg
+                width="15" height="15" viewBox="0 0 16 16" fill="none"
+                aria-hidden="true"
+                style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }}
+              >
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search for ${label.replace(/^All /, "").toLowerCase()}…`}
+                style={{
+                  width:       "100%",
+                  height:      46,
+                  paddingLeft: 38,
+                  paddingRight: 14,
+                  fontSize:    14,
+                  color:       "#374151",
+                  background:  "transparent",
+                  border:      "none",
+                  outline:     "none",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Default / clear row */}
+          {!searchable && (
+            <>
+              <button
+                onClick={() => { onChange(null); setOpen(false); }}
+                className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
+                style={{ color: !active ? "#15803d" : "#6b7280" }}
+              >
+                {label}
+                {!active && <Check size={12} style={{ color: "#16a34a" }} />}
+              </button>
+              <div style={{ height: 1, background: "#f3f4f6" }} />
+            </>
+          )}
+
+          {/* Options list */}
+          <div style={{ maxHeight: 240, overflowY: "auto" }}>
+            {filtered.length === 0 && (
+              <p className="px-4 py-3 text-[12px]" style={{ color: "#9ca3af" }}>No results found.</p>
+            )}
+            {filtered.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { onChange(opt); setOpen(false); setQuery(""); }}
+                className="w-full text-left px-4 py-2.5 text-[14px] hover:bg-gray-50 flex items-center justify-between transition-colors"
+                style={{ color: value === opt ? "#15803d" : "#1f2937", fontWeight: value === opt ? 600 : 400 }}
+              >
+                {opt}
+                {value === opt && <Check size={12} style={{ color: "#16a34a" }} />}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -750,10 +804,10 @@ export default function DashboardScreen() {
             )}
           </div>
 
-          <FilterDropdown label="All Regions"     options={REGIONS}           value={region}    onChange={handleRegion}    />
-          <FilterDropdown label="All Districts"   options={districtOptions}   value={district}  onChange={handleDistrict}  />
-          <FilterDropdown label="All Agents"      options={ALL_AGENTS_LIST}   value={agent}     onChange={setAgent}        />
-          <FilterDropdown label="All Communities" options={communityOptions}  value={community} onChange={setCommunity}    />
+          <FilterDropdown label="All Regions"     options={REGIONS}           value={region}    onChange={handleRegion}   searchable />
+          <FilterDropdown label="All Districts"   options={districtOptions}   value={district}  onChange={handleDistrict} searchable />
+          <FilterDropdown label="All Agents"      options={ALL_AGENTS_LIST}   value={agent}     onChange={setAgent}       searchable />
+          <FilterDropdown label="All Communities" options={communityOptions}  value={community} onChange={setCommunity}   searchable />
         </div>
 
         {/* ── CASH ── */}

@@ -55,11 +55,12 @@ function FilterPill<T extends string>({
   onSelect: (v: T | null) => void;
   searchable?: boolean;
 }) {
-  const [open, setOpen]   = useState(false);
+  const [open,  setOpen]  = useState(false);
   const [query, setQuery] = useState("");
-  const [coords, setCoords] = useState({ top: 0, left: 0, minWidth: 180 });
+  const [hover, setHover] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, minWidth: 200 });
   const ref        = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const isActive   = value !== null;
   const displayLabel = isActive
     ? options.find((o) => o.value === value)?.label ?? label
@@ -71,22 +72,19 @@ function FilterPill<T extends string>({
   function calcCoords() {
     if (!triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
-    setCoords({ top: r.bottom + 6, left: r.left, minWidth: Math.max(180, r.width) });
+    setCoords({ top: r.bottom + 6, left: r.left, minWidth: Math.max(200, r.width) });
   }
 
-  // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery("");
+        setOpen(false); setQuery("");
       }
     }
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Reposition on scroll / resize while open
   useEffect(() => {
     if (!open) return;
     function reposition() { calcCoords(); }
@@ -98,138 +96,138 @@ function FilterPill<T extends string>({
     };
   }, [open]);
 
-  const pillStyle: React.CSSProperties = isActive
-    ? {
-        height: 32, padding: "0 12px",
-        borderRadius: 999,
-        border: "1.5px solid var(--green-500)",
-        background: "var(--green-50)",
-        color: "var(--green-600)",
-        fontSize: "0.75rem", fontWeight: 600,
-        display: "flex", alignItems: "center", gap: 6,
-        cursor: "pointer", whiteSpace: "nowrap",
-        transition: "all 0.15s",
-      }
-    : {
-        height: 32, padding: "0 12px",
-        borderRadius: 999,
-        border: "1px solid var(--gray-200)",
-        background: "#ffffff",
-        color: "var(--gray-600)",
-        fontSize: "0.75rem", fontWeight: 500,
-        display: "flex", alignItems: "center", gap: 6,
-        cursor: "pointer", whiteSpace: "nowrap",
-        transition: "all 0.15s",
-      };
-
   return (
     <div ref={ref} className="relative shrink-0">
-      <button
+      {/* Pill container — trigger + X clear button */}
+      <div
         ref={triggerRef}
-        style={pillStyle}
-        onClick={() => { calcCoords(); setOpen((v) => !v); setQuery(""); }}
-        onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.borderColor = "var(--gray-300)";
+        style={{
+          display:     "inline-flex",
+          alignItems:  "center",
+          height:      34,
+          borderRadius: 8,
+          border:      `1px solid ${isActive ? "#1ab373" : "#d4d4d4"}`,
+          background:  isActive ? "#e8f7f1" : hover ? "#f5f5f5" : "#fff",
+          overflow:    "hidden",
+          transition:  "background 0.12s, border-color 0.12s",
+          cursor:      "pointer",
         }}
-        onMouseLeave={(e) => {
-          if (!isActive) e.currentTarget.style.borderColor = "var(--gray-200)";
-        }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
       >
-        {displayLabel}
-        <svg
-          width="10" height="10" viewBox="0 0 10 10" fill="none"
-          style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }}
+        <button
+          style={{
+            display:     "inline-flex",
+            alignItems:  "center",
+            gap:         6,
+            height:      "100%",
+            paddingLeft: 12,
+            paddingRight: 10,
+            background:  "none",
+            border:      "none",
+            cursor:      "pointer",
+            color:       isActive ? "#15803d" : "#525252",
+            fontSize:    "0.8125rem",
+            fontWeight:  isActive ? 600 : 500,
+            whiteSpace:  "nowrap",
+          }}
+          onClick={() => { calcCoords(); setOpen((v) => !v); setQuery(""); }}
         >
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+          {displayLabel}
+          <svg
+            width="10" height="10" viewBox="0 0 10 10" fill="none"
+            aria-hidden="true"
+            style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none", flexShrink: 0, color: isActive ? "#15803d" : "#9ca3af" }}
+          >
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
 
+        {isActive && (
+          <>
+            <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: "7px 0", background: "#86efac" }} />
+            <button
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: "100%", background: "none", border: "none", cursor: "pointer", color: "#15803d" }}
+              onClick={(e) => { e.stopPropagation(); onSelect(null); setOpen(false); setQuery(""); }}
+              aria-label="Clear filter"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Dropdown panel */}
       {open && (
         <div
-          className="py-1 overflow-hidden"
           style={{
-            position: "fixed",
-            top: coords.top,
-            left: coords.left,
-            minWidth: coords.minWidth,
-            zIndex: 9999,
-            background: "#ffffff",
-            border: "1px solid var(--gray-200)",
-            borderRadius: 10,
-            boxShadow: "0px 8px 24px rgba(16,24,40,0.12)",
+            position:     "fixed",
+            top:          coords.top,
+            left:         coords.left,
+            minWidth:     coords.minWidth,
+            zIndex:       9999,
+            background:   "#ffffff",
+            border:       "1px solid #e5e7eb",
+            borderRadius: 12,
+            boxShadow:    "0px 8px 24px rgba(16,24,40,0.12)",
+            overflow:     "hidden",
           }}
         >
-          {/* Search box */}
+          {/* Combobox search input */}
           {searchable && (
-            <div className="px-2 pt-1 pb-1">
+            <div style={{ position: "relative", borderBottom: "1px solid #f3f4f6" }}>
+              <svg
+                width="15" height="15" viewBox="0 0 16 16" fill="none"
+                aria-hidden="true"
+                style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }}
+              >
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
               <input
                 autoFocus
                 type="text"
-                placeholder="Search…"
+                placeholder={`Search for ${label.replace(/^All /, "").toLowerCase()}…`}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: 30,
-                  borderRadius: 6,
-                  border: "1px solid var(--gray-300)",
-                  padding: "0 8px",
-                  fontSize: "0.75rem",
-                  color: "var(--gray-700)",
-                  outline: "none",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--green-500)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(26,179,115,0.12)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--gray-300)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                style={{ width: "100%", height: 46, paddingLeft: 38, paddingRight: 14, border: "none", fontSize: 14, color: "#374151", background: "transparent", outline: "none" }}
               />
             </div>
           )}
 
-          {/* Clear */}
-          {isActive && (
-            <button
-              className="flex items-center gap-1.5 w-full text-left px-3 py-1.5 transition-colors"
-              style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--error-600)" }}
-              onClick={() => { onSelect(null); setOpen(false); setQuery(""); }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-50)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-              Clear
-            </button>
-          )}
-
-          {/* Options */}
-          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+          {/* Options list */}
+          <div style={{ maxHeight: 240, overflowY: "auto", padding: "4px 0" }}>
             {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-[11px]" style={{ color: "var(--gray-400)" }}>No results</p>
+              <p style={{ padding: "10px 16px", fontSize: 12, color: "#9ca3af" }}>No results found.</p>
             ) : filtered.map((o) => {
               const isSelected = value === o.value;
               return (
                 <button
                   key={o.value}
-                  className="flex items-center justify-between w-full text-left px-3 py-1.5 transition-colors"
                   style={{
-                    fontSize: "0.8125rem",
+                    display:    "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width:      "100%",
+                    textAlign:  "left",
+                    padding:    "10px 16px",
+                    border:     "none",
+                    background: isSelected ? "#f0fdf4" : "transparent",
+                    fontSize:   14,
                     fontWeight: isSelected ? 600 : 400,
-                    color: isSelected ? "var(--green-600)" : "var(--gray-700)",
-                    background: isSelected ? "var(--green-25)" : "transparent",
+                    color:      isSelected ? "#15803d" : "#1f2937",
+                    cursor:     "pointer",
                   }}
                   onClick={() => { onSelect(o.value); setOpen(false); setQuery(""); }}
-                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--gray-50)"; }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#f9fafb"; }}
                   onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
                 >
                   {o.label}
                   {isSelected && (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
