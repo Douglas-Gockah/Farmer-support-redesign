@@ -1,16 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar from "@/components/sidebar";
+import Sidebar, { type AppScreen } from "@/components/sidebar";
 import Header from "@/components/header";
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+  children,
+  activeScreen,
+  onNavigate,
+}: {
+  children: React.ReactNode;
+  activeScreen: AppScreen;
+  onNavigate: (screen: AppScreen) => void;
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
 
-      {/* Mobile backdrop — tap to close sidebar */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 lg:hidden"
@@ -20,7 +28,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeScreen={activeScreen}
+        onNavigate={onNavigate}
+      />
 
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         <Header onMenuClick={() => setSidebarOpen((v) => !v)} />
