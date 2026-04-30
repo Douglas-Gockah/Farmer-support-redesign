@@ -206,7 +206,7 @@ function FilterDropdown({ label, options, value, onChange }: {
   );
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
+// ─── StatCard (used by Agroforestry tab) ─────────────────────────────────────
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -219,37 +219,108 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-// ─── Area Chart ───────────────────────────────────────────────────────────────
+// ─── FulfillmentCard (used by Cash tab KPIs) ──────────────────────────────────
+
+function FulfillmentCard({
+  label, total, fulfilled, totalDisplay, fulfilledDisplay,
+}: {
+  label: string;
+  total: number;
+  fulfilled: number;
+  totalDisplay: string;
+  fulfilledDisplay: string;
+}) {
+  const pct = total > 0 ? Math.round((fulfilled / total) * 100) : 0;
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] font-medium text-gray-400">{label}</p>
+        <span
+          className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: "var(--green-50)", color: "var(--green-700)" }}
+        >
+          {pct}%
+        </span>
+      </div>
+      <p className="text-[22px] font-bold text-gray-900 leading-tight">{totalDisplay}</p>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gray-100)" }}>
+        <div
+          className="h-1.5 rounded-full"
+          style={{ width: `${pct}%`, background: "var(--green-600)" }}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--green-500)" }} />
+          <span className="text-[12px] text-gray-400">Fulfilled</span>
+        </div>
+        <span className="text-[12px] font-semibold text-gray-700">{fulfilledDisplay}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dual-line Area Chart ─────────────────────────────────────────────────────
 
 const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-function AreaChartPanel({ records }: { records: DashRecord[] }) {
-  const byMonth: Record<string, number> = {};
-  records.forEach(({ date, amount }) => {
+function DualAreaChart({ records }: { records: DashRecord[] }) {
+  // Aggregate by month: total requested amount vs fulfilled amount
+  const byMonth: Record<string, { requested: number; fulfilled: number }> = {};
+  records.forEach(({ date, amount, fulfilled }) => {
     const k = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    byMonth[k] = (byMonth[k] ?? 0) + amount;
+    if (!byMonth[k]) byMonth[k] = { requested: 0, fulfilled: 0 };
+    byMonth[k].requested += amount;
+    if (fulfilled) byMonth[k].fulfilled += amount;
   });
 
-  const data: { key: string; month: number; year: number; amount: number }[] = [];
+  const data: { key: string; month: number; year: number; requested: number; fulfilled: number }[] = [];
   for (let y = 2023; y <= 2025; y++) {
     for (let m = 0; m < 12; m++) {
       const k = `${y}-${String(m + 1).padStart(2, "0")}`;
-      data.push({ key: k, month: m, year: y, amount: byMonth[k] ?? 0 });
+      const d = byMonth[k] ?? { requested: 0, fulfilled: 0 };
+      data.push({ key: k, month: m, year: y, ...d });
     }
   }
-  data.push({ key: "2026-01", month: 0, year: 2026, amount: byMonth["2026-01"] ?? 0 });
+  const last = byMonth["2026-01"] ?? { requested: 0, fulfilled: 0 };
+  data.push({ key: "2026-01", month: 0, year: 2026, ...last });
 
   const yearTicks = data.filter((d) => d.month === 0).map((d) => d.key);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6">
-      <p className="text-[15px] font-bold text-gray-900">Support fulfillment</p>
-      <p className="text-[12px] text-gray-400 mt-0.5 mb-6">Cash support fulfillment over time</p>
+      {/* Header + inline legend */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <p className="text-[15px] font-bold text-gray-900">Support fulfillment</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">Requested vs fulfilled cash support over time</p>
+        </div>
+        <div className="flex items-center gap-5 shrink-0 pt-0.5">
+          <div className="flex items-center gap-2">
+            <svg width="24" height="8" aria-hidden="true">
+              <line x1="0" y1="4" x2="24" y2="4" stroke="#9CA3AF" strokeWidth="1.5" strokeDasharray="4 2" />
+            </svg>
+            <span className="text-[12px] text-gray-500">Requested</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="24" height="8" aria-hidden="true">
+              <line x1="0" y1="4" x2="24" y2="4" stroke="#16A34A" strokeWidth="2" />
+            </svg>
+            <span className="text-[12px] text-gray-500">Fulfilled</span>
+          </div>
+        </div>
+      </div>
+
       <ResponsiveContainer width="100%" height={240}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
           <defs>
-            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#16A34A" stopOpacity={0.28} />
+            <linearGradient id="reqGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#9CA3AF" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#9CA3AF" stopOpacity={0.01} />
+            </linearGradient>
+            <linearGradient id="fulGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#16A34A" stopOpacity={0.25} />
               <stop offset="100%" stopColor="#16A34A" stopOpacity={0.02} />
             </linearGradient>
           </defs>
@@ -274,19 +345,33 @@ function AreaChartPanel({ records }: { records: DashRecord[] }) {
             }
           />
           <Tooltip
-            formatter={(v: number) => [fmtGHS(v), "Amount"]}
+            formatter={(value: number, name: string) => [
+              fmtGHS(value),
+              name === "requested" ? "Requested" : "Fulfilled",
+            ]}
             labelFormatter={(key: string) => {
               const d = data.find((x) => x.key === key);
               return d ? `${MONTH_ABBR[d.month]} ${d.year}` : key;
             }}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E5E7EB" }}
           />
+          {/* Requested: dashed grey line, light fill */}
           <Area
             type="monotone"
-            dataKey="amount"
+            dataKey="requested"
+            stroke="#9CA3AF"
+            strokeWidth={1.5}
+            strokeDasharray="5 3"
+            fill="url(#reqGrad)"
+            dot={false}
+          />
+          {/* Fulfilled: solid green line, green fill — drawn on top */}
+          <Area
+            type="monotone"
+            dataKey="fulfilled"
             stroke="#16A34A"
             strokeWidth={2}
-            fill="url(#areaGrad)"
+            fill="url(#fulGrad)"
             dot={false}
           />
         </AreaChart>
@@ -603,20 +688,29 @@ export default function DashboardScreen() {
         {tab === "Cash" && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="No of community requests" value={stats.communities} />
-              <StatCard label="No of group requests"     value={stats.groups} />
-              <StatCard label="No of farmer requests"    value={stats.farmers} />
-              <StatCard label="Value of requests"        value={fmtGHS(stats.value)} />
+              <FulfillmentCard
+                label="Communities"
+                total={stats.communities}  fulfilled={stats.fulComm}
+                totalDisplay={fmtN(stats.communities)} fulfilledDisplay={fmtN(stats.fulComm)}
+              />
+              <FulfillmentCard
+                label="Groups"
+                total={stats.groups}       fulfilled={stats.fulGroups}
+                totalDisplay={fmtN(stats.groups)}      fulfilledDisplay={fmtN(stats.fulGroups)}
+              />
+              <FulfillmentCard
+                label="Farmers"
+                total={stats.farmers}      fulfilled={stats.fulFarmers}
+                totalDisplay={fmtN(stats.farmers)}     fulfilledDisplay={fmtN(stats.fulFarmers)}
+              />
+              <FulfillmentCard
+                label="Value of requests"
+                total={stats.value}        fulfilled={stats.fulValue}
+                totalDisplay={fmtGHS(stats.value)}     fulfilledDisplay={fmtGHS(stats.fulValue)}
+              />
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Community requests fulfilled" value={stats.fulComm} />
-              <StatCard label="Group requests fulfilled"     value={stats.fulGroups} />
-              <StatCard label="Farmer requests fulfilled"    value={stats.fulFarmers} />
-              <StatCard label="Value of fulfilled requests"  value={fmtGHS(stats.fulValue)} />
-            </div>
-
-            <AreaChartPanel records={filtered} />
+            <DualAreaChart records={filtered} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DonutChart
