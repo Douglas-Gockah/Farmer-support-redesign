@@ -5,7 +5,7 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { Calendar, ChevronDown, Check } from "lucide-react";
+import { Calendar, ChevronDown, Check, X } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -144,7 +144,8 @@ function FilterDropdown({ label, options, value, onChange }: {
   label: string; options: string[]; value: string | null;
   onChange: (v: string | null) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open,  setOpen]  = useState(false);
+  const [hover, setHover] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -159,45 +160,77 @@ function FilterDropdown({ label, options, value, onChange }: {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-colors whitespace-nowrap"
+      {/* Pill container — splits into trigger + clear button when active */}
+      <div
+        className="flex items-center rounded-lg border overflow-hidden"
         style={{
-          background:   active ? "var(--green-25)"  : "#fff",
-          borderColor:  active ? "var(--green-300)" : "var(--gray-200)",
-          color:        active ? "var(--green-700)" : "var(--gray-600)",
+          height:      34,
+          background:  active ? "#e8f7f1" : hover ? "#f5f5f5" : "#fff",
+          borderColor: active ? "#1ab373" : "#d4d4d4",
+          transition:  "background 0.12s, border-color 0.12s",
         }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
       >
-        {value ?? label}
-        <ChevronDown
-          size={13}
-          style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }}
-        />
-      </button>
+        {/* Trigger */}
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 pl-3 pr-2.5 h-full text-[13px] font-medium whitespace-nowrap"
+          style={{ color: active ? "#15803d" : "#525252" }}
+        >
+          {value ?? label}
+          <ChevronDown
+            size={12}
+            strokeWidth={2.5}
+            style={{
+              transition: "transform 0.15s",
+              transform:  open ? "rotate(180deg)" : "none",
+              color:      active ? "#15803d" : "#9ca3af",
+              flexShrink: 0,
+            }}
+          />
+        </button>
 
+        {/* Clear button — only when a value is selected */}
+        {active && (
+          <>
+            <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: "7px 0", background: "#86efac" }} />
+            <button
+              onClick={(e) => { e.stopPropagation(); onChange(null); setOpen(false); }}
+              className="flex items-center justify-center px-2.5 h-full"
+              style={{ color: "#15803d" }}
+              aria-label={`Clear ${label}`}
+            >
+              <X size={12} strokeWidth={2.5} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Dropdown panel */}
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-y-auto"
-          style={{ minWidth: 176, maxHeight: 260 }}
+          className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-y-auto"
+          style={{ minWidth: 180, maxHeight: 264 }}
         >
           <button
             onClick={() => { onChange(null); setOpen(false); }}
             className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-            style={{ color: !active ? "var(--green-700)" : "var(--gray-500)" }}
+            style={{ color: !active ? "#15803d" : "#6b7280" }}
           >
             {label}
-            {!active && <Check size={12} style={{ color: "var(--green-600)" }} />}
+            {!active && <Check size={12} style={{ color: "#16a34a" }} />}
           </button>
-          <div style={{ height: 1, background: "var(--gray-100)" }} />
+          <div style={{ height: 1, background: "#f3f4f6" }} />
           {options.map((opt) => (
             <button
               key={opt}
               onClick={() => { onChange(opt); setOpen(false); }}
               className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-              style={{ color: value === opt ? "var(--green-700)" : "var(--gray-800)" }}
+              style={{ color: value === opt ? "#15803d" : "#1f2937" }}
             >
               {opt}
-              {value === opt && <Check size={12} style={{ color: "var(--green-600)" }} />}
+              {value === opt && <Check size={12} style={{ color: "#16a34a" }} />}
             </button>
           ))}
         </div>
@@ -530,6 +563,7 @@ export default function DashboardScreen() {
   const [tab,       setTab]       = useState<DashTab>("Cash");
   const [time,      setTime]      = useState<TimePreset>("all");
   const [timeOpen,  setTimeOpen]  = useState(false);
+  const [timeHover, setTimeHover] = useState(false);
   const [region,    setRegion]    = useState<string | null>(null);
   const [district,  setDistrict]  = useState<string | null>(null);
   const [agent,     setAgent]     = useState<string | null>(null);
@@ -646,21 +680,59 @@ export default function DashboardScreen() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Time dropdown */}
           <div ref={timeRef} className="relative">
-            <button
-              onClick={() => setTimeOpen((v) => !v)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium border border-gray-200 bg-white text-gray-700 whitespace-nowrap"
+            <div
+              className="flex items-center rounded-lg border overflow-hidden"
+              style={{
+                height:      34,
+                background:  time !== "all" ? "#e8f7f1" : timeHover ? "#f5f5f5" : "#fff",
+                borderColor: time !== "all" ? "#1ab373" : "#d4d4d4",
+                transition:  "background 0.12s, border-color 0.12s",
+              }}
+              onMouseEnter={() => setTimeHover(true)}
+              onMouseLeave={() => setTimeHover(false)}
             >
-              <Calendar size={13} className="text-gray-400" />
-              {timeLabel}
-              <ChevronDown
-                size={13}
-                className="text-gray-400"
-                style={{ transform: timeOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
-              />
-            </button>
+              {/* Trigger */}
+              <button
+                onClick={() => setTimeOpen((v) => !v)}
+                className="flex items-center gap-1.5 pl-3 pr-2.5 h-full text-[13px] font-medium whitespace-nowrap"
+                style={{ color: time !== "all" ? "#15803d" : "#525252" }}
+              >
+                <Calendar
+                  size={13}
+                  style={{ color: time !== "all" ? "#15803d" : "#9ca3af", flexShrink: 0 }}
+                />
+                {timeLabel}
+                <ChevronDown
+                  size={12}
+                  strokeWidth={2.5}
+                  style={{
+                    transition: "transform 0.15s",
+                    transform:  timeOpen ? "rotate(180deg)" : "none",
+                    color:      time !== "all" ? "#15803d" : "#9ca3af",
+                    flexShrink: 0,
+                  }}
+                />
+              </button>
+
+              {/* Clear button — only when a non-default time is selected */}
+              {time !== "all" && (
+                <>
+                  <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: "7px 0", background: "#86efac" }} />
+                  <button
+                    onClick={() => { setTime("all"); setTimeOpen(false); }}
+                    className="flex items-center justify-center px-2.5 h-full"
+                    style={{ color: "#15803d" }}
+                    aria-label="Clear time filter"
+                  >
+                    <X size={12} strokeWidth={2.5} />
+                  </button>
+                </>
+              )}
+            </div>
+
             {timeOpen && (
               <div
-                className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
+                className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
                 style={{ minWidth: 164 }}
               >
                 {TIME_OPTIONS.map((opt) => (
@@ -668,10 +740,10 @@ export default function DashboardScreen() {
                     key={opt.id}
                     onClick={() => { setTime(opt.id); setTimeOpen(false); }}
                     className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-                    style={{ color: time === opt.id ? "var(--green-700)" : "var(--gray-700)" }}
+                    style={{ color: time === opt.id ? "#15803d" : "#374151" }}
                   >
                     {opt.label}
-                    {time === opt.id && <Check size={12} style={{ color: "var(--green-600)" }} />}
+                    {time === opt.id && <Check size={12} style={{ color: "#16a34a" }} />}
                   </button>
                 ))}
               </div>
