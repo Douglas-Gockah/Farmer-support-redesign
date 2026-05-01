@@ -8,6 +8,7 @@ import FulfillmentSlideOver from "@/components/fulfillment-slide-over";
 import FulfillmentOptOutModal from "@/components/fulfillment-opt-out-modal";
 import { FULFILLMENT_COLUMNS } from "@/components/kanban/constants";
 import { MOCK_FULFILLMENT_REQUESTS } from "@/components/kanban/mock-data";
+import { DateFilterChip } from "@/components/kanban/date-filter-chip";
 import type { FulfillmentRequest, FulfillmentStage } from "@/components/kanban/types";
 
 // ---------------------------------------------------------------------------
@@ -28,8 +29,6 @@ const STATUS_OPTIONS: { value: FulfillmentStage; label: string }[] = [
   { value: "fully_fulfilled",     label: "Fully Fulfilled"     },
   { value: "opted_out",           label: "Cash Opt-Outs"       },
 ];
-
-const DATE_PRESETS = ["Today", "Yesterday", "This Week", "Last Week", "This Month", "Last Month"];
 
 const REGIONS = [
   "Ahafo", "Ashanti", "Bono", "Bono East", "Central", "Eastern",
@@ -259,7 +258,6 @@ function FulfillmentFilterBar({
   }
 
   const activeCount  = Object.values(filters).filter(Boolean).length;
-  const dateOptions  = DATE_PRESETS.map((d) => ({ value: d, label: d }));
   const regionOpts   = REGIONS.map((r)    => ({ value: r, label: r }));
   const districtOpts = DISTRICTS.map((d)  => ({ value: d, label: d }));
   const communityOpts = communities.map((c) => ({ value: c, label: c }));
@@ -270,10 +268,8 @@ function FulfillmentFilterBar({
       className="shrink-0 flex items-center gap-2 px-4 sm:px-6 py-2.5 overflow-x-auto scrollbar-none"
       style={{ background: "#ffffff", borderBottom: "1px solid var(--gray-100)" }}
     >
-      <FilterPill
-        label="All time"
+      <DateFilterChip
         value={filters.datePreset}
-        options={dateOptions}
         onSelect={(v) => set("datePreset", v)}
       />
       <FilterPill

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { DATE_PRESETS, GHANA_REGIONS, COMMUNITIES, DISTRICTS } from "./constants";
-import { fmtDate, presetDates, calDays, isSameDay, inRange } from "./helpers";
+import { GHANA_REGIONS, COMMUNITIES, DISTRICTS } from "./constants";
+import { DateFilterChip } from "./date-filter-chip";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -223,9 +223,7 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
   const [filtersVisible, setFiltersVisible] = useState(false);
 
   const [search,          setSearch]          = useState("");
-  const [datePickerOpen,  setDatePickerOpen]  = useState(false);
   const [datePreset,      setDatePreset]      = useState<string | null>(null);
-  const [calMonth,        setCalMonth]        = useState(() => new Date());
   const [regionsOpen,     setRegionsOpen]     = useState(false);
   const [selectedRegion,  setSelectedRegion]  = useState<string | null>(null);
   const [regionSearch,    setRegionSearch]    = useState("");
@@ -238,7 +236,6 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
   const [agentOpen,       setAgentOpen]       = useState(false);
   const [selectedAgent,   setSelectedAgent]   = useState<string | null>(null);
 
-  const dateRef      = useRef<HTMLDivElement>(null!);
   const regionsRef   = useRef<HTMLDivElement>(null!);
   const distRef      = useRef<HTMLDivElement>(null!);
   const communityRef = useRef<HTMLDivElement>(null!);
@@ -246,7 +243,6 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (dateRef.current      && !dateRef.current.contains(e.target as Node))      setDatePickerOpen(false);
       if (regionsRef.current   && !regionsRef.current.contains(e.target as Node))   setRegionsOpen(false);
       if (distRef.current      && !distRef.current.contains(e.target as Node))      setDistrictsOpen(false);
       if (communityRef.current && !communityRef.current.contains(e.target as Node)) setCommunityOpen(false);
@@ -261,12 +257,9 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
   }, [search, selectedCommunity, selectedRegion, selectedDistrict, selectedAgent, datePreset, onFilterChange]);
 
   function closeAll() {
-    setDatePickerOpen(false); setRegionsOpen(false); setDistrictsOpen(false);
-    setCommunityOpen(false);  setAgentOpen(false);
+    setRegionsOpen(false); setDistrictsOpen(false);
+    setCommunityOpen(false); setAgentOpen(false);
   }
-
-  const today = new Date();
-  const [dateStart, dateEnd] = datePreset ? presetDates(datePreset, today) : [null, null];
 
   const filteredRegions     = GHANA_REGIONS.filter((r) => r.toLowerCase().includes(regionSearch.toLowerCase()));
   const filteredDistricts   = DISTRICTS.filter((d) => d.toLowerCase().includes(districtSearch.toLowerCase()));
@@ -379,123 +372,7 @@ export function FilterBar({ agents, onFilterChange, rightSlot }: FilterBarProps)
       >
 
         {/* 1. Date picker */}
-        <div ref={dateRef} style={{ position: "relative" }}>
-          <FilterChip
-            active={!!datePreset}
-            isOpen={datePickerOpen}
-            onTriggerClick={() => { const next = !datePickerOpen; closeAll(); setDatePickerOpen(next); }}
-            onClear={() => setDatePreset(null)}
-          >
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-              <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            {datePreset ?? "All Time"}
-          </FilterChip>
-
-          {datePickerOpen && (
-            <div
-              style={{
-                position: "absolute", top: 40, left: 0, zIndex: 50,
-                background: "#ffffff",
-                borderRadius: "10px",
-                border: "1px solid var(--gray-200)",
-                boxShadow: "0px 8px 24px rgba(16,24,40,0.12)",
-                display: "flex", width: 520,
-              }}
-            >
-              {/* Presets */}
-              <div style={{ width: 168, borderRight: "1px solid var(--gray-100)", paddingTop: 8, paddingBottom: 8, flexShrink: 0 }}>
-                {DATE_PRESETS.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => { setDatePreset(p); setCalMonth(new Date()); }}
-                    style={{
-                      display: "block", width: "100%", textAlign: "left",
-                      padding: "7px 16px", border: "none", background: "transparent",
-                      fontSize: "0.8125rem", cursor: "pointer",
-                      color: datePreset === p ? "var(--green-600)" : "var(--gray-700)",
-                      fontWeight: datePreset === p ? 600 : 500,
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-50)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <div style={{ borderTop: "1px solid var(--gray-100)", marginTop: 8, paddingTop: 8, paddingLeft: 12, paddingRight: 12 }}>
-                  {["Days up to today", "Days starting today"].map((label) => (
-                    <div key={label} className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-                      <input type="number" defaultValue={1} min={1}
-                        style={{
-                          width: 44, height: 28, textAlign: "center",
-                          borderRadius: "var(--radius)", border: "1px solid var(--gray-200)",
-                          fontSize: "0.75rem", outline: "none",
-                        }}
-                      />
-                      <span style={{ fontSize: "0.6875rem", color: "var(--gray-500)", fontWeight: 500 }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Calendar */}
-              <div style={{ flex: 1, padding: 16 }}>
-                <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
-                  {[fmtDate(dateStart), fmtDate(dateEnd)].map((d, i) => (
-                    <div key={i} style={{ flex: 1, height: 32, borderRadius: "var(--radius)", border: "1px solid var(--gray-200)", display: "flex", alignItems: "center", paddingLeft: 10, fontSize: "0.75rem", fontWeight: 500, color: "var(--gray-700)" }}>{d}</div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <button onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-                    style={{ width: 28, height: 28, borderRadius: "var(--radius)", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gray-500)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-100)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                  <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--gray-800)" }}>
-                    {calMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
-                  </span>
-                  <button onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-                    style={{ width: 28, height: 28, borderRadius: "var(--radius)", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gray-500)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-100)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 4 }}>
-                  {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
-                    <div key={d} style={{ textAlign: "center", fontSize: "0.625rem", fontWeight: 700, color: "var(--gray-400)", padding: "4px 0" }}>{d}</div>
-                  ))}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px 0" }}>
-                  {calDays(calMonth).map((d, i) => {
-                    if (!d) return <div key={`e-${i}`} />;
-                    const isToday = isSameDay(d, today);
-                    const isStart = dateStart && isSameDay(d, dateStart);
-                    const isEnd   = dateEnd   && isSameDay(d, dateEnd);
-                    const inRng   = inRange(d, dateStart, dateEnd);
-                    return (
-                      <button key={d.toISOString()} onClick={() => {}}
-                        style={{
-                          height: 28, width: "100%", borderRadius: "9999px", border: "none", cursor: "pointer",
-                          fontSize: "0.75rem", fontWeight: isToday ? 700 : 400,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          background: (isStart || isEnd) ? "var(--green-600)" : inRng ? "var(--green-50)" : isToday ? "var(--green-25)" : "transparent",
-                          color: (isStart || isEnd) ? "#fff" : inRng ? "var(--green-700)" : "var(--gray-700)",
-                        }}
-                      >
-                        {d.getDate()}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <DateFilterChip value={datePreset} onSelect={setDatePreset} />
 
         {/* 2. Regions */}
         <div ref={regionsRef} style={{ position: "relative" }}>
