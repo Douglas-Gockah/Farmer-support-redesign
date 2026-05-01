@@ -5,13 +5,14 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { Calendar, ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, X } from "lucide-react";
+import { DateFilterChip } from "./kanban/date-filter-chip";
+import { presetDates } from "./kanban/helpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type DashTab    = "Cash" | "Agroforestry";
-type AgroType   = "Nursery" | "Tree Planting" | "Parkland";
-type TimePreset = "all" | "1y" | "6m" | "3m" | "1m";
+type DashTab  = "Cash" | "Agroforestry";
+type AgroType = "Nursery" | "Tree Planting" | "Parkland";
 
 interface DashRecord {
   date:      Date;
@@ -140,66 +141,153 @@ function fmtN(n: number) { return n.toLocaleString("en-GH"); }
 
 // ─── FilterDropdown ───────────────────────────────────────────────────────────
 
-function FilterDropdown({ label, options, value, onChange }: {
+function FilterDropdown({ label, options, value, onChange, searchable = false }: {
   label: string; options: string[]; value: string | null;
   onChange: (v: string | null) => void;
+  searchable?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open,  setOpen]  = useState(false);
+  const [hover, setHover] = useState(false);
+  const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const active = value !== null;
+  const active   = value !== null;
+  const filtered = searchable
+    ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  function handleOpen() { setOpen((v) => !v); setQuery(""); }
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-colors whitespace-nowrap"
+      {/* Pill container */}
+      <div
+        className="flex items-center rounded-lg border overflow-hidden"
         style={{
-          background:   active ? "var(--green-25)"  : "#fff",
-          borderColor:  active ? "var(--green-300)" : "var(--gray-200)",
-          color:        active ? "var(--green-700)" : "var(--gray-600)",
+          height:      34,
+          background:  active ? "#e8f7f1" : hover ? "#f5f5f5" : "#fff",
+          borderColor: active ? "#1ab373" : "#d4d4d4",
+          transition:  "background 0.12s, border-color 0.12s",
         }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
       >
-        {value ?? label}
-        <ChevronDown
-          size={13}
-          style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }}
-        />
-      </button>
+        {/* Trigger */}
+        <button
+          onClick={handleOpen}
+          className="flex items-center gap-1.5 pl-3 pr-2.5 h-full text-[13px] font-medium whitespace-nowrap"
+          style={{ color: active ? "#15803d" : "#525252" }}
+        >
+          {value ?? label}
+          <ChevronDown
+            size={12}
+            strokeWidth={2.5}
+            style={{
+              transition: "transform 0.15s",
+              transform:  open ? "rotate(180deg)" : "none",
+              color:      active ? "#15803d" : "#9ca3af",
+              flexShrink: 0,
+            }}
+          />
+        </button>
 
+        {/* Clear button — only when a value is selected */}
+        {active && (
+          <>
+            <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: "7px 0", background: "#86efac" }} />
+            <button
+              onClick={(e) => { e.stopPropagation(); onChange(null); setOpen(false); setQuery(""); }}
+              className="flex items-center justify-center px-2.5 h-full"
+              style={{ color: "#15803d" }}
+              aria-label={`Clear ${label}`}
+            >
+              <X size={12} strokeWidth={2.5} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Dropdown panel */}
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-y-auto"
-          style={{ minWidth: 176, maxHeight: 260 }}
+          className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
+          style={{ minWidth: 220, maxWidth: 280 }}
         >
-          <button
-            onClick={() => { onChange(null); setOpen(false); }}
-            className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-            style={{ color: !active ? "var(--green-700)" : "var(--gray-500)" }}
-          >
-            {label}
-            {!active && <Check size={12} style={{ color: "var(--green-600)" }} />}
-          </button>
-          <div style={{ height: 1, background: "var(--gray-100)" }} />
-          {options.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-              style={{ color: value === opt ? "var(--green-700)" : "var(--gray-800)" }}
-            >
-              {opt}
-              {value === opt && <Check size={12} style={{ color: "var(--green-600)" }} />}
-            </button>
-          ))}
+          {/* Combobox search input */}
+          {searchable && (
+            <div style={{ position: "relative", borderBottom: "1px solid #f3f4f6" }}>
+              <svg
+                width="15" height="15" viewBox="0 0 16 16" fill="none"
+                aria-hidden="true"
+                style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }}
+              >
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search for ${label.replace(/^All /, "").toLowerCase()}…`}
+                style={{
+                  width:       "100%",
+                  height:      46,
+                  paddingLeft: 38,
+                  paddingRight: 14,
+                  fontSize:    14,
+                  color:       "#374151",
+                  background:  "transparent",
+                  border:      "none",
+                  outline:     "none",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Default / clear row */}
+          {!searchable && (
+            <>
+              <button
+                onClick={() => { onChange(null); setOpen(false); }}
+                className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
+                style={{ color: !active ? "#15803d" : "#6b7280" }}
+              >
+                {label}
+                {!active && <Check size={12} style={{ color: "#16a34a" }} />}
+              </button>
+              <div style={{ height: 1, background: "#f3f4f6" }} />
+            </>
+          )}
+
+          {/* Options list */}
+          <div style={{ maxHeight: 240, overflowY: "auto" }}>
+            {filtered.length === 0 && (
+              <p className="px-4 py-3 text-[12px]" style={{ color: "#9ca3af" }}>No results found.</p>
+            )}
+            {filtered.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { onChange(opt); setOpen(false); setQuery(""); }}
+                className="w-full text-left px-4 py-2.5 text-[14px] hover:bg-gray-50 flex items-center justify-between transition-colors"
+                style={{ color: value === opt ? "#15803d" : "#1f2937", fontWeight: value === opt ? 600 : 400 }}
+              >
+                {opt}
+                {value === opt && <Check size={12} style={{ color: "#16a34a" }} />}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -514,62 +602,37 @@ function AgroBarChart({ records }: { records: DashRecord[] }) {
   );
 }
 
-// ─── Time filter options ──────────────────────────────────────────────────────
-
-const TIME_OPTIONS: { id: TimePreset; label: string }[] = [
-  { id: "all", label: "All Time" },
-  { id: "1y",  label: "Last Year" },
-  { id: "6m",  label: "Last 6 Months" },
-  { id: "3m",  label: "Last 3 Months" },
-  { id: "1m",  label: "Last Month" },
-];
+// Reference date for preset calculations — end of mock data range
+const DASH_TODAY = new Date(2025, 11, 31);
 
 // ─── DashboardScreen ──────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
-  const [tab,       setTab]       = useState<DashTab>("Cash");
-  const [time,      setTime]      = useState<TimePreset>("all");
-  const [timeOpen,  setTimeOpen]  = useState(false);
-  const [region,    setRegion]    = useState<string | null>(null);
-  const [district,  setDistrict]  = useState<string | null>(null);
-  const [agent,     setAgent]     = useState<string | null>(null);
-  const [community, setCommunity] = useState<string | null>(null);
-  const timeRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (timeRef.current && !timeRef.current.contains(e.target as Node)) setTimeOpen(false);
-    };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
+  const [tab,        setTab]        = useState<DashTab>("Cash");
+  const [datePreset, setDatePreset] = useState<string | null>(null);
+  const [region,     setRegion]     = useState<string | null>(null);
+  const [district,   setDistrict]   = useState<string | null>(null);
+  const [agent,      setAgent]      = useState<string | null>(null);
+  const [community,  setCommunity]  = useState<string | null>(null);
 
   function handleRegion(v: string | null)   { setRegion(v); setDistrict(null); setCommunity(null); }
   function handleDistrict(v: string | null) { setDistrict(v); setCommunity(null); }
   function handleTab(t: DashTab) {
-    setTab(t); setRegion(null); setDistrict(null); setAgent(null); setCommunity(null);
+    setTab(t); setDatePreset(null); setRegion(null); setDistrict(null); setAgent(null); setCommunity(null);
   }
 
-  const cutoff = useMemo(() => {
-    const ref = new Date(2025, 11, 31);
-    if (time === "1m") return new Date(ref.getFullYear(), ref.getMonth() - 1,  ref.getDate());
-    if (time === "3m") return new Date(ref.getFullYear(), ref.getMonth() - 3,  ref.getDate());
-    if (time === "6m") return new Date(ref.getFullYear(), ref.getMonth() - 6,  ref.getDate());
-    if (time === "1y") return new Date(ref.getFullYear() - 1, ref.getMonth(),  ref.getDate());
-    return new Date(2000, 0, 1);
-  }, [time]);
-
-  const filtered = useMemo(() =>
-    ALL_RECORDS.filter((r) => {
-      if (r.tab !== tab)                      return false;
-      if (r.date < cutoff)                    return false;
-      if (region    && r.region    !== region)    return false;
-      if (district  && r.district  !== district)  return false;
-      if (agent     && r.agent     !== agent)      return false;
-      if (community && r.community !== community)  return false;
+  const filtered = useMemo(() => {
+    const [ds, de] = datePreset ? presetDates(datePreset, DASH_TODAY) : [null, null];
+    return ALL_RECORDS.filter((r) => {
+      if (r.tab !== tab)                                     return false;
+      if (ds && de && (r.date < ds || r.date > de))         return false;
+      if (region    && r.region    !== region)               return false;
+      if (district  && r.district  !== district)             return false;
+      if (agent     && r.agent     !== agent)                return false;
+      if (community && r.community !== community)            return false;
       return true;
-    }),
-  [tab, cutoff, region, district, agent, community]);
+    });
+  }, [tab, datePreset, region, district, agent, community]);
 
   // Cascaded dropdown options
   const districtOptions = useMemo(
@@ -611,8 +674,6 @@ export default function DashboardScreen() {
     };
   }, [filtered]);
 
-  const timeLabel = TIME_OPTIONS.find((t) => t.id === time)?.label ?? "All Time";
-
   return (
     <div className="h-full overflow-y-auto" style={{ background: "var(--gray-50)" }}>
       <div style={{ maxWidth: 1200 }} className="mx-auto px-6 py-6 space-y-5">
@@ -644,44 +705,11 @@ export default function DashboardScreen() {
 
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Time dropdown */}
-          <div ref={timeRef} className="relative">
-            <button
-              onClick={() => setTimeOpen((v) => !v)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium border border-gray-200 bg-white text-gray-700 whitespace-nowrap"
-            >
-              <Calendar size={13} className="text-gray-400" />
-              {timeLabel}
-              <ChevronDown
-                size={13}
-                className="text-gray-400"
-                style={{ transform: timeOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
-              />
-            </button>
-            {timeOpen && (
-              <div
-                className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
-                style={{ minWidth: 164 }}
-              >
-                {TIME_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => { setTime(opt.id); setTimeOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-gray-50 flex items-center justify-between transition-colors"
-                    style={{ color: time === opt.id ? "var(--green-700)" : "var(--gray-700)" }}
-                  >
-                    {opt.label}
-                    {time === opt.id && <Check size={12} style={{ color: "var(--green-600)" }} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <FilterDropdown label="All Regions"     options={REGIONS}           value={region}    onChange={handleRegion}    />
-          <FilterDropdown label="All Districts"   options={districtOptions}   value={district}  onChange={handleDistrict}  />
-          <FilterDropdown label="All Agents"      options={ALL_AGENTS_LIST}   value={agent}     onChange={setAgent}        />
-          <FilterDropdown label="All Communities" options={communityOptions}  value={community} onChange={setCommunity}    />
+          <DateFilterChip value={datePreset} onSelect={setDatePreset} />
+          <FilterDropdown label="All Regions"     options={REGIONS}           value={region}    onChange={handleRegion}   searchable />
+          <FilterDropdown label="All Districts"   options={districtOptions}   value={district}  onChange={handleDistrict} searchable />
+          <FilterDropdown label="All Agents"      options={ALL_AGENTS_LIST}   value={agent}     onChange={setAgent}       searchable />
+          <FilterDropdown label="All Communities" options={communityOptions}  value={community} onChange={setCommunity}   searchable />
         </div>
 
         {/* ── CASH ── */}
