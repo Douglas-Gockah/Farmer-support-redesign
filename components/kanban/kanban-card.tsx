@@ -295,15 +295,14 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
             </p>
             {showArchive && (
               <button
-                className="flex items-center gap-1 shrink-0 transition-colors"
+                className="flex items-center justify-center shrink-0 transition-colors"
                 style={{
-                  height: 24, padding: "0 6px",
+                  width: 24, height: 24,
                   borderRadius: "6px",
                   background: "var(--gray-100)",
                   color: "var(--gray-500)",
                   border: "none", cursor: "pointer",
                   marginTop: -2, marginRight: -2,
-                  fontSize: "0.625rem", fontWeight: 600,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--error-50)";
@@ -315,13 +314,13 @@ export function KanbanCard({ r, ctaLabel, onCta, onView, onArchive }: KanbanCard
                 }}
                 onClick={(e) => { e.stopPropagation(); setArchiveConfirmOpen(true); }}
                 title="Archive request"
+                aria-label="Archive request"
               >
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                   <rect x="1" y="1.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M2.5 5v7.5a1 1 0 001 1h9a1 1 0 001-1V5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M6 9.5l2 2 2-2M8 11.5v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Archive
               </button>
             )}
           </div>
