@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ColumnHeader } from "@/components/kanban/column-header";
 import { RECOVERIES_COLUMNS } from "@/components/kanban/constants";
 import { FilterBar, type ActiveFilters } from "@/components/kanban/filter-bar";
-import { presetDates, avatarColor, initials } from "@/components/kanban/helpers";
+import { presetDates, avatarColor, initials, makeRefCode } from "@/components/kanban/helpers";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -69,41 +69,6 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     submittedDate: new Date(2025, 11, 8), stage: "rec_pending_review",
     disbursedDate: "12 Sep 2025", transactionId: "TXN-FS-2024-015",
   },
-  {
-    id: "REC-005", groupName: "Sawla Farming Alliance",
-    community: "Sawla-Tuna-Kalba", region: "Savannah", district: "Sawla-Tuna-Kalba",
-    agent: "Yaw Darko", farmersSupported: 17, amountPerFarmer: 450,
-    submittedDate: new Date(2025, 10, 22), stage: "rec_approved",
-    disbursedDate: "18 Jul 2025", transactionId: "TXN-FS-2024-019",
-  },
-  {
-    id: "REC-006", groupName: "Wa East Food Coalition",
-    community: "Wa", region: "Upper West", district: "Wa East",
-    agent: "Abena Frimpong", farmersSupported: 32, amountPerFarmer: 350,
-    submittedDate: new Date(2025, 10, 18), stage: "rec_approved",
-    disbursedDate: "20 Jul 2025", transactionId: "TXN-FS-2024-020",
-  },
-  {
-    id: "REC-007", groupName: "Tamale Metro Food Group",
-    community: "Tamale", region: "Northern", district: "Tamale Metro",
-    agent: "Kweku Boateng", farmersSupported: 25, amountPerFarmer: 520,
-    submittedDate: new Date(2025, 10, 5), stage: "rec_pending_recovery",
-    disbursedDate: "1 Jun 2025", transactionId: "TXN-FS-2024-018",
-  },
-  {
-    id: "REC-008", groupName: "Bole United Farmers",
-    community: "Bole", region: "Savannah", district: "Bole",
-    agent: "Adjoa Tetteh", farmersSupported: 19, amountPerFarmer: 480,
-    submittedDate: new Date(2025, 9, 14), stage: "rec_partial",
-    disbursedDate: "10 May 2025", transactionId: "TXN-FS-2024-017",
-  },
-  {
-    id: "REC-009", groupName: "Bolgatanga Growers Coop",
-    community: "Tamale", region: "Northern", district: "Tamale Metro",
-    agent: "Kojo Annan", farmersSupported: 23, amountPerFarmer: 420,
-    submittedDate: new Date(2025, 8, 2), stage: "rec_full",
-    disbursedDate: "15 Apr 2025", transactionId: "TXN-FS-2024-013",
-  },
 ];
 
 const ALL_RECOVERY_AGENTS = [...new Set(MOCK_RECOVERY_REQUESTS.map((r) => r.agent))].sort();
@@ -136,78 +101,104 @@ function RecoveryCard({
   req: RecoveryRequest;
   onReview: () => void;
 }) {
-  const [hover, setHover] = useState(false);
-  const color = avatarColor(req.groupName);
-  const ini   = initials(req.groupName);
-  const total = req.farmersSupported * req.amountPerFarmer;
+  const [hovered, setHovered] = useState(false);
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+  const agentDisplay  = req.agent.split(" ").slice(0, 2).join(" ");
+  const refCode       = makeRefCode(fmtShort(req.submittedDate), req.id, req.agent);
 
   return (
     <div
-      className="bg-white rounded-xl mx-3 mb-3 cursor-pointer"
       style={{
-        border:     `1px solid ${hover ? "#d1d5db" : "#f3f4f6"}`,
-        padding:    16,
-        transition: "border-color 0.12s, box-shadow 0.12s",
-        boxShadow:  hover ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+        background:   "#ffffff",
+        borderRadius: "12px",
+        border:       "1px solid var(--gray-200)",
+        boxShadow:    hovered ? "0px 4px 16px rgba(16,24,40,0.10)" : "0px 1px 3px rgba(16,24,40,0.06)",
+        transform:    hovered ? "translateY(-2px)" : "none",
+        transition:   "box-shadow 0.2s, transform 0.2s",
+        marginBottom: 10,
+        cursor:       "pointer",
       }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={onReview}
     >
-      {/* Group identity */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
-          background: `${color}20`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <span style={{ fontSize: "0.6875rem", fontWeight: 700, color }}>{ini}</span>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "#111827", lineHeight: 1.3, marginBottom: 2 }}>
-            {req.groupName}
-          </p>
-          <p style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-            {req.community} · Cash support
-          </p>
-        </div>
-      </div>
+      <div style={{ padding: "16px" }}>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-        <div style={{ background: "#f9fafb", borderRadius: 8, padding: "8px 10px" }}>
-          <p style={{ fontSize: "0.625rem", color: "#9ca3af", fontWeight: 500, marginBottom: 2 }}>Farmers</p>
-          <p style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#111827" }}>{req.farmersSupported}</p>
-        </div>
-        <div style={{ background: "#f9fafb", borderRadius: 8, padding: "8px 10px" }}>
-          <p style={{ fontSize: "0.625rem", color: "#9ca3af", fontWeight: 500, marginBottom: 2 }}>Total amount</p>
-          <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#111827" }}>
-            GHS {total.toLocaleString("en-GH")}
-          </p>
-        </div>
-      </div>
-
-      {/* Footer: submission date + CTA */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <p style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>
-          Submitted {fmtShort(req.submittedDate)}
+        {/* Group name */}
+        <p style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--gray-900)", lineHeight: 1.3, marginBottom: 2 }}>
+          {req.groupName}
         </p>
-        {req.stage === "rec_pending_review" && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onReview(); }}
-            style={{
-              height: 28, padding: "0 12px",
-              borderRadius: 6,
-              background: "#16a34a", color: "#fff",
-              border: "none", fontSize: "0.75rem", fontWeight: 600,
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#16a34a")}
-          >
-            Review
-          </button>
-        )}
+
+        {/* Community · farmers */}
+        <p style={{ fontSize: "0.75rem", color: "var(--gray-500)", marginBottom: 10 }}>
+          {req.community} · {req.farmersSupported} farmers
+        </p>
+
+        {/* Cash support pill */}
+        <div style={{ marginBottom: 12 }}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "3px 8px", borderRadius: 20,
+            background: "var(--green-50)", color: "var(--green-600)",
+            fontSize: "0.6875rem", fontWeight: 600,
+          }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            Cash support
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: "1px solid var(--gray-100)", marginBottom: 12 }} />
+
+        {/* Agent row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                background: agentColor, color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.625rem", fontWeight: 700,
+              }}
+            >
+              {agentInitials}
+            </span>
+            <span style={{ maxWidth: 130, fontSize: "0.75rem", fontWeight: 500, color: "var(--gray-600)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {agentDisplay}
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.6875rem", fontWeight: 500, color: "var(--gray-500)" }}>
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M5 1v2M9 1v2M1 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+            {fmtShort(req.submittedDate)}
+          </div>
+        </div>
+
+        {/* Monospace ref ID */}
+        <p style={{ fontFamily: "monospace", fontSize: "0.6875rem", color: "var(--gray-400)", marginBottom: 12 }}>
+          {refCode}
+        </p>
+
+        {/* Full-width Review CTA */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onReview(); }}
+          style={{
+            width: "100%", height: 36, borderRadius: 8,
+            border: "none", background: "var(--green-600)",
+            color: "#fff", fontSize: "0.875rem", fontWeight: 600,
+            cursor: "pointer", transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-700, #15803d)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-600)")}
+        >
+          Review
+        </button>
       </div>
     </div>
   );
@@ -227,218 +218,238 @@ function RecoveryApprovalModal({
   const [unitPriceStr, setUnitPriceStr] = useState("0.00");
   const [confirmed,    setConfirmed]    = useState(false);
 
-  const unitPrice      = parseFloat(unitPriceStr) || 0;
-  const hasValidPrice  = unitPrice > 0;
-  const canApprove     = confirmed && hasValidPrice;
-  const totalAmount    = req.farmersSupported * req.amountPerFarmer;
-  const expectedQty    = hasValidPrice ? req.amountPerFarmer / unitPrice : null;
-  const recoveryValue  = req.amountPerFarmer * (1 + DEFAULT_PENALTY);
+  const unitPrice     = parseFloat(unitPriceStr) || 0;
+  const hasValidPrice = unitPrice > 0;
+  const canApprove    = confirmed && hasValidPrice;
+  const totalAmount   = req.farmersSupported * req.amountPerFarmer;
+  const expectedQty   = hasValidPrice ? req.amountPerFarmer / unitPrice : null;
+  const recoveryValue = req.amountPerFarmer * (1 + DEFAULT_PENALTY);
+
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
 
   return (
     <div
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(0,0,0,0.45)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "16px",
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        style={{
-          background: "#fff", borderRadius: 16,
-          padding: 28, width: "100%", maxWidth: 480,
-          maxHeight: "90vh", overflowY: "auto",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-        }}
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827", margin: 0 }}>
-            Recovery request
-          </h2>
-          <button
-            onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: 8, border: "none",
-              background: "transparent", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Group identity */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: "50%", flexShrink: 0,
-            background: "#e8f7f1",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
-              <circle cx="9"  cy="6" r="4" stroke="#16a34a" strokeWidth="1.6"/>
-              <circle cx="18" cy="6" r="3" stroke="#16a34a" strokeWidth="1.6"/>
-              <path d="M1 21c0-4.418 3.582-7 8-7h1c4.418 0 8 2.582 8 7"
-                stroke="#16a34a" strokeWidth="1.6" strokeLinecap="round"/>
-              <path d="M21 14c3 0 4.5 1.5 4.5 4"
-                stroke="#16a34a" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: "1.0625rem", fontWeight: 700, color: "#111827", marginBottom: 3 }}>
-              {req.groupName}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h2 className="text-[17px] font-bold text-gray-900">Recovery request</h2>
+            <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+              Review the group details and set the unit price for recovery
             </p>
-            <p style={{ fontSize: "0.875rem", color: "#6b7280" }}>Cash support</p>
           </div>
-          <span style={{
-            padding: "4px 12px", borderRadius: 20, flexShrink: 0,
-            background: "#fef3c7", color: "#d97706",
-            fontSize: "0.8125rem", fontWeight: 600,
-          }}>
-            Pending
-          </span>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 20 }}>
-          {[
-            { label: "Farmers supported", value: String(req.farmersSupported) },
-            { label: "Amount per farmer",  value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
-            { label: "Total amount",       value: `GHS ${totalAmount.toLocaleString("en-GH", { minimumFractionDigits: 2 })}` },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p style={{ fontSize: "0.6875rem", color: "#9ca3af", marginBottom: 5 }}>{label}</p>
-              <p style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>{value}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Important notice */}
-        <div style={{
-          background: "#fffbeb", border: "1px solid #fde68a",
-          borderRadius: 10, padding: "14px 16px", marginBottom: 20,
-        }}>
-          <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827", marginBottom: 6 }}>Important:</p>
-          <p style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 10 }}>
-            Before you approve this request, please take a moment to review these key details:
-          </p>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
-              <strong>Interest Rate:</strong> {INTEREST_RATE * 100}% per month
-            </li>
-            <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: hasValidPrice ? 4 : 0 }}>
-              <strong>Default Penalty:</strong> {DEFAULT_PENALTY * 100}% on cash
-            </li>
-            {hasValidPrice && expectedQty !== null && (
-              <>
-                <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
-                  <strong>Expected Quantity per Farmer:</strong> {expectedQty.toFixed(2)} kg (based on the unit price)
-                </li>
-                <li style={{ fontSize: "0.875rem", color: "#374151" }}>
-                  <strong>Total Cash Recovery Value per Farmer</strong> (including penalty): GHS {Math.round(recoveryValue)}
-                </li>
-              </>
-            )}
-          </ul>
-        </div>
-
-        {/* Unit price input */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: 8 }}>
-            Unit price (GHS per kg)
-          </label>
-          <div style={{
-            display: "flex", height: 48,
-            border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden",
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center",
-              paddingLeft: 14, paddingRight: 14,
-              borderRight: "1px solid #e5e7eb", background: "#f9fafb",
-              fontSize: "0.875rem", fontWeight: 500, color: "#6b7280",
-              flexShrink: 0,
-            }}>
-              GHS
-            </div>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={unitPriceStr}
-              onChange={(e) => setUnitPriceStr(e.target.value)}
-              style={{
-                flex: 1, paddingLeft: 14, paddingRight: 14,
-                border: "none", outline: "none",
-                fontSize: "0.9375rem", color: "#111827", background: "transparent",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Confirmation checkbox */}
-        <label
-          style={{
-            display: "flex", alignItems: "flex-start", gap: 10,
-            cursor: "pointer", marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 2,
-              border: `2px solid ${confirmed ? "#16a34a" : "#d1d5db"}`,
-              background: confirmed ? "#16a34a" : "transparent",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "background 0.12s, border-color 0.12s",
-            }}
-            onClick={() => setConfirmed((v) => !v)}
-          >
-            {confirmed && (
-              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </div>
-          <span style={{ fontSize: "0.875rem", color: "#374151", lineHeight: 1.5, userSelect: "none" }}>
-            I have reviewed the details of this request and confirm my decision to proceed with approval.
-          </span>
-        </label>
-
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={onClose}
-            style={{
-              flex: 1, height: 48, borderRadius: 10,
-              border: "1.5px solid #16a34a", background: "transparent",
-              color: "#16a34a", fontSize: "0.9375rem", fontWeight: 600, cursor: "pointer",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0fdf4")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
           >
-            Cancel
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
           </button>
-          <button
-            onClick={() => { if (canApprove) onApprove(req.id, unitPrice); }}
-            disabled={!canApprove}
-            style={{
-              flex: 2, height: 48, borderRadius: 10,
-              border: "none",
-              background: canApprove ? "#16a34a" : "#e5e7eb",
-              color: canApprove ? "#fff" : "#9ca3af",
-              fontSize: "0.9375rem", fontWeight: 600,
-              cursor: canApprove ? "pointer" : "not-allowed",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => { if (canApprove) e.currentTarget.style.background = "#15803d"; }}
-            onMouseLeave={(e) => { if (canApprove) e.currentTarget.style.background = "#16a34a"; }}
+        </div>
+
+        {/* Body: two columns */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile context strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+              <p className="text-[11px] text-gray-500">{req.community} · {req.farmersSupported} farmers</p>
+            </div>
+            <span
+              className="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
+              style={{ background: "var(--green-50)", color: "var(--green-600)" }}
+            >
+              Cash support
+            </span>
+          </div>
+
+          {/* Left panel — group context */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
           >
-            Approve
-          </button>
+            {/* GROUP */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            {/* Stats tiles */}
+            <div className="flex gap-3">
+              <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Per farmer</p>
+                <p className="text-[15px] font-bold text-gray-900">GHS {req.amountPerFarmer}</p>
+              </div>
+            </div>
+
+            {/* DISBURSEMENT */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* FIELD AGENT */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                  style={{ background: agentColor }}
+                >
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right panel — action area */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Important notice */}
+              <div style={{
+                background: "#fffbeb", border: "1px solid #fde68a",
+                borderRadius: 12, padding: "14px 16px",
+              }}>
+                <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827", marginBottom: 6 }}>Important:</p>
+                <p style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 10 }}>
+                  Before you approve this request, please take a moment to review these key details:
+                </p>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
+                    <strong>Interest Rate:</strong> {INTEREST_RATE * 100}% per month
+                  </li>
+                  <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: hasValidPrice ? 4 : 0 }}>
+                    <strong>Default Penalty:</strong> {DEFAULT_PENALTY * 100}% on cash
+                  </li>
+                  {hasValidPrice && expectedQty !== null && (
+                    <>
+                      <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
+                        <strong>Expected Quantity per Farmer:</strong> {expectedQty.toFixed(2)} kg (based on the unit price)
+                      </li>
+                      <li style={{ fontSize: "0.875rem", color: "#374151" }}>
+                        <strong>Total Cash Recovery Value per Farmer</strong> (including penalty): GHS {Math.round(recoveryValue)}
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              {/* Unit price input */}
+              <div>
+                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: 8 }}>
+                  Unit price (GHS per kg)
+                </label>
+                <div style={{
+                  display: "flex", height: 48,
+                  border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden",
+                }}>
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    paddingLeft: 14, paddingRight: 14,
+                    borderRight: "1px solid #e5e7eb", background: "#f9fafb",
+                    fontSize: "0.875rem", fontWeight: 500, color: "#6b7280",
+                    flexShrink: 0,
+                  }}>
+                    GHS
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={unitPriceStr}
+                    onChange={(e) => setUnitPriceStr(e.target.value)}
+                    style={{
+                      flex: 1, paddingLeft: 14, paddingRight: 14,
+                      border: "none", outline: "none",
+                      fontSize: "0.9375rem", color: "#111827", background: "transparent",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Confirmation checkbox */}
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <div
+                  style={{
+                    width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 2,
+                    border: `2px solid ${confirmed ? "#16a34a" : "#d1d5db"}`,
+                    background: confirmed ? "#16a34a" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.12s, border-color 0.12s",
+                  }}
+                  onClick={() => setConfirmed((v) => !v)}
+                >
+                  {confirmed && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+                <span style={{ fontSize: "0.875rem", color: "#374151", lineHeight: 1.5, userSelect: "none" }}>
+                  I have reviewed the details of this request and confirm my decision to proceed with approval.
+                </span>
+              </label>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-2">
+              <button
+                onClick={onClose}
+                className="h-9 px-5 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!canApprove}
+                onClick={() => { if (canApprove) onApprove(req.id, unitPrice); }}
+                className="h-9 px-6 rounded-lg text-[13px] font-bold transition-colors"
+                style={{
+                  background: canApprove ? "#16a34a" : "#e5e7eb",
+                  color:      canApprove ? "#fff"    : "#9ca3af",
+                  cursor:     canApprove ? "pointer" : "not-allowed",
+                }}
+                onMouseEnter={(e) => { if (canApprove) e.currentTarget.style.background = "#15803d"; }}
+                onMouseLeave={(e) => { if (canApprove) e.currentTarget.style.background = canApprove ? "#16a34a" : "#e5e7eb"; }}
+              >
+                Approve
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
