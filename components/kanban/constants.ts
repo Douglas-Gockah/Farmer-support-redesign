@@ -24,6 +24,7 @@ export const FULFILLMENT_COLUMNS: GenericColDef[] = [
 // Flow 3 — Recoveries
 export const RECOVERIES_COLUMNS: GenericColDef[] = [
   { id: "rec_pending_review",   label: "Pending Review",      dotColor: "#6B7280" },
+  { id: "rec_finance_review",   label: "Finance Review",      dotColor: "#2563EB" },
   { id: "rec_approved",         label: "Approved",            dotColor: "#16A34A" },
   { id: "rec_rejected",         label: "Rejected",            dotColor: "#DC2626" },
   { id: "rec_pending_recovery", label: "Pending Recovery",    dotColor: "#7C3AED" },
