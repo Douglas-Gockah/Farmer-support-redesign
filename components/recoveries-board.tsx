@@ -39,6 +39,8 @@ interface RecoveryRequest {
   transactionId:    string;
   actionHistory?:   ActionRecord[];
   farmersList?:     Array<{ id: string; name: string }>;
+  bagWeightKg?:     number;
+  wantsDouble?:     boolean;
 }
 
 // ─── Mock recovery requests ───────────────────────────────────────────────────
@@ -48,7 +50,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
   {
     id: "REC-001", groupName: "Kumbungu Crop Growers",
     community: "Tamale", region: "Northern", district: "Tamale Metro",
-    agent: "Kofi Mensah", farmersSupported: 21, amountPerFarmer: 400,
+    agent: "Kofi Mensah", farmersSupported: 21, amountPerFarmer: 400, bagWeightKg: 100,
     submittedDate: new Date(2025, 11, 15), stage: "rec_pending_review",
     disbursedDate: "15 Aug 2025", transactionId: "TXN-FS-2024-016",
     actionHistory: [
@@ -76,7 +78,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
   {
     id: "REC-002", groupName: "Jirapa Fields Cooperative",
     community: "Wa", region: "Upper West", district: "Wa East",
-    agent: "Ama Owusu", farmersSupported: 20, amountPerFarmer: 400,
+    agent: "Ama Owusu", farmersSupported: 20, amountPerFarmer: 400, bagWeightKg: 100,
     submittedDate: new Date(2025, 11, 12), stage: "rec_pending_review",
     disbursedDate: "10 Aug 2025", transactionId: "TXN-FS-2024-022",
     actionHistory: [
@@ -103,7 +105,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
   {
     id: "REC-003", groupName: "Bole Agri Cooperative",
     community: "Bole", region: "Savannah", district: "Bole",
-    agent: "Kwame Asante", farmersSupported: 14, amountPerFarmer: 600,
+    agent: "Kwame Asante", farmersSupported: 14, amountPerFarmer: 600, bagWeightKg: 100, wantsDouble: true,
     submittedDate: new Date(2025, 11, 10), stage: "rec_pending_review",
     disbursedDate: "5 Sep 2025", transactionId: "TXN-FS-2024-014",
     actionHistory: [
@@ -127,7 +129,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
   {
     id: "REC-004", groupName: "Tolon Cooperative Society",
     community: "Tamale", region: "Northern", district: "Tamale Metro",
-    agent: "Akosua Boateng", farmersSupported: 28, amountPerFarmer: 500,
+    agent: "Akosua Boateng", farmersSupported: 28, amountPerFarmer: 500, bagWeightKg: 100,
     submittedDate: new Date(2025, 11, 8), stage: "rec_pending_review",
     disbursedDate: "12 Sep 2025", transactionId: "TXN-FS-2024-015",
     actionHistory: [
@@ -370,12 +372,16 @@ function RecoveryApprovalModal({
   const [unitPriceStr, setUnitPriceStr] = useState("0.00");
   const [confirmed,    setConfirmed]    = useState(false);
 
-  const unitPrice     = parseFloat(unitPriceStr) || 0;
-  const hasValidPrice = unitPrice > 0;
-  const canApprove    = confirmed && hasValidPrice;
-  const totalAmount   = req.farmersSupported * req.amountPerFarmer;
-  const expectedQty   = hasValidPrice ? req.amountPerFarmer / unitPrice : null;
-  const recoveryValue = req.amountPerFarmer * (1 + DEFAULT_PENALTY);
+  const unitPrice       = parseFloat(unitPriceStr) || 0;
+  const hasValidPrice   = unitPrice > 0;
+  const canApprove      = confirmed && hasValidPrice;
+  const totalAmount     = req.farmersSupported * req.amountPerFarmer;
+  const bagWeightKg     = req.bagWeightKg ?? 100;
+  const wantsDouble     = req.wantsDouble ?? false;
+  const bagsExpected    = wantsDouble ? 2 : 1;
+  const bagValue        = hasValidPrice ? unitPrice * bagWeightKg : null;
+  const totalBagValue   = hasValidPrice ? bagValue! * bagsExpected : null;
+  const recoveryValue   = req.amountPerFarmer * (1 + DEFAULT_PENALTY);
 
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
@@ -445,12 +451,12 @@ function RecoveryApprovalModal({
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
               <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing Amount</p>
-                <p className="text-[15px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
               </div>
               <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
                 <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[15px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
               </div>
             </div>
 
@@ -523,19 +529,9 @@ function RecoveryApprovalModal({
                   <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
                     <strong>Interest Rate:</strong> {INTEREST_RATE * 100}% per month
                   </li>
-                  <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: hasValidPrice ? 4 : 0 }}>
+                  <li style={{ fontSize: "0.875rem", color: "#374151" }}>
                     <strong>Default Penalty:</strong> {DEFAULT_PENALTY * 100}% on cash
                   </li>
-                  {hasValidPrice && expectedQty !== null && (
-                    <>
-                      <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
-                        <strong>Expected Quantity per Farmer:</strong> {expectedQty.toFixed(2)} kg (based on the unit price)
-                      </li>
-                      <li style={{ fontSize: "0.875rem", color: "#374151" }}>
-                        <strong>Total Cash Recovery Value per Farmer</strong> (including penalty): GHS {Math.round(recoveryValue)}
-                      </li>
-                    </>
-                  )}
                 </ul>
               </div>
 
@@ -571,6 +567,53 @@ function RecoveryApprovalModal({
                   />
                 </div>
               </div>
+
+              {/* Bag recovery calculation */}
+              {hasValidPrice && bagValue !== null && totalBagValue !== null && (
+                <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                  {/* Card header */}
+                  <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                    <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                      Bag Recovery Calculation
+                    </p>
+                  </div>
+                  {/* Rows */}
+                  <div style={{ padding: "4px 0" }}>
+                    {/* Expected bag weight */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Expected bag weight</span>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>{bagWeightKg} kg / bag</span>
+                    </div>
+                    {/* Value of one bag */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+                        Value of 1 bag&nbsp;
+                        <span style={{ color: "#9ca3af" }}>({bagWeightKg} kg × GHS {unitPrice.toFixed(2)})</span>
+                      </span>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>
+                        GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    {/* Bags expected — always show, highlight double */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                      <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                        {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
+                        {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                      </span>
+                    </div>
+                    {/* Total recovery per farmer */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>
+                        Total recovery per farmer
+                      </span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                        GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Confirmation checkbox */}
               <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
