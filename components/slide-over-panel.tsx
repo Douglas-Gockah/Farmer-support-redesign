@@ -231,9 +231,7 @@ export default function SlideOverPanel({
 
           {/* Action timeline */}
           {(card.actionHistory ?? []).length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <ActionTimeline records={card.actionHistory ?? []} />
-            </div>
+            <ActionTimeline records={card.actionHistory ?? []} accordion />
           )}
         </div>
 

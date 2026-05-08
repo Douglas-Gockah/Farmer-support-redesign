@@ -48,6 +48,14 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     groupName: "Nkoranza Double Yield Group", score: 72, stage: "pending_approval", farmers: 18,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
     wantsDouble: true,
+    farmersList: [
+      { id: "FRM-013-01", name: "Kwabena Poku" }, { id: "FRM-013-02", name: "Adwoa Ntim" },
+      { id: "FRM-013-03", name: "Yaw Antwi" }, { id: "FRM-013-04", name: "Akua Fosu" },
+      { id: "FRM-013-05", name: "Kofi Acheampong" }, { id: "FRM-013-06", name: "Ama Darko" },
+      { id: "FRM-013-07", name: "Kweku Frimpong" }, { id: "FRM-013-08", name: "Abena Amoah" },
+      { id: "FRM-013-09", name: "Opoku Mensah" }, { id: "FRM-013-10", name: "Efua Osei" },
+      { id: "FRM-013-11", name: "Kwame Nkrumah" }, { id: "FRM-013-12", name: "Akosua Boateng" },
+    ],
     supportInterests: [
       { rank: "Primary", type: "Cash", amountPerFarmer: 120, momoNumber: "0244-321-654", momoName: "Nkoranza DY Group" },
     ],
@@ -59,6 +67,13 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     id: "FS-2024-003", date: "18 Jan 2024", agent: "Yaw Darko", community: "Bole",
     groupName: "Bole Farmers Alliance", score: 62, stage: "pending_approval", farmers: 14,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: null,
+    farmersList: [
+      { id: "FRM-003-01", name: "Alhassan Sulemana" }, { id: "FRM-003-02", name: "Fati Mahama" },
+      { id: "FRM-003-03", name: "Issaka Yakubu" }, { id: "FRM-003-04", name: "Ramatu Fuseini" },
+      { id: "FRM-003-05", name: "Seidu Abdulai" }, { id: "FRM-003-06", name: "Zenabu Ibrahim" },
+      { id: "FRM-003-07", name: "Mustapha Salifu" }, { id: "FRM-003-08", name: "Hawa Iddrisu" },
+      { id: "FRM-003-09", name: "Abubakari Tahiru" }, { id: "FRM-003-10", name: "Mariama Amadu" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 150, momoNumber: "0551-234-567", momoName: "Bole Alliance" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.0 },
@@ -71,6 +86,14 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     id: "FS-2024-004", date: "20 Jan 2024", agent: "Abena Asante", community: "Wa East",
     groupName: "Wa East Crop Circle", score: 78, stage: "pending_approval", farmers: 31,
     onHold: true, holdComment: "MoMo account details need verification from field.", rejectionComment: "", approvedSupportType: null,
+    farmersList: [
+      { id: "FRM-004-01", name: "Nandom Kugri" }, { id: "FRM-004-02", name: "Puo Porekuu" },
+      { id: "FRM-004-03", name: "Dery Bonyuuri" }, { id: "FRM-004-04", name: "Hawa Nabilgmaa" },
+      { id: "FRM-004-05", name: "Doumbia Salia" }, { id: "FRM-004-06", name: "Theresa Naabuor" },
+      { id: "FRM-004-07", name: "Joseph Puo" }, { id: "FRM-004-08", name: "Agnes Ziem" },
+      { id: "FRM-004-09", name: "Patrick Demwir" }, { id: "FRM-004-10", name: "Comfort Dery" },
+      { id: "FRM-004-11", name: "Cletus Naabuor" }, { id: "FRM-004-12", name: "Bernadette Kugri" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 3.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 200, momoNumber: "0244-987-654", momoName: "WE Crop Circle" },
@@ -98,6 +121,14 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     groupName: "Kalba Green Initiative", score: 84, stage: "agent_confirmation", farmers: 27,
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
     approvedAmountPerFarmer: 120,
+    farmersList: [
+      { id: "FRM-006-01", name: "Sandow Kuupuo" }, { id: "FRM-006-02", name: "Yelzoya Bayuo" },
+      { id: "FRM-006-03", name: "Kolbila Iddrisu" }, { id: "FRM-006-04", name: "Yirsob Sugri" },
+      { id: "FRM-006-05", name: "Poyola Daari" }, { id: "FRM-006-06", name: "Azumah Wumbei" },
+      { id: "FRM-006-07", name: "Nwanaba Dole" }, { id: "FRM-006-08", name: "Farimah Yidana" },
+      { id: "FRM-006-09", name: "Tunimi Baba" }, { id: "FRM-006-10", name: "Akuree Yelzoya" },
+      { id: "FRM-006-11", name: "Kpandoo Suglo" }, { id: "FRM-006-12", name: "Ziem Kolbila" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 120, momoNumber: "0244-111-222", momoName: "Kalba Green" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.5 },
@@ -113,6 +144,13 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Ploughing",
     approvedLandSizePerFarmer: 2.0,
     momoNumber: "0551-777-888", momoName: "Bole Collective",
+    farmersList: [
+      { id: "FRM-007-01", name: "Alhassan Bawah" }, { id: "FRM-007-02", name: "Memunatu Tia" },
+      { id: "FRM-007-03", name: "Salifu Mahama" }, { id: "FRM-007-04", name: "Zuwera Seidu" },
+      { id: "FRM-007-05", name: "Yakubu Anafo" }, { id: "FRM-007-06", name: "Hawa Iddrisu" },
+      { id: "FRM-007-07", name: "Fuseini Adam" }, { id: "FRM-007-08", name: "Ramatu Abubakari" },
+      { id: "FRM-007-09", name: "Issaka Laari" }, { id: "FRM-007-10", name: "Fatima Tahiru" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Ploughing", landSizePerFarmer: 2.0 },
       { rank: "Secondary", type: "Cash",      amountPerFarmer: 180, momoNumber: "0551-777-888", momoName: "Bole Collective" },
@@ -129,6 +167,14 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     onHold: false, holdComment: "", rejectionComment: "", approvedSupportType: "Cash",
     approvedAmountPerFarmer: 150,
     momoNumber: "0244-333-444", momoName: "Tamale Pioneer",
+    farmersList: [
+      { id: "FRM-009-01", name: "Dawuni Alhassan" }, { id: "FRM-009-02", name: "Sadia Mahama" },
+      { id: "FRM-009-03", name: "Musah Seidu" }, { id: "FRM-009-04", name: "Rafia Fuseini" },
+      { id: "FRM-009-05", name: "Abdulai Yahaya" }, { id: "FRM-009-06", name: "Kubura Dramani" },
+      { id: "FRM-009-07", name: "Zakari Iddrisu" }, { id: "FRM-009-08", name: "Fauzia Sulemana" },
+      { id: "FRM-009-09", name: "Amadu Baba" }, { id: "FRM-009-10", name: "Hawa Yakubu" },
+      { id: "FRM-009-11", name: "Ibrahim Salifu" }, { id: "FRM-009-12", name: "Zenabu Adam" },
+    ],
     supportInterests: [
       { rank: "Primary",   type: "Cash",      amountPerFarmer: 150, momoNumber: "0244-333-444", momoName: "Tamale Pioneer" },
       { rank: "Secondary", type: "Ploughing", landSizePerFarmer: 1.2 },
@@ -221,6 +267,14 @@ export const MOCK_REQUESTS: FarmerRequest[] = [
     approvedAmountPerFarmer: 140,
     momoNumber: "0551-999-000", momoName: "Sissala Grain Growers",
     simulateMomoNotRegistered: true,
+    farmersList: [
+      { id: "FRM-030-01", name: "Chirii Kuupuo" }, { id: "FRM-030-02", name: "Bonyiri Sandow" },
+      { id: "FRM-030-03", name: "Puobe Sugri" }, { id: "FRM-030-04", name: "Yelpoe Dery" },
+      { id: "FRM-030-05", name: "Naawuni Puo" }, { id: "FRM-030-06", name: "Tiimah Nabilgmaa" },
+      { id: "FRM-030-07", name: "Gbaguri Ziem" }, { id: "FRM-030-08", name: "Awumbie Kolbila" },
+      { id: "FRM-030-09", name: "Dazuoh Yirsob" }, { id: "FRM-030-10", name: "Pelaa Daari" },
+      { id: "FRM-030-11", name: "Nooru Wumbei" }, { id: "FRM-030-12", name: "Saaka Azumah" },
+    ],
     supportInterests: [
       { rank: "Primary", type: "Cash", amountPerFarmer: 140, momoNumber: "0551-999-000", momoName: "Sissala Grain Growers" },
     ],

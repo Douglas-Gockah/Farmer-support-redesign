@@ -212,6 +212,7 @@ function RecordDetailModal({ record, onClose }: { record: FarmerRequest; onClose
             <ActionTimeline
               records={record.actionHistory ?? []}
               title="Full Action History"
+              accordion
             />
 
           </div>
