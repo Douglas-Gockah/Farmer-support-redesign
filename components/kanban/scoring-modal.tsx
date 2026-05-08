@@ -251,26 +251,6 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
         </div>
       </div>
 
-      {/* Group score */}
-      {card.groupScore != null && <GroupScoreWidget score={card.groupScore} />}
-
-      {/* Agent */}
-      <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
-        <div className="flex items-center gap-2.5">
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-            style={{ background: agentColor }}
-          >
-            {agentInitials}
-          </span>
-          <div>
-            <p className="text-[13px] font-semibold text-gray-800">{card.agent}</p>
-            <p className="text-[11px] text-gray-400">{card.id}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Interested farmers list — accordion */}
       {card.farmersList && card.farmersList.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-100)" }}>
@@ -300,7 +280,7 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
             </svg>
           </button>
           {farmersOpen && (
-            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px" }}>
+            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px", maxHeight: 220, overflowY: "auto" }}>
               <div className="space-y-2">
                 {card.farmersList.map((farmer) => {
                   const farmerInitials = initials(farmer.name);
@@ -325,6 +305,26 @@ function GroupSummaryPanel({ card }: { card: FarmerRequest }) {
           )}
         </div>
       )}
+
+      {/* Group score */}
+      {card.groupScore != null && <GroupScoreWidget score={card.groupScore} />}
+
+      {/* Agent */}
+      <div>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+        <div className="flex items-center gap-2.5">
+          <span
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+            style={{ background: agentColor }}
+          >
+            {agentInitials}
+          </span>
+          <div>
+            <p className="text-[13px] font-semibold text-gray-800">{card.agent}</p>
+            <p className="text-[11px] text-gray-400">{card.id}</p>
+          </div>
+        </div>
+      </div>
 
       {/* On-hold notice */}
       {card.onHold && card.holdComment && (

@@ -153,7 +153,7 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest; }) {
             </svg>
           </button>
           {farmersOpen && (
-            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px" }}>
+            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px", maxHeight: 220, overflowY: "auto" }}>
               <div className="space-y-2">
                 {card.farmersList.map((farmer) => {
                   const farmerInitials = initials(farmer.name);
