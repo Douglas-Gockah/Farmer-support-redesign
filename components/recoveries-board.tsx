@@ -369,8 +369,9 @@ function RecoveryApprovalModal({
   onClose: () => void;
   onApprove: (id: string, unitPrice: number) => void;
 }) {
-  const [unitPriceStr, setUnitPriceStr] = useState("0.00");
-  const [confirmed,    setConfirmed]    = useState(false);
+  const [unitPriceStr,     setUnitPriceStr]     = useState("0.00");
+  const [purchasePriceStr, setPurchasePriceStr] = useState("0.00");
+  const [confirmed,        setConfirmed]        = useState(false);
 
   const unitPrice       = parseFloat(unitPriceStr) || 0;
   const hasValidPrice   = unitPrice > 0;
@@ -516,30 +517,51 @@ function RecoveryApprovalModal({
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-              {/* Important notice */}
-              <div style={{
-                background: "#fffbeb", border: "1px solid #fde68a",
-                borderRadius: 12, padding: "14px 16px",
-              }}>
-                <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827", marginBottom: 6 }}>Important:</p>
-                <p style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 10 }}>
-                  Before you approve this request, please take a moment to review these key details:
+              {/* Rate tiles */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Applicable rates
                 </p>
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
-                  <li style={{ fontSize: "0.875rem", color: "#374151", marginBottom: 4 }}>
-                    <strong>Interest Rate:</strong> {INTEREST_RATE * 100}% per month
-                  </li>
-                  <li style={{ fontSize: "0.875rem", color: "#374151" }}>
-                    <strong>Default Penalty:</strong> {DEFAULT_PENALTY * 100}% on cash
-                  </li>
-                </ul>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {/* Interest rate tile */}
+                  <div style={{ borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" stroke="#d97706" strokeWidth="1.5" />
+                          <path d="M8 5v4M8 11v.5" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interest rate</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#92400e", margin: 0, lineHeight: 1 }}>{INTEREST_RATE * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "4px 0 0", fontWeight: 500 }}>per month</p>
+                  </div>
+                  {/* Default penalty tile */}
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Default penalty</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#7f1d1d", margin: 0, lineHeight: 1 }}>{DEFAULT_PENALTY * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: "4px 0 0", fontWeight: 500 }}>on cash disbursed</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Unit price input */}
+              {/* Recovery unit price input */}
               <div>
-                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: 8 }}>
-                  Unit price (GHS per kg)
+                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, color: "#374151", marginBottom: 2 }}>
+                  Recovery unit price (GHS per kg)
                 </label>
+                <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: 8 }}>
+                  Price used to calculate the commodity value for bag recovery
+                </p>
                 <div style={{
                   display: "flex", height: 48,
                   border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden",
@@ -614,6 +636,60 @@ function RecoveryApprovalModal({
                   </div>
                 </div>
               )}
+
+              {/* Purchasing price input */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                    Extra Commodity Purchase Price
+                  </p>
+                </div>
+                <div style={{ padding: "14px 16px" }}>
+                  <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: 12, lineHeight: 1.5 }}>
+                    Set the price field agents should use when buying any <strong style={{ color: "#374151" }}>extra commodity</strong> from farmers who want to sell beyond the recovery quantity.
+                  </p>
+                  <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "#374151", marginBottom: 6 }}>
+                    Purchasing price (GHS per kg)
+                  </label>
+                  <div style={{
+                    display: "flex", height: 48,
+                    border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden",
+                  }}>
+                    <div style={{
+                      display: "flex", alignItems: "center",
+                      paddingLeft: 14, paddingRight: 14,
+                      borderRight: "1px solid #e5e7eb", background: "#f9fafb",
+                      fontSize: "0.875rem", fontWeight: 500, color: "#6b7280",
+                      flexShrink: 0,
+                    }}>
+                      GHS
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={purchasePriceStr}
+                      onChange={(e) => setPurchasePriceStr(e.target.value)}
+                      style={{
+                        flex: 1, paddingLeft: 14, paddingRight: 14,
+                        border: "none", outline: "none",
+                        fontSize: "0.9375rem", color: "#111827", background: "transparent",
+                      }}
+                    />
+                  </div>
+                  {parseFloat(purchasePriceStr) > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" fill="#dcfce7" />
+                        <path d="M5 8l2 2 4-4" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 500 }}>
+                        GHS {parseFloat(purchasePriceStr).toFixed(2)} / kg set for extra purchases
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Confirmation checkbox */}
               <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
