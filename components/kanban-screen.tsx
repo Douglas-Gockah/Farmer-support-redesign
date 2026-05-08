@@ -121,30 +121,20 @@ export default function KanbanScreen() {
               >
                 <button
                   onClick={() => setViewMode("pipeline")}
-                  className="flex items-center gap-1.5 h-7 px-3 rounded-md transition-all"
+                  className="flex items-center h-7 px-3 rounded-md transition-all"
                   style={viewMode === "pipeline"
                     ? { background: "#ffffff", color: "var(--gray-900)", fontSize: "0.75rem", fontWeight: 600, boxShadow: "0px 1px 3px rgba(16,24,40,0.08)" }
                     : { background: "transparent", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <rect x="1" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                    <rect x="6" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                    <rect x="11" y="1" width="4" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  </svg>
                   Pipeline
                 </button>
                 <button
                   onClick={() => setViewMode("records")}
-                  className="flex items-center gap-1.5 h-7 px-3 rounded-md transition-all"
+                  className="flex items-center h-7 px-3 rounded-md transition-all"
                   style={viewMode === "records"
                     ? { background: "#ffffff", color: "var(--gray-900)", fontSize: "0.75rem", fontWeight: 600, boxShadow: "0px 1px 3px rgba(16,24,40,0.08)" }
                     : { background: "transparent", color: "var(--gray-500)", fontSize: "0.75rem", fontWeight: 500 }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <rect x="1" y="1" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                    <rect x="1" y="6.25" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                    <rect x="1" y="11.5" width="14" height="3.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  </svg>
                   Records
                 </button>
               </div>

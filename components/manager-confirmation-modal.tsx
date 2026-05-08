@@ -62,20 +62,9 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Approved Support</p>
           <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--green-25)", border: "1.5px solid var(--green-200)" }}>
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold"
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold"
               style={isCash ? { background: "var(--green-100)", color: "var(--green-600)" } : { background: "#FFF7ED", color: "#C2410C" }}
             >
-              {isCash ? (
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              ) : (
-                <svg width="12" height="11" viewBox="0 0 16 14" fill="none">
-                  <rect x="1" y="7" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M3 7V5a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-              )}
               {card.approvedSupportType}
             </span>
             {isCash && card.approvedAmountPerFarmer != null && (
@@ -136,7 +125,7 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
       {/* Action timeline */}
       {(card.actionHistory ?? []).length > 0 && (
         <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16 }}>
-          <ActionTimeline records={card.actionHistory ?? []} />
+          <ActionTimeline records={card.actionHistory ?? []} accordion />
         </div>
       )}
     </div>
