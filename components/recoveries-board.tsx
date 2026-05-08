@@ -218,7 +218,7 @@ function RecoveryCard({
 
         {/* Community · farmers */}
         <p style={{ fontSize: "0.75rem", color: "var(--gray-500)", marginBottom: 10 }}>
-          {req.community} · {req.farmersSupported} farmers
+          {req.community} · {req.farmersSupported} farmers supported
         </p>
 
         {/* Cash support pill */}
@@ -439,23 +439,20 @@ function RecoveryApprovalModal({
             </div>
 
             {/* Stats tiles */}
-            <div className="flex gap-3">
-              <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Farmers</p>
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="flex-1 rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Per farmer</p>
-                <p className="text-[15px] font-bold text-gray-900">GHS {req.amountPerFarmer}</p>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing Amount</p>
+                <p className="text-[15px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[15px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
               </div>
             </div>
-
-            {/* FARMERS SUPPORTED */}
-            {req.farmersList && req.farmersList.length > 0 && (
-              <div>
-                <FarmerListAccordion farmers={req.farmersList} />
-              </div>
-            )}
 
             {/* DISBURSEMENT */}
             <div>
@@ -492,6 +489,13 @@ function RecoveryApprovalModal({
                 <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
               </div>
             </div>
+
+            {/* FARMERS SUPPORTED */}
+            {req.farmersList && req.farmersList.length > 0 && (
+              <div>
+                <FarmerListAccordion farmers={req.farmersList} />
+              </div>
+            )}
 
             {/* APPROVAL TIMELINE (accordion, collapsed by default) */}
             {req.actionHistory && req.actionHistory.length > 0 && (
@@ -764,8 +768,8 @@ function SetTimeframeModal({
 // ─── Recovery Timeframe Banner ────────────────────────────────────────────────
 
 function RecoveryBanner({
-  start, end, onEdit,
-}: { start: Date; end: Date; onEdit: () => void }) {
+  start, end,
+}: { start: Date; end: Date }) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const endDay = new Date(end); endDay.setHours(0, 0, 0, 0);
   const daysLeft = Math.ceil((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -790,7 +794,7 @@ function RecoveryBanner({
   return (
     <div
       className="flex items-center gap-3 shrink-0"
-      style={{ padding: "10px 20px", background: bgColor, borderBottom: `1px solid ${bdColor}` }}
+      style={{ padding: "14px 20px", background: bgColor, borderBottom: `1px solid ${bdColor}` }}
     >
       <span className="relative flex shrink-0" style={{ width: 10, height: 10 }}>
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full" style={{ background: dotColor, opacity: 0.5 }} />
@@ -810,24 +814,6 @@ function RecoveryBanner({
         </svg>
         Field agents notified
       </div>
-
-      <button
-        onClick={onEdit}
-        className="flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-        style={{
-          height: 30, padding: "0 12px", borderRadius: 8,
-          border: `1px solid ${btnBorder}`, background: "rgba(255,255,255,0.65)",
-          fontSize: "0.75rem", fontWeight: 600, color: btnColor, cursor: "pointer",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.95)")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.65)")}
-      >
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-          <path d="M8.5 1.5a1.414 1.414 0 012 2L3.75 10.25l-2.5.5.5-2.5L8.5 1.5z"
-            stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        Edit timeframe
-      </button>
     </div>
   );
 }
@@ -931,7 +917,6 @@ export default function RecoveriesBoard() {
         <RecoveryBanner
           start={timeframe.start}
           end={timeframe.end}
-          onEdit={() => setModalOpen(true)}
         />
       )}
 
