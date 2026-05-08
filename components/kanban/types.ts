@@ -128,4 +128,5 @@ export interface FulfillmentRequest {
   momoName: string;
   optedOutFarmers?: Array<{ id: string; name: string }>;
   documents?: FulfillmentDocument[];
+  actionHistory?: ActionRecord[];
 }

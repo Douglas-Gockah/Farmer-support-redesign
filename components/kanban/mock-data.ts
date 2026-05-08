@@ -463,6 +463,13 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
     fulfillmentStage: "pending_fulfillment",
     momoNumber: "0244-555-666",
     momoName: "Metro Food Security",
+    actionHistory: [
+      { id: "f008-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 88% to the group",                                                                    timestamp: "28 Jan 2024, 09:15" },
+      { id: "f008-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved Cash support for 34 farmers at GHS 120/farmer, totalling GHS 4,080",                             timestamp: "28 Jan 2024, 10:42" },
+      { id: "f008-3", stage: "agent_confirmation",   actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 34 farmers and submitted MoMo 0244-555-666 (Metro Food Security) for disbursement",            timestamp: "29 Jan 2024, 08:30" },
+      { id: "f008-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Disbursed funds",                 summary: "GHS 4,080 disbursed to Metro Food Security via MoMo · TXN-4F8A2B1C",                                                    timestamp: "30 Jan 2024, 11:00" },
+      { id: "f008-5", stage: "disbursed",            actor: "Akosua Frimpong", action: "Fulfilment initiated",           summary: "Akosua Frimpong initiated fulfilment — 34 farmers pending confirmation of receipt",                                      timestamp: "31 Jan 2024, 08:00" },
+    ],
     confirmedFarmers: [
       { id: "F001", name: "Ama Mensah",       received: false },
       { id: "F002", name: "Kofi Asante",      received: false },
@@ -513,6 +520,14 @@ export const MOCK_FULFILLMENT_REQUESTS: FulfillmentRequest[] = [
     fulfillmentStage: "pending_fulfillment",
     momoNumber: "0244-999-000",
     momoName: "WE Food Coalition",
+    actionHistory: [
+      { id: "f010-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 95% to the group",                                                                    timestamp: "25 Jan 2024, 14:05" },
+      { id: "f010-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Updated support amount",          summary: "Douglas Gockah updated the cash amount from GHS 150 to GHS 180 per farmer", reason: "Revised upward to match prevailing market rate for the season", timestamp: "26 Jan 2024, 09:20" },
+      { id: "f010-3", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved Cash support for 40 farmers at GHS 180/farmer, totalling GHS 7,200",                             timestamp: "26 Jan 2024, 09:35" },
+      { id: "f010-4", stage: "agent_confirmation",   actor: "Douglas Gockah", action: "Confirmed participating farmers", summary: "Douglas Gockah confirmed 40 farmers and submitted MoMo 0244-999-000 (WE Food Coalition) for disbursement",              timestamp: "27 Jan 2024, 10:00" },
+      { id: "f010-5", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Disbursed funds",                 summary: "GHS 7,200 disbursed to WE Food Coalition via MoMo · TXN-7C3D9E2A",                                                    timestamp: "28 Jan 2024, 13:22" },
+      { id: "f010-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Fulfilment initiated",            summary: "Ama Owusu initiated fulfilment — 40 farmers pending confirmation of receipt",                                          timestamp: "29 Jan 2024, 07:45" },
+    ],
     confirmedFarmers: [
       { id: "G001", name: "Issaka Mahama",      received: false },
       { id: "G002", name: "Ramatu Abubakari",   received: false },
