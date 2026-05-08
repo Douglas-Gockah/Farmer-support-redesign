@@ -18,6 +18,7 @@ const DEFAULT_PENALTY  = 0.15;  // 15% on cash
 
 type RecoveryStage =
   | "rec_pending_review"
+  | "rec_finance_review"
   | "rec_approved"
   | "rec_rejected"
   | "rec_pending_recovery"
@@ -185,9 +186,15 @@ function parseInputDate(s: string): Date {
 function RecoveryCard({
   req,
   onReview,
+  ctaLabel = "Review",
+  ctaColor = "var(--green-600)",
+  ctaHoverColor = "var(--green-700, #15803d)",
 }: {
   req: RecoveryRequest;
   onReview: () => void;
+  ctaLabel?: string;
+  ctaColor?: string;
+  ctaHoverColor?: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const agentColor    = avatarColor(req.agent);
@@ -269,19 +276,19 @@ function RecoveryCard({
           {refCode}
         </p>
 
-        {/* Full-width Review CTA */}
+        {/* Full-width CTA */}
         <button
           onClick={(e) => { e.stopPropagation(); onReview(); }}
           style={{
             width: "100%", height: 36, borderRadius: 8,
-            border: "none", background: "var(--green-600)",
+            border: "none", background: ctaColor,
             color: "#fff", fontSize: "0.875rem", fontWeight: 600,
             cursor: "pointer", transition: "background 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-700, #15803d)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-600)")}
+          onMouseEnter={(e) => (e.currentTarget.style.background = ctaHoverColor)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = ctaColor)}
         >
-          Review
+          {ctaLabel}
         </button>
       </div>
     </div>
@@ -367,7 +374,7 @@ function RecoveryApprovalModal({
 }: {
   req: RecoveryRequest;
   onClose: () => void;
-  onApprove: (id: string, unitPrice: number) => void;
+  onApprove: (id: string, unitPrice: number, purchasePrice: number) => void;
 }) {
   const [unitPriceStr,     setUnitPriceStr]     = useState("0.00");
   const [purchasePriceStr, setPurchasePriceStr] = useState("0.00");
@@ -725,7 +732,7 @@ function RecoveryApprovalModal({
               </button>
               <button
                 disabled={!canApprove}
-                onClick={() => { if (canApprove) onApprove(req.id, unitPrice); }}
+                onClick={() => { if (canApprove) onApprove(req.id, unitPrice, parseFloat(purchasePriceStr) || 0); }}
                 className="h-9 px-6 rounded-lg text-[13px] font-bold transition-colors"
                 style={{
                   background: canApprove ? "#16a34a" : "#e5e7eb",
@@ -736,6 +743,722 @@ function RecoveryApprovalModal({
                 onMouseLeave={(e) => { if (canApprove) e.currentTarget.style.background = canApprove ? "#16a34a" : "#e5e7eb"; }}
               >
                 Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Finance Review Modal ─────────────────────────────────────────────────────
+
+function FinanceReviewModal({
+  req,
+  approvedUnitPrice,
+  approvedPurchasePrice,
+  onClose,
+  onActivate,
+}: {
+  req: RecoveryRequest;
+  approvedUnitPrice: number;
+  approvedPurchasePrice: number;
+  onClose: () => void;
+  onActivate: (id: string, finalPurchasePrice: number, comment: string) => void;
+}) {
+  const [purchasePriceStr, setPurchasePriceStr] = useState(
+    approvedPurchasePrice > 0 ? approvedPurchasePrice.toFixed(2) : "0.00"
+  );
+  const [comment, setComment] = useState("");
+
+  const finalPurchasePrice = parseFloat(purchasePriceStr) || 0;
+  const priceChanged       = Math.abs(finalPurchasePrice - approvedPurchasePrice) > 0.001;
+  const canActivate        = !priceChanged || comment.trim().length > 0;
+
+  const totalAmount  = req.farmersSupported * req.amountPerFarmer;
+  const bagWeightKg  = req.bagWeightKg ?? 100;
+  const wantsDouble  = req.wantsDouble ?? false;
+  const bagsExpected = wantsDouble ? 2 : 1;
+  const bagValue     = approvedUnitPrice * bagWeightKg;
+  const totalBagValue = bagValue * bagsExpected;
+
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M2 8h8M2 12h5" stroke="#2563eb" strokeWidth="1.6" strokeLinecap="round" />
+                <circle cx="13" cy="11" r="2.5" stroke="#2563eb" strokeWidth="1.4" />
+                <path d="M13 9.8V11l.8.8" stroke="#2563eb" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-gray-900">Finance review</h2>
+              <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+                Review and verify the recovery parameters before activation
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body: two columns */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+              <p className="text-[11px] text-gray-500">{req.community} · {req.farmersSupported} farmers</p>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--green-50)", color: "var(--green-600)" }}>
+              Cash support
+            </span>
+          </div>
+
+          {/* Left panel — read-only context */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
+          >
+            {/* Group */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            {/* Stats tiles */}
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+              </div>
+            </div>
+
+            {/* Disbursement */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Field Agent */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                  style={{ background: agentColor }}
+                >
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+
+            {/* Farmers accordion */}
+            {req.farmersList && req.farmersList.length > 0 && (
+              <div>
+                <FarmerListAccordion farmers={req.farmersList} />
+              </div>
+            )}
+
+            {/* Action timeline */}
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
+          </div>
+
+          {/* Right panel — finance review actions */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Applicable rates (read-only) */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Applicable rates
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" stroke="#d97706" strokeWidth="1.5" />
+                          <path d="M8 5v4M8 11v.5" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interest rate</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#92400e", margin: 0, lineHeight: 1 }}>{INTEREST_RATE * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "4px 0 0", fontWeight: 500 }}>per month</p>
+                  </div>
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Default penalty</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#7f1d1d", margin: 0, lineHeight: 1 }}>{DEFAULT_PENALTY * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: "4px 0 0", fontWeight: 500 }}>on cash disbursed</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recovery unit price — read-only */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                    Recovery Unit Price (set by manager)
+                  </p>
+                </div>
+                <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Price per kg</span>
+                  <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                    GHS {approvedUnitPrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/ kg</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Bag recovery calculation — read-only */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                    Bag Recovery Calculation
+                  </p>
+                </div>
+                <div style={{ padding: "4px 0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Expected bag weight</span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>{bagWeightKg} kg / bag</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+                      Value of 1 bag&nbsp;
+                      <span style={{ color: "#9ca3af" }}>({bagWeightKg} kg × GHS {approvedUnitPrice.toFixed(2)})</span>
+                    </span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>
+                      GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                      {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
+                      {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                      GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Extra commodity purchase price — editable */}
+              <div style={{ borderRadius: 12, border: priceChanged ? "1px solid #bfdbfe" : "1px solid #e5e7eb", overflow: "hidden", transition: "border-color 0.15s" }}>
+                <div style={{ padding: "10px 16px", background: priceChanged ? "#eff6ff" : "#f9fafb", borderBottom: priceChanged ? "1px solid #bfdbfe" : "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "background 0.15s" }}>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: priceChanged ? "#1d4ed8" : "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                    Extra Commodity Purchase Price
+                  </p>
+                  {priceChanged && (
+                    <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#dbeafe", padding: "2px 8px", borderRadius: 20 }}>
+                      Modified
+                    </span>
+                  )}
+                </div>
+                <div style={{ padding: "14px 16px" }}>
+                  <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: 4, lineHeight: 1.5 }}>
+                    Manager set: <strong style={{ color: "#374151" }}>
+                      {approvedPurchasePrice > 0 ? `GHS ${approvedPurchasePrice.toFixed(2)} / kg` : "Not set"}
+                    </strong>
+                  </p>
+                  <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: 12, lineHeight: 1.5 }}>
+                    Adjust if needed. Field agents will use this price when recording surplus purchases from farmers.
+                  </p>
+                  <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "#374151", marginBottom: 6 }}>
+                    Purchasing price (GHS per kg)
+                  </label>
+                  <div style={{ display: "flex", height: 48, border: `1.5px solid ${priceChanged ? "#93c5fd" : "#e5e7eb"}`, borderRadius: 10, overflow: "hidden", transition: "border-color 0.15s" }}>
+                    <div style={{ display: "flex", alignItems: "center", paddingLeft: 14, paddingRight: 14, borderRight: `1px solid ${priceChanged ? "#bfdbfe" : "#e5e7eb"}`, background: "#f9fafb", fontSize: "0.875rem", fontWeight: 500, color: "#6b7280", flexShrink: 0 }}>
+                      GHS
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={purchasePriceStr}
+                      onChange={(e) => { setPurchasePriceStr(e.target.value); if (comment) setComment(""); }}
+                      style={{ flex: 1, paddingLeft: 14, paddingRight: 14, border: "none", outline: "none", fontSize: "0.9375rem", color: "#111827", background: "transparent" }}
+                    />
+                  </div>
+
+                  {/* Comment required when price is changed */}
+                  {priceChanged && (
+                    <div style={{ marginTop: 14 }}>
+                      <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 600, color: "#1d4ed8", marginBottom: 6 }}>
+                        Reason for adjustment <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Explain why the purchase price was adjusted…"
+                        rows={3}
+                        style={{
+                          width: "100%", borderRadius: 10,
+                          border: comment.trim() ? "1.5px solid #93c5fd" : "1.5px solid #fca5a5",
+                          padding: "10px 12px",
+                          fontSize: "0.875rem", color: "#374151",
+                          outline: "none", resize: "vertical", boxSizing: "border-box",
+                          lineHeight: 1.5,
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = "#3b82f6")}
+                        onBlur={(e)  => (e.currentTarget.style.borderColor = comment.trim() ? "#93c5fd" : "#fca5a5")}
+                      />
+                      {!comment.trim() && (
+                        <p style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: 4 }}>
+                          A comment is required when updating the purchase price.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-2">
+              <p style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                {priceChanged && !comment.trim()
+                  ? "Add a comment to proceed with the adjusted price"
+                  : "Review complete — activate to notify field agents"}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onClose}
+                  className="h-9 px-5 rounded-lg border border-gray-300 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={!canActivate}
+                  onClick={() => { if (canActivate) onActivate(req.id, finalPurchasePrice, comment.trim()); }}
+                  className="h-9 px-6 rounded-lg text-[13px] font-bold transition-colors flex items-center gap-2"
+                  style={{
+                    background: canActivate ? "#2563eb" : "#e5e7eb",
+                    color:      canActivate ? "#fff"    : "#9ca3af",
+                    cursor:     canActivate ? "pointer" : "not-allowed",
+                  }}
+                  onMouseEnter={(e) => { if (canActivate) e.currentTarget.style.background = "#1d4ed8"; }}
+                  onMouseLeave={(e) => { if (canActivate) e.currentTarget.style.background = canActivate ? "#2563eb" : "#e5e7eb"; }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Activate recovery
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Activated Summary Modal ──────────────────────────────────────────────────
+
+function ActivatedSummaryModal({
+  req,
+  approvedUnitPrice,
+  approvedPurchasePrice,
+  onClose,
+  onCancel,
+}: {
+  req: RecoveryRequest;
+  approvedUnitPrice: number;
+  approvedPurchasePrice: number;
+  onClose: () => void;
+  onCancel: (id: string) => void;
+}) {
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+
+  const totalAmount   = req.farmersSupported * req.amountPerFarmer;
+  const bagWeightKg   = req.bagWeightKg ?? 100;
+  const wantsDouble   = req.wantsDouble ?? false;
+  const bagsExpected  = wantsDouble ? 2 : 1;
+  const bagValue      = approvedUnitPrice * bagWeightKg;
+  const totalBagValue = bagValue * bagsExpected;
+
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" fill="#dcfce7" stroke="#16a34a" strokeWidth="1.2" />
+                <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#16a34a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-gray-900">Recovery activated</h2>
+              <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+                Recovery is live — field agents are working with the parameters below
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+              <p className="text-[11px] text-gray-500">{req.community} · {req.farmersSupported} farmers</p>
+            </div>
+          </div>
+
+          {/* Left panel */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
+          >
+            {/* Group */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            {/* Stats tiles */}
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+              </div>
+            </div>
+
+            {/* Disbursement */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Field Agent */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                  style={{ background: agentColor }}
+                >
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+
+            {/* Farmers accordion */}
+            {req.farmersList && req.farmersList.length > 0 && (
+              <div>
+                <FarmerListAccordion farmers={req.farmersList} />
+              </div>
+            )}
+
+            {/* Full action timeline */}
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
+          </div>
+
+          {/* Right panel — read-only summary */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Active status banner */}
+              <div style={{ borderRadius: 12, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                <span className="relative flex shrink-0" style={{ width: 10, height: 10 }}>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full" style={{ background: "#16a34a", opacity: 0.5 }} />
+                  <span className="relative inline-flex rounded-full" style={{ width: 10, height: 10, background: "#16a34a" }} />
+                </span>
+                <div>
+                  <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#14532d", margin: 0 }}>Recovery is active</p>
+                  <p style={{ fontSize: "0.75rem", color: "#16a34a", margin: "2px 0 0", fontWeight: 500 }}>
+                    Field agents have been notified via the mobile app
+                  </p>
+                </div>
+              </div>
+
+              {/* Recovery parameters heading */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+                  Active recovery parameters
+                </p>
+
+                {/* Unit prices */}
+                <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 500, margin: 0 }}>Recovery unit price</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>Used to calculate bag recovery value</p>
+                    </div>
+                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                      GHS {approvedUnitPrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/kg</span>
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 500, margin: 0 }}>Extra commodity purchase price</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>For surplus purchases beyond recovery quantity</p>
+                    </div>
+                    {approvedPurchasePrice > 0 ? (
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                        GHS {approvedPurchasePrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/kg</span>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "0.8125rem", color: "#9ca3af", fontStyle: "italic" }}>Not set</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bag recovery calculation */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                    Bag Recovery Calculation
+                  </p>
+                </div>
+                <div style={{ padding: "4px 0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Expected bag weight</span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>{bagWeightKg} kg / bag</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+                      Value of 1 bag&nbsp;
+                      <span style={{ color: "#9ca3af" }}>({bagWeightKg} kg × GHS {approvedUnitPrice.toFixed(2)})</span>
+                    </span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827" }}>
+                      GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                    <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                      {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
+                      {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                      GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Applicable rates */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Applicable rates
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" stroke="#d97706" strokeWidth="1.5" />
+                          <path d="M8 5v4M8 11v.5" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interest rate</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#92400e", margin: 0, lineHeight: 1 }}>{INTEREST_RATE * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "4px 0 0", fontWeight: 500 }}>per month</p>
+                  </div>
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Default penalty</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#7f1d1d", margin: 0, lineHeight: 1 }}>{DEFAULT_PENALTY * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: "4px 0 0", fontWeight: 500 }}>on cash disbursed</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cancel confirmation — inline */}
+              {confirmingCancel && (
+                <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                        <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#7f1d1d", margin: 0 }}>Cancel this recovery?</p>
+                  </div>
+                  <p style={{ fontSize: "0.8125rem", color: "#b91c1c", lineHeight: 1.55, marginBottom: 14 }}>
+                    This will invalidate the current recovery request. The field agent will be able to submit a new recovery request for this group.
+                  </p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => setConfirmingCancel(false)}
+                      style={{ flex: 1, height: 38, borderRadius: 8, border: "1px solid #fecaca", background: "#fff", fontSize: "0.8125rem", fontWeight: 600, color: "#b91c1c", cursor: "pointer" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#fff5f5")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+                    >
+                      Keep active
+                    </button>
+                    <button
+                      onClick={() => onCancel(req.id)}
+                      style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "#dc2626", fontSize: "0.8125rem", fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}
+                    >
+                      Yes, cancel request
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-2">
+              {!confirmingCancel ? (
+                <button
+                  onClick={() => setConfirmingCancel(true)}
+                  style={{ height: 36, paddingLeft: 14, paddingRight: 14, borderRadius: 8, border: "1px solid #fecaca", background: "transparent", fontSize: "0.8125rem", fontWeight: 600, color: "#dc2626", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#fff5f5")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                  Cancel request
+                </button>
+              ) : (
+                <span style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 500 }}>
+                  Confirm cancellation above to proceed
+                </span>
+              )}
+              <button
+                onClick={onClose}
+                className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
@@ -963,8 +1686,18 @@ export default function RecoveriesBoard() {
   const [timeframe,      setTimeframe]      = useState<{ start: Date; end: Date } | null>(null);
   const [modalOpen,      setModalOpen]      = useState(false);
   const [reviewingReq,   setReviewingReq]   = useState<RecoveryRequest | null>(null);
+  const [financingReq,   setFinancingReq]   = useState<RecoveryRequest | null>(null);
+  const [activatedReq,   setActivatedReq]   = useState<RecoveryRequest | null>(null);
   const [stageOverrides, setStageOverrides] = useState<Record<string, RecoveryStage>>({});
+  const [priceOverrides, setPriceOverrides] = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
+  const [dynamicActions, setDynamicActions] = useState<Record<string, ActionRecord[]>>({});
   const [filters,        setFilters]        = useState<ActiveFilters>(DEFAULT_FILTERS);
+
+  function enrichActions(req: RecoveryRequest): RecoveryRequest {
+    const additions = dynamicActions[req.id] ?? [];
+    if (additions.length === 0) return req;
+    return { ...req, actionHistory: [...(req.actionHistory ?? []), ...additions] };
+  }
 
   const handleFilterChange = useCallback((f: ActiveFilters) => setFilters(f), []);
 
@@ -992,9 +1725,70 @@ export default function RecoveriesBoard() {
     return filteredRequests.filter((r) => r.stage === colId);
   }
 
-  function handleApprove(id: string, unitPrice: number) {
-    setStageOverrides((prev) => ({ ...prev, [id]: "rec_approved" }));
+  function handleApprove(id: string, unitPrice: number, purchasePrice: number) {
+    setStageOverrides((prev) => ({ ...prev, [id]: "rec_finance_review" }));
+    setPriceOverrides((prev) => ({ ...prev, [id]: { unitPrice, purchasePrice } }));
+    setDynamicActions((prev) => ({
+      ...prev,
+      [id]: [
+        ...(prev[id] ?? []),
+        {
+          id: `${id}-mgr-${Date.now()}`,
+          stage: "rec_finance_review" as const,
+          actor: "Agent Manager",
+          action: "Recovery request reviewed & approved",
+          summary: `Set recovery unit price to GHS ${unitPrice.toFixed(2)}/kg${purchasePrice > 0 ? ` and extra commodity purchase price to GHS ${purchasePrice.toFixed(2)}/kg` : ""}. Forwarded to finance for activation.`,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
     setReviewingReq(null);
+  }
+
+  function handleFinanceActivate(id: string, finalPurchasePrice: number, comment: string) {
+    const prevPurchasePrice = priceOverrides[id]?.purchasePrice ?? 0;
+    const priceAdjusted = Math.abs(finalPurchasePrice - prevPurchasePrice) > 0.001;
+    setStageOverrides((prev) => ({ ...prev, [id]: "rec_approved" }));
+    setPriceOverrides((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], purchasePrice: finalPurchasePrice },
+    }));
+    setDynamicActions((prev) => ({
+      ...prev,
+      [id]: [
+        ...(prev[id] ?? []),
+        {
+          id: `${id}-fin-${Date.now()}`,
+          stage: "rec_approved" as const,
+          actor: "Finance Officer",
+          action: "Recovery request activated",
+          summary: priceAdjusted
+            ? `Recovery activated with adjusted purchase price: GHS ${finalPurchasePrice.toFixed(2)}/kg (was GHS ${prevPurchasePrice.toFixed(2)}/kg). Reason: ${comment}`
+            : `Recovery activated. Purchase price confirmed at GHS ${finalPurchasePrice.toFixed(2)}/kg.`,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setFinancingReq(null);
+  }
+
+  function handleCancelRequest(id: string) {
+    setStageOverrides((prev) => ({ ...prev, [id]: "rec_rejected" }));
+    setDynamicActions((prev) => ({
+      ...prev,
+      [id]: [
+        ...(prev[id] ?? []),
+        {
+          id: `${id}-cancel-${Date.now()}`,
+          stage: "rec_rejected" as const,
+          actor: "Finance Officer",
+          action: "Recovery request cancelled",
+          summary: "Recovery request was cancelled. The field agent may submit a new request.",
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setActivatedReq(null);
   }
 
   const timeframeRightSlot = (
@@ -1065,11 +1859,20 @@ export default function RecoveriesBoard() {
           {(() => {
             const cards = cardsForCol(mobileColId);
             if (cards.length === 0) return <EmptyColState />;
+            const isActivatedCol = mobileColId === "rec_approved";
+            const isFinanceCol   = mobileColId === "rec_finance_review";
             return cards.map((r) => (
               <RecoveryCard
                 key={r.id}
                 req={r}
-                onReview={() => setReviewingReq(r)}
+                ctaLabel={isActivatedCol ? "View details" : "Review"}
+                ctaColor={isActivatedCol ? "#2563eb" : "var(--green-600)"}
+                ctaHoverColor={isActivatedCol ? "#1d4ed8" : "var(--green-700, #15803d)"}
+                onReview={() => {
+                  if (isActivatedCol)  setActivatedReq(r);
+                  else if (isFinanceCol) setFinancingReq(r);
+                  else setReviewingReq(r);
+                }}
               />
             ));
           })()}
@@ -1085,6 +1888,8 @@ export default function RecoveriesBoard() {
         }}>
           {RECOVERIES_COLUMNS.map((col) => {
             const cards = cardsForCol(col.id);
+            const isActivatedCol = col.id === "rec_approved";
+            const isFinanceCol   = col.id === "rec_finance_review";
             return (
               <div
                 key={col.id}
@@ -1105,7 +1910,14 @@ export default function RecoveriesBoard() {
                           <RecoveryCard
                             key={r.id}
                             req={r}
-                            onReview={() => setReviewingReq(r)}
+                            ctaLabel={isActivatedCol ? "View details" : "Review"}
+                            ctaColor={isActivatedCol ? "#2563eb" : "var(--green-600)"}
+                            ctaHoverColor={isActivatedCol ? "#1d4ed8" : "var(--green-700, #15803d)"}
+                            onReview={() => {
+                              if (isActivatedCol)    setActivatedReq(r);
+                              else if (isFinanceCol) setFinancingReq(r);
+                              else                   setReviewingReq(r);
+                            }}
                           />
                         ))
                     }
@@ -1117,12 +1929,34 @@ export default function RecoveriesBoard() {
         </div>
       </div>
 
-      {/* ── Recovery approval modal ── */}
+      {/* ── Recovery approval modal (agent manager) ── */}
       {reviewingReq && (
         <RecoveryApprovalModal
-          req={reviewingReq}
+          req={enrichActions(reviewingReq)}
           onClose={() => setReviewingReq(null)}
           onApprove={handleApprove}
+        />
+      )}
+
+      {/* ── Finance review modal ── */}
+      {financingReq && priceOverrides[financingReq.id] && (
+        <FinanceReviewModal
+          req={enrichActions(financingReq)}
+          approvedUnitPrice={priceOverrides[financingReq.id].unitPrice}
+          approvedPurchasePrice={priceOverrides[financingReq.id].purchasePrice}
+          onClose={() => setFinancingReq(null)}
+          onActivate={handleFinanceActivate}
+        />
+      )}
+
+      {/* ── Activated summary modal ── */}
+      {activatedReq && priceOverrides[activatedReq.id] && (
+        <ActivatedSummaryModal
+          req={enrichActions(activatedReq)}
+          approvedUnitPrice={priceOverrides[activatedReq.id].unitPrice}
+          approvedPurchasePrice={priceOverrides[activatedReq.id].purchasePrice}
+          onClose={() => setActivatedReq(null)}
+          onCancel={handleCancelRequest}
         />
       )}
 
