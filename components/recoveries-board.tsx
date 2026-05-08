@@ -421,6 +421,28 @@ function FarmerListAccordion({ farmers }: { farmers: Array<{ id: string; name: s
   );
 }
 
+// ─── Double Bag Banner ────────────────────────────────────────────────────────
+
+function DoubleBagBanner({ bagWeightKg }: { bagWeightKg: number }) {
+  return (
+    <div style={{ borderRadius: 10, background: "#fffbeb", border: "1.5px solid #f59e0b", padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="4" width="5" height="9" rx="1" stroke="#d97706" strokeWidth="1.4" />
+          <rect x="9" y="4" width="5" height="9" rx="1" stroke="#d97706" strokeWidth="1.4" />
+          <path d="M4 4V3a1 1 0 011-1h1a1 1 0 011 1v1M10 4V3a1 1 0 011-1h1a1 1 0 011 1v1" stroke="#d97706" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div>
+        <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e", margin: "0 0 3px" }}>Double bag amount opted</p>
+        <p style={{ fontSize: "0.75rem", color: "#b45309", margin: 0, lineHeight: 1.5 }}>
+          Each farmer in this group is expected to return <strong>2 bags ({bagWeightKg * 2} kg)</strong> instead of the standard 1 bag ({bagWeightKg} kg).
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Recovery Approval Modal ──────────────────────────────────────────────────
 
 function RecoveryApprovalModal({
@@ -616,6 +638,9 @@ function RecoveryApprovalModal({
                   </div>
                 </div>
               </div>
+
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
 
               {/* Recovery unit price input */}
               <div>
@@ -1012,6 +1037,9 @@ function FinanceReviewModal({
                 </div>
               </div>
 
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+
               {/* Recovery unit price — read-only */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
                 <div style={{ padding: "10px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
@@ -1333,6 +1361,9 @@ function PendingRecoveryModal({
                 </div>
               </div>
 
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+
               {/* Approved recovery parameters */}
               <div>
                 <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
@@ -1521,9 +1552,11 @@ function ActivatedSummaryModal({
   approvedUnitPrice: number;
   approvedPurchasePrice: number;
   onClose: () => void;
-  onCancel: (id: string) => void;
+  onCancel: (id: string, comment: string) => void;
 }) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelComment,    setCancelComment]    = useState("");
+  const canConfirmCancel = cancelComment.trim().length > 0;
 
   const totalAmount   = req.farmersSupported * req.amountPerFarmer;
   const bagWeightKg   = req.bagWeightKg ?? 100;
@@ -1680,6 +1713,9 @@ function ActivatedSummaryModal({
                 </div>
               </div>
 
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+
               {/* Recovery parameters heading */}
               <div>
                 <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
@@ -1797,12 +1833,38 @@ function ActivatedSummaryModal({
                     </div>
                     <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#7f1d1d", margin: 0 }}>Cancel this recovery?</p>
                   </div>
-                  <p style={{ fontSize: "0.8125rem", color: "#b91c1c", lineHeight: 1.55, marginBottom: 14 }}>
+                  <p style={{ fontSize: "0.8125rem", color: "#b91c1c", lineHeight: 1.55, marginBottom: 12 }}>
                     This will invalidate the current recovery request. The field agent will be able to submit a new recovery request for this group.
                   </p>
+
+                  {/* Required comment */}
+                  <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 600, color: "#7f1d1d", marginBottom: 6 }}>
+                    Reason for cancellation <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <textarea
+                    value={cancelComment}
+                    onChange={(e) => setCancelComment(e.target.value)}
+                    placeholder="Explain why this recovery request is being canceled…"
+                    rows={3}
+                    style={{
+                      width: "100%", borderRadius: 8, marginBottom: 12,
+                      border: cancelComment.trim() ? "1.5px solid #fca5a5" : "1.5px solid #fca5a5",
+                      padding: "9px 12px", fontSize: "0.875rem", color: "#374151",
+                      outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.5,
+                      background: "#fff",
+                    }}
+                    onFocus={(e)  => (e.currentTarget.style.borderColor = "#f87171")}
+                    onBlur={(e)   => (e.currentTarget.style.borderColor = "#fca5a5")}
+                  />
+                  {!cancelComment.trim() && (
+                    <p style={{ fontSize: "0.75rem", color: "#dc2626", marginBottom: 12, marginTop: -8 }}>
+                      A reason is required to cancel this request.
+                    </p>
+                  )}
+
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
-                      onClick={() => setConfirmingCancel(false)}
+                      onClick={() => { setConfirmingCancel(false); setCancelComment(""); }}
                       style={{ flex: 1, height: 38, borderRadius: 8, border: "1px solid #fecaca", background: "#fff", fontSize: "0.8125rem", fontWeight: 600, color: "#b91c1c", cursor: "pointer" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#fff5f5")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
@@ -1810,10 +1872,11 @@ function ActivatedSummaryModal({
                       Keep active
                     </button>
                     <button
-                      onClick={() => onCancel(req.id)}
-                      style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "#dc2626", fontSize: "0.8125rem", fontWeight: 600, color: "#fff", cursor: "pointer" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}
+                      disabled={!canConfirmCancel}
+                      onClick={() => { if (canConfirmCancel) onCancel(req.id, cancelComment.trim()); }}
+                      style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: canConfirmCancel ? "#dc2626" : "#e5e7eb", fontSize: "0.8125rem", fontWeight: 600, color: canConfirmCancel ? "#fff" : "#9ca3af", cursor: canConfirmCancel ? "pointer" : "not-allowed" }}
+                      onMouseEnter={(e) => { if (canConfirmCancel) e.currentTarget.style.background = "#b91c1c"; }}
+                      onMouseLeave={(e) => { if (canConfirmCancel) e.currentTarget.style.background = "#dc2626"; }}
                     >
                       Yes, cancel request
                     </button>
@@ -1839,9 +1902,213 @@ function ActivatedSummaryModal({
                 </button>
               ) : (
                 <span style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 500 }}>
-                  Confirm cancellation above to proceed
+                  {cancelComment.trim() ? "Submit cancellation above to proceed" : "A reason is required — fill in the form above"}
                 </span>
               )}
+              <button
+                onClick={onClose}
+                className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Canceled Summary Modal ───────────────────────────────────────────────────
+
+function CanceledSummaryModal({
+  req,
+  unitPrice,
+  purchasePrice,
+  onClose,
+}: {
+  req: RecoveryRequest;
+  unitPrice: number;
+  purchasePrice: number;
+  onClose: () => void;
+}) {
+  const totalAmount  = req.farmersSupported * req.amountPerFarmer;
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" stroke="#dc2626" strokeWidth="1.4" />
+                <path d="M5 5l6 6M11 5L5 11" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-gray-900">Canceled request</h2>
+              <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+                This recovery request is no longer active
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+          </div>
+
+          {/* Left panel — full context + timeline */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
+          >
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ background: agentColor }}>
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+
+            {req.farmersList && req.farmersList.length > 0 && (
+              <div>
+                <FarmerListAccordion farmers={req.farmersList} />
+              </div>
+            )}
+
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
+          </div>
+
+          {/* Right panel — read-only summary */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Cancellation banner */}
+              <div style={{ borderRadius: 12, background: "#fef2f2", border: "1px solid #fecaca", padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="7" stroke="#dc2626" strokeWidth="1.4" />
+                    <path d="M5 5l6 6M11 5L5 11" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#7f1d1d", margin: "0 0 3px" }}>Recovery request canceled</p>
+                  <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: 0, lineHeight: 1.55 }}>
+                    This request is no longer active. The field agent may submit a new recovery request for this group.
+                  </p>
+                </div>
+              </div>
+
+              {/* Recovery parameters at time of cancellation — only if prices were set */}
+              {(unitPrice > 0 || purchasePrice > 0) && (
+                <div>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Recovery parameters at time of cancellation
+                  </p>
+                  <div style={{ borderRadius: 12, border: "1px solid #f3f4f6", overflow: "hidden", opacity: 0.8 }}>
+                    {unitPrice > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", borderBottom: purchasePrice > 0 ? "1px solid #f3f4f6" : "none" }}>
+                        <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Recovery unit price</span>
+                        <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#374151" }}>GHS {unitPrice.toFixed(2)} <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "#9ca3af" }}>/kg</span></span>
+                      </div>
+                    )}
+                    {purchasePrice > 0 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px" }}>
+                        <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Extra commodity purchase price</span>
+                        <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#374151" }}>GHS {purchasePrice.toFixed(2)} <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "#9ca3af" }}>/kg</span></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Info note */}
+              <div style={{ borderRadius: 10, background: "#f9fafb", border: "1px solid #e5e7eb", padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="8" cy="8" r="7" stroke="#9ca3af" strokeWidth="1.3" />
+                  <path d="M8 7v5M8 5v.5" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <p style={{ fontSize: "0.8125rem", color: "#6b7280", margin: 0, lineHeight: 1.55 }}>
+                  Review the full action timeline on the left panel for the complete history of this request, including the reason for cancellation.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
               <button
                 onClick={onClose}
                 className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
@@ -2077,6 +2344,7 @@ export default function RecoveriesBoard() {
   const [financingReq,       setFinancingReq]       = useState<RecoveryRequest | null>(null);
   const [activatedReq,       setActivatedReq]       = useState<RecoveryRequest | null>(null);
   const [pendingRecoveryReq, setPendingRecoveryReq] = useState<RecoveryRequest | null>(null);
+  const [canceledReq,        setCanceledReq]        = useState<RecoveryRequest | null>(null);
   const [stageOverrides, setStageOverrides] = useState<Record<string, RecoveryStage>>({});
   const [priceOverrides, setPriceOverrides] = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
   const [dynamicActions, setDynamicActions] = useState<Record<string, ActionRecord[]>>({});
@@ -2169,7 +2437,7 @@ export default function RecoveriesBoard() {
     setFinancingReq(null);
   }
 
-  function handleCancelRequest(id: string) {
+  function handleCancelRequest(id: string, comment: string) {
     setStageOverrides((prev) => ({ ...prev, [id]: "rec_rejected" }));
     setDynamicActions((prev) => ({
       ...prev,
@@ -2179,8 +2447,8 @@ export default function RecoveriesBoard() {
           id: `${id}-cancel-${Date.now()}`,
           stage: "rec_rejected" as const,
           actor: "Finance Officer",
-          action: "Recovery request cancelled",
-          summary: "Recovery request was cancelled. The field agent may submit a new request.",
+          action: "Recovery request canceled",
+          summary: `Recovery request was canceled. Reason: ${comment} The field agent may submit a new request.`,
           timestamp: new Date().toISOString(),
         },
       ],
@@ -2259,19 +2527,29 @@ export default function RecoveriesBoard() {
             const isActivatedCol        = mobileColId === "rec_approved";
             const isFinanceCol          = mobileColId === "rec_finance_review";
             const isPendingRecoveryCol  = mobileColId === "rec_pending_recovery";
-            const isViewOnly = isActivatedCol || isPendingRecoveryCol;
+            const isCanceledCol         = mobileColId === "rec_rejected";
+            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol;
+            const ctaColor =
+              isActivatedCol ? "#2563eb" :
+              isCanceledCol  ? "#6b7280" :
+              "var(--green-600)";
+            const ctaHoverColor =
+              isActivatedCol ? "#1d4ed8" :
+              isCanceledCol  ? "#4b5563" :
+              "var(--green-700, #15803d)";
             return cards.map((r) => (
               <RecoveryCard
                 key={r.id}
                 req={r}
                 ctaLabel={isViewOnly ? "View details" : "Review"}
-                ctaColor={isViewOnly ? "#2563eb" : "var(--green-600)"}
-                ctaHoverColor={isViewOnly ? "#1d4ed8" : "var(--green-700, #15803d)"}
+                ctaColor={ctaColor}
+                ctaHoverColor={ctaHoverColor}
                 onReview={() => {
-                  if (isActivatedCol)       setActivatedReq(r);
-                  else if (isFinanceCol)    setFinancingReq(r);
+                  if (isActivatedCol)           setActivatedReq(r);
+                  else if (isFinanceCol)         setFinancingReq(r);
                   else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
-                  else setReviewingReq(r);
+                  else if (isCanceledCol)        setCanceledReq(r);
+                  else                           setReviewingReq(r);
                 }}
               />
             ));
@@ -2291,7 +2569,16 @@ export default function RecoveriesBoard() {
             const isActivatedCol       = col.id === "rec_approved";
             const isFinanceCol         = col.id === "rec_finance_review";
             const isPendingRecoveryCol = col.id === "rec_pending_recovery";
-            const isViewOnly = isActivatedCol || isPendingRecoveryCol;
+            const isCanceledCol        = col.id === "rec_rejected";
+            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol;
+            const colCtaColor =
+              isActivatedCol ? "#2563eb" :
+              isCanceledCol  ? "#6b7280" :
+              "var(--green-600)";
+            const colCtaHoverColor =
+              isActivatedCol ? "#1d4ed8" :
+              isCanceledCol  ? "#4b5563" :
+              "var(--green-700, #15803d)";
             return (
               <div
                 key={col.id}
@@ -2313,13 +2600,14 @@ export default function RecoveriesBoard() {
                             key={r.id}
                             req={r}
                             ctaLabel={isViewOnly ? "View details" : "Review"}
-                            ctaColor={isViewOnly ? "#2563eb" : "var(--green-600)"}
-                            ctaHoverColor={isViewOnly ? "#1d4ed8" : "var(--green-700, #15803d)"}
+                            ctaColor={colCtaColor}
+                            ctaHoverColor={colCtaHoverColor}
                             onReview={() => {
-                              if (isActivatedCol)           setActivatedReq(r);
-                              else if (isFinanceCol)        setFinancingReq(r);
+                              if (isActivatedCol)            setActivatedReq(r);
+                              else if (isFinanceCol)         setFinancingReq(r);
                               else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
-                              else                          setReviewingReq(r);
+                              else if (isCanceledCol)        setCanceledReq(r);
+                              else                           setReviewingReq(r);
                             }}
                           />
                         ))
@@ -2372,6 +2660,19 @@ export default function RecoveriesBoard() {
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
             onClose={() => setPendingRecoveryReq(null)}
+          />
+        );
+      })()}
+
+      {/* ── Canceled summary modal ── */}
+      {canceledReq && (() => {
+        const { unitPrice, purchasePrice } = resolvedPrices(canceledReq);
+        return (
+          <CanceledSummaryModal
+            req={enrichActions(canceledReq)}
+            unitPrice={unitPrice}
+            purchasePrice={purchasePrice}
+            onClose={() => setCanceledReq(null)}
           />
         );
       })()}
