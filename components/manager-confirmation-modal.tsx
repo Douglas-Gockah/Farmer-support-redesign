@@ -43,6 +43,7 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
   const agentInitials = initials(card.agent);
   const agentColor    = avatarColor(card.agent);
   const isCash = card.approvedSupportType === "Cash";
+  const [farmersOpen, setFarmersOpen] = useState(false);
 
   return (
     <div
@@ -121,6 +122,61 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
           </div>
         </div>
       </div>
+
+      {/* Interested farmers list — accordion */}
+      {card.farmersList && card.farmersList.length > 0 && (
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-100)" }}>
+          <button
+            onClick={() => setFarmersOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
+            style={{ background: farmersOpen ? "var(--gray-50)" : "#fff" }}
+            aria-expanded={farmersOpen}
+          >
+            <div className="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "var(--gray-400)" }}>
+                <circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="3" cy="12" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="13" cy="12" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M8 7.5v1.5M5 12h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Interested Farmers</span>
+              <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}>
+                {card.farmersList.length}
+              </span>
+            </div>
+            <svg
+              width="13" height="13" viewBox="0 0 13 13" fill="none"
+              style={{ color: "var(--gray-400)", transform: farmersOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}
+            >
+              <path d="M2 4.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {farmersOpen && (
+            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px", maxHeight: 220, overflowY: "auto" }}>
+              <div className="space-y-2">
+                {card.farmersList.map((farmer) => {
+                  const farmerInitials = initials(farmer.name);
+                  const farmerColor    = avatarColor(farmer.name);
+                  return (
+                    <div key={farmer.id} className="flex items-center gap-2.5">
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                        style={{ background: farmerColor }}
+                      >
+                        {farmerInitials}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-gray-800 leading-tight truncate">{farmer.name}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">{farmer.id}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action timeline */}
       {(card.actionHistory ?? []).length > 0 && (
