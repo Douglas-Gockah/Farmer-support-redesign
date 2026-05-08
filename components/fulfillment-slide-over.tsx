@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { FulfillmentRequest, FarmerFulfillmentRecord, FulfillmentDocument } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 import { NativeVoiceNote } from "@/components/kanban/native-voice-note";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
 // Farmer row — received (with voice proof) or pending
@@ -446,6 +447,16 @@ function InfoPanel({ req }: { req: FulfillmentRequest }) {
           onClose={() => setLightbox(null)}
         />
       )}
+
+      {/* Approval timeline (accordion, collapsed by default) */}
+      {req.actionHistory && req.actionHistory.length > 0 && (
+        <div>
+          <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-2">
+            Timeline
+          </p>
+          <ActionTimeline records={req.actionHistory} accordion />
+        </div>
+      )}
     </div>
   );
 }
@@ -553,7 +564,7 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
             count={received.length}
             dotColor="var(--green-600)"
             labelColor="var(--green-700)"
-            defaultOpen
+            defaultOpen={false}
           >
             <div className="divide-y divide-gray-100 px-2">
               {received.map((f) => (
@@ -570,7 +581,7 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
             count={pending.length}
             dotColor="#9CA3AF"
             labelColor="var(--gray-500)"
-            defaultOpen
+            defaultOpen={false}
           >
             <div className="divide-y divide-gray-100 px-2">
               {pending.map((f) => (
@@ -587,7 +598,7 @@ function FarmersPanel({ req }: { req: FulfillmentRequest }) {
             count={optedOut.length}
             dotColor="var(--yellow-500)"
             labelColor="var(--yellow-600)"
-            defaultOpen
+            defaultOpen={false}
           >
             <div className="divide-y" style={{ borderColor: "var(--yellow-100)" }}>
               {optedOut.map((f) => {

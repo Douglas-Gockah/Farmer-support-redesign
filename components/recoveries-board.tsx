@@ -6,6 +6,8 @@ import { ColumnHeader } from "@/components/kanban/column-header";
 import { RECOVERIES_COLUMNS } from "@/components/kanban/constants";
 import { FilterBar, type ActiveFilters } from "@/components/kanban/filter-bar";
 import { presetDates, avatarColor, initials, makeRefCode } from "@/components/kanban/helpers";
+import { ActionTimeline } from "@/components/kanban/action-timeline";
+import type { ActionRecord } from "@/components/kanban/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,7 @@ interface RecoveryRequest {
   stage:            RecoveryStage;
   disbursedDate:    string;
   transactionId:    string;
+  actionHistory?:   ActionRecord[];
 }
 
 // ─── Mock recovery requests ───────────────────────────────────────────────────
@@ -47,6 +50,14 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     agent: "Kofi Mensah", farmersSupported: 21, amountPerFarmer: 400,
     submittedDate: new Date(2025, 11, 15), stage: "rec_pending_review",
     disbursedDate: "15 Aug 2025", transactionId: "TXN-FS-2024-016",
+    actionHistory: [
+      { id: "r001-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 74% to the group",                                                    timestamp: "2025-07-10T09:00:00" },
+      { id: "r001-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 400/farmer for 21 farmers, totalling GHS 8,400",                            timestamp: "2025-07-12T10:30:00" },
+      { id: "r001-3", stage: "agent_confirmation",   actor: "Kofi Mensah",    action: "Confirmed participating farmers", summary: "Kofi Mensah confirmed 21 farmers and submitted MoMo for disbursement",                                   timestamp: "2025-07-20T08:00:00" },
+      { id: "r001-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 8,400 disbursed to group via MoMo · TXN-FS-2024-016",                                               timestamp: "2025-08-15T11:00:00" },
+      { id: "r001-5", stage: "disbursed",            actor: "Kofi Mensah",    action: "Fulfilment completed",            summary: "Kofi Mensah confirmed all 21 farmers received their support",                                            timestamp: "2025-10-04T09:15:00" },
+      { id: "r001-6", stage: "disbursed",            actor: "Kofi Mensah",    action: "Recovery request submitted",      summary: "Kofi Mensah submitted a recovery request — 21 farmers at GHS 400/farmer",                              timestamp: "2025-12-15T08:30:00" },
+    ],
   },
   {
     id: "REC-002", groupName: "Jirapa Fields Cooperative",
@@ -54,6 +65,14 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     agent: "Ama Owusu", farmersSupported: 20, amountPerFarmer: 400,
     submittedDate: new Date(2025, 11, 12), stage: "rec_pending_review",
     disbursedDate: "10 Aug 2025", transactionId: "TXN-FS-2024-022",
+    actionHistory: [
+      { id: "r002-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 66% to the group",                                                    timestamp: "2025-07-05T10:00:00" },
+      { id: "r002-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 400/farmer for 20 farmers, totalling GHS 8,000",                            timestamp: "2025-07-08T09:00:00" },
+      { id: "r002-3", stage: "agent_confirmation",   actor: "Ama Owusu",      action: "Confirmed participating farmers", summary: "Ama Owusu confirmed 20 farmers and submitted MoMo for disbursement",                                     timestamp: "2025-07-18T08:30:00" },
+      { id: "r002-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 8,000 disbursed to group via MoMo · TXN-FS-2024-022",                                               timestamp: "2025-08-10T11:30:00" },
+      { id: "r002-5", stage: "disbursed",            actor: "Ama Owusu",      action: "Fulfilment completed",            summary: "Ama Owusu confirmed all 20 farmers received their support",                                              timestamp: "2025-10-12T10:00:00" },
+      { id: "r002-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Recovery request submitted",      summary: "Ama Owusu submitted a recovery request — 20 farmers at GHS 400/farmer",                                timestamp: "2025-12-12T09:00:00" },
+    ],
   },
   {
     id: "REC-003", groupName: "Bole Agri Cooperative",
@@ -61,6 +80,14 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     agent: "Kwame Asante", farmersSupported: 14, amountPerFarmer: 600,
     submittedDate: new Date(2025, 11, 10), stage: "rec_pending_review",
     disbursedDate: "5 Sep 2025", transactionId: "TXN-FS-2024-014",
+    actionHistory: [
+      { id: "r003-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 80% to the group",                                                    timestamp: "2025-08-01T09:30:00" },
+      { id: "r003-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 600/farmer for 14 farmers, totalling GHS 8,400",                            timestamp: "2025-08-04T10:00:00" },
+      { id: "r003-3", stage: "agent_confirmation",   actor: "Kwame Asante",   action: "Confirmed participating farmers", summary: "Kwame Asante confirmed 14 farmers and submitted MoMo for disbursement",                                   timestamp: "2025-08-15T08:00:00" },
+      { id: "r003-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 8,400 disbursed to group via MoMo · TXN-FS-2024-014",                                               timestamp: "2025-09-05T11:00:00" },
+      { id: "r003-5", stage: "disbursed",            actor: "Kwame Asante",   action: "Fulfilment completed",            summary: "Kwame Asante confirmed all 14 farmers received their support",                                           timestamp: "2025-10-20T09:30:00" },
+      { id: "r003-6", stage: "disbursed",            actor: "Kwame Asante",   action: "Recovery request submitted",      summary: "Kwame Asante submitted a recovery request — 14 farmers at GHS 600/farmer",                             timestamp: "2025-12-10T08:45:00" },
+    ],
   },
   {
     id: "REC-004", groupName: "Tolon Cooperative Society",
@@ -68,6 +95,14 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     agent: "Akosua Boateng", farmersSupported: 28, amountPerFarmer: 500,
     submittedDate: new Date(2025, 11, 8), stage: "rec_pending_review",
     disbursedDate: "12 Sep 2025", transactionId: "TXN-FS-2024-015",
+    actionHistory: [
+      { id: "r004-1", stage: "synced",              actor: "Douglas Gockah",  action: "Scored request",                  summary: "Douglas Gockah assigned a score of 87% to the group",                                                    timestamp: "2025-08-05T09:00:00" },
+      { id: "r004-2", stage: "pending_approval",     actor: "Douglas Gockah",  action: "Approved cash support",           summary: "Douglas Gockah approved GHS 500/farmer for 28 farmers, totalling GHS 14,000",                           timestamp: "2025-08-08T10:30:00" },
+      { id: "r004-3", stage: "agent_confirmation",   actor: "Akosua Boateng",  action: "Confirmed participating farmers", summary: "Akosua Boateng confirmed 28 farmers and submitted MoMo for disbursement",                                  timestamp: "2025-08-20T08:15:00" },
+      { id: "r004-4", stage: "finance_disbursement", actor: "Douglas Gockah",  action: "Funds disbursed",                 summary: "GHS 14,000 disbursed to group via MoMo · TXN-FS-2024-015",                                              timestamp: "2025-09-12T11:00:00" },
+      { id: "r004-5", stage: "disbursed",            actor: "Akosua Boateng",  action: "Fulfilment completed",            summary: "Akosua Boateng confirmed all 28 farmers received their support",                                         timestamp: "2025-10-28T10:00:00" },
+      { id: "r004-6", stage: "disbursed",            actor: "Akosua Boateng",  action: "Recovery request submitted",      summary: "Akosua Boateng submitted a recovery request — 28 farmers at GHS 500/farmer",                           timestamp: "2025-12-08T09:00:00" },
+    ],
   },
 ];
 
@@ -333,6 +368,13 @@ function RecoveryApprovalModal({
                 <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
               </div>
             </div>
+
+            {/* APPROVAL TIMELINE (accordion, collapsed by default) */}
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
           </div>
 
           {/* Right panel — action area */}
