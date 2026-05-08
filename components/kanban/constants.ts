@@ -26,7 +26,7 @@ export const RECOVERIES_COLUMNS: GenericColDef[] = [
   { id: "rec_pending_review",   label: "Pending Review",      dotColor: "#6B7280" },
   { id: "rec_finance_review",   label: "Finance Review",      dotColor: "#2563EB" },
   { id: "rec_approved",         label: "Activated",           dotColor: "#16A34A" },
-  { id: "rec_rejected",         label: "Rejected",            dotColor: "#DC2626" },
+  { id: "rec_rejected",         label: "Canceled",            dotColor: "#DC2626" },
   { id: "rec_pending_recovery", label: "Pending Recovery",    dotColor: "#7C3AED" },
   { id: "rec_partial",          label: "Partially Recovered", dotColor: "#F59E0B" },
   { id: "rec_full",             label: "Fully Recovered",     dotColor: "#059669" },
