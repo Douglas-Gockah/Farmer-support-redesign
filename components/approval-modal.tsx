@@ -151,11 +151,9 @@ function GroupContextPanel({ card }: { card: FarmerRequest }) {
         </div>
       )}
 
-      {/* Action timeline */}
+      {/* Action timeline (accordion, collapsed by default) */}
       {hasHistory && (
-        <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16 }}>
-          <ActionTimeline records={card.actionHistory ?? []} />
-        </div>
+        <ActionTimeline records={card.actionHistory ?? []} accordion />
       )}
     </div>
   );

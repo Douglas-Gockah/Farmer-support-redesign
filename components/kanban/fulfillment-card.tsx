@@ -74,13 +74,9 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
         {/* Amount row */}
         <div className="flex items-center justify-between mb-3">
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
             style={{ background: "var(--green-50)", color: "var(--green-600)" }}
           >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
             GHS {req.approvedAmountPerFarmer.toLocaleString()} / farmer
           </span>
           <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--gray-900)" }}>

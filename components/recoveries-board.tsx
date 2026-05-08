@@ -38,6 +38,7 @@ interface RecoveryRequest {
   disbursedDate:    string;
   transactionId:    string;
   actionHistory?:   ActionRecord[];
+  farmersList?:     Array<{ id: string; name: string }>;
 }
 
 // ─── Mock recovery requests ───────────────────────────────────────────────────
@@ -58,6 +59,19 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r001-5", stage: "disbursed",            actor: "Kofi Mensah",    action: "Fulfilment completed",            summary: "Kofi Mensah confirmed all 21 farmers received their support",                                            timestamp: "2025-10-04T09:15:00" },
       { id: "r001-6", stage: "disbursed",            actor: "Kofi Mensah",    action: "Recovery request submitted",      summary: "Kofi Mensah submitted a recovery request — 21 farmers at GHS 400/farmer",                              timestamp: "2025-12-15T08:30:00" },
     ],
+    farmersList: [
+      { id: "F101", name: "Abena Owusu" },       { id: "F102", name: "Kweku Asante" },
+      { id: "F103", name: "Adwoa Mensah" },      { id: "F104", name: "Kofi Adu" },
+      { id: "F105", name: "Akosua Baidoo" },     { id: "F106", name: "Yaw Appiah" },
+      { id: "F107", name: "Efua Darko" },        { id: "F108", name: "Nana Boateng" },
+      { id: "F109", name: "Ama Frimpong" },      { id: "F110", name: "Kwame Adjei" },
+      { id: "F111", name: "Abena Asante" },      { id: "F112", name: "Kojo Mensah" },
+      { id: "F113", name: "Akua Boakye" },       { id: "F114", name: "Yaw Amoah" },
+      { id: "F115", name: "Efua Nyarko" },       { id: "F116", name: "Nana Bediako" },
+      { id: "F117", name: "Ato Agyei" },         { id: "F118", name: "Maama Opoku" },
+      { id: "F119", name: "Kwabena Antwi" },     { id: "F120", name: "Adjoa Adusei" },
+      { id: "F121", name: "Kofi Kwarteng" },
+    ],
   },
   {
     id: "REC-002", groupName: "Jirapa Fields Cooperative",
@@ -72,6 +86,18 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r002-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 8,000 disbursed to group via MoMo · TXN-FS-2024-022",                                               timestamp: "2025-08-10T11:30:00" },
       { id: "r002-5", stage: "disbursed",            actor: "Ama Owusu",      action: "Fulfilment completed",            summary: "Ama Owusu confirmed all 20 farmers received their support",                                              timestamp: "2025-10-12T10:00:00" },
       { id: "r002-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Recovery request submitted",      summary: "Ama Owusu submitted a recovery request — 20 farmers at GHS 400/farmer",                                timestamp: "2025-12-12T09:00:00" },
+    ],
+    farmersList: [
+      { id: "G101", name: "Issaka Mahama" },     { id: "G102", name: "Ramatu Abubakari" },
+      { id: "G103", name: "Sumaila Seidu" },     { id: "G104", name: "Fatima Yakubu" },
+      { id: "G105", name: "Alhassan Fuseini" },  { id: "G106", name: "Zenabu Dauda" },
+      { id: "G107", name: "Amadu Mahama" },      { id: "G108", name: "Bintu Seidu" },
+      { id: "G109", name: "Hawa Yakubu" },       { id: "G110", name: "Safiatu Alhassan" },
+      { id: "G111", name: "Mariama Dauda" },     { id: "G112", name: "Fatimatu Amadu" },
+      { id: "G113", name: "Huseini Baba" },      { id: "G114", name: "Baba Mahama" },
+      { id: "G115", name: "Issaka Seidu" },      { id: "G116", name: "Ramatu Yakubu" },
+      { id: "G117", name: "Sumaila Alhassan" },  { id: "G118", name: "Fatima Dauda" },
+      { id: "G119", name: "Alhassan Amadu" },    { id: "G120", name: "Zenabu Baba" },
     ],
   },
   {
@@ -88,6 +114,15 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r003-5", stage: "disbursed",            actor: "Kwame Asante",   action: "Fulfilment completed",            summary: "Kwame Asante confirmed all 14 farmers received their support",                                           timestamp: "2025-10-20T09:30:00" },
       { id: "r003-6", stage: "disbursed",            actor: "Kwame Asante",   action: "Recovery request submitted",      summary: "Kwame Asante submitted a recovery request — 14 farmers at GHS 600/farmer",                             timestamp: "2025-12-10T08:45:00" },
     ],
+    farmersList: [
+      { id: "H101", name: "Bawah Naabu" },       { id: "H102", name: "Asana Tampuri" },
+      { id: "H103", name: "Seidu Wumbei" },      { id: "H104", name: "Ayisha Fuseini" },
+      { id: "H105", name: "Dauda Ziblim" },      { id: "H106", name: "Memunatu Abukari" },
+      { id: "H107", name: "Yakubu Alhassan" },   { id: "H108", name: "Rahinatu Mahama" },
+      { id: "H109", name: "Sulley Abdulai" },    { id: "H110", name: "Fati Iddrisu" },
+      { id: "H111", name: "Habiba Issah" },      { id: "H112", name: "Aminu Bawah" },
+      { id: "H113", name: "Zuwera Naabu" },      { id: "H114", name: "Alimatu Seidu" },
+    ],
   },
   {
     id: "REC-004", groupName: "Tolon Cooperative Society",
@@ -102,6 +137,22 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r004-4", stage: "finance_disbursement", actor: "Douglas Gockah",  action: "Funds disbursed",                 summary: "GHS 14,000 disbursed to group via MoMo · TXN-FS-2024-015",                                              timestamp: "2025-09-12T11:00:00" },
       { id: "r004-5", stage: "disbursed",            actor: "Akosua Boateng",  action: "Fulfilment completed",            summary: "Akosua Boateng confirmed all 28 farmers received their support",                                         timestamp: "2025-10-28T10:00:00" },
       { id: "r004-6", stage: "disbursed",            actor: "Akosua Boateng",  action: "Recovery request submitted",      summary: "Akosua Boateng submitted a recovery request — 28 farmers at GHS 500/farmer",                           timestamp: "2025-12-08T09:00:00" },
+    ],
+    farmersList: [
+      { id: "T101", name: "Ama Mensah" },        { id: "T102", name: "Kofi Asante" },
+      { id: "T103", name: "Akua Boateng" },      { id: "T104", name: "Yaw Amoah" },
+      { id: "T105", name: "Abena Darko" },       { id: "T106", name: "Kwame Appiah" },
+      { id: "T107", name: "Adwoa Acheampong" },  { id: "T108", name: "Kwesi Ofori" },
+      { id: "T109", name: "Afua Frimpong" },     { id: "T110", name: "Kojo Adjei" },
+      { id: "T111", name: "Akosua Asare" },      { id: "T112", name: "Nana Boakye" },
+      { id: "T113", name: "Efua Antwi" },        { id: "T114", name: "Ato Nyarko" },
+      { id: "T115", name: "Maama Bediako" },     { id: "T116", name: "Yaa Agyei" },
+      { id: "T117", name: "Kwabena Opoku" },     { id: "T118", name: "Adjoa Adusei" },
+      { id: "T119", name: "Kofi Kwarteng" },     { id: "T120", name: "Esi Mensah" },
+      { id: "T121", name: "Akua Owusu" },        { id: "T122", name: "Yaw Darko" },
+      { id: "T123", name: "Kwame Asante" },      { id: "T124", name: "Abena Boateng" },
+      { id: "T125", name: "Kwesi Amoah" },       { id: "T126", name: "Adwoa Frimpong" },
+      { id: "T127", name: "Kojo Appiah" },       { id: "T128", name: "Akosua Adjei" },
     ],
   },
 ];
@@ -173,15 +224,11 @@ function RecoveryCard({
         {/* Cash support pill */}
         <div style={{ marginBottom: 12 }}>
           <span style={{
-            display: "inline-flex", alignItems: "center", gap: 4,
+            display: "inline-flex", alignItems: "center",
             padding: "3px 8px", borderRadius: 20,
             background: "var(--green-50)", color: "var(--green-600)",
             fontSize: "0.6875rem", fontWeight: 600,
           }}>
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M1 7h14" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
             Cash support
           </span>
         </div>
@@ -235,6 +282,76 @@ function RecoveryCard({
           Review
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Farmer List Accordion (for recovery modal left panel) ───────────────────
+
+function FarmerListAccordion({ farmers }: { farmers: Array<{ id: string; name: string }> }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-100)" }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
+        style={{ background: open ? "var(--gray-50)" : "#fff" }}
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-2">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "var(--gray-400)" }}>
+            <circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />
+            <circle cx="11" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.3" />
+            <path d="M1 14c0-3 2.2-5 5-5h1c2.8 0 5 2 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M13 10c2 0 3 1 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Farmers supported</span>
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+            style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}
+          >
+            {farmers.length}
+          </span>
+        </div>
+        <svg
+          width="13" height="13" viewBox="0 0 13 13" fill="none"
+          style={{
+            color: "var(--gray-400)",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            flexShrink: 0,
+          }}
+        >
+          <path d="M2 4.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ borderTop: "1px solid var(--gray-100)" }}>
+          {farmers.map((f, idx) => {
+            const color = avatarColor(f.name);
+            const ini   = initials(f.name);
+            const isLast = idx === farmers.length - 1;
+            return (
+              <div
+                key={f.id}
+                className="flex items-center gap-2.5 px-3 py-2"
+                style={{ borderBottom: isLast ? "none" : "1px solid var(--gray-100)" }}
+              >
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
+                  style={{ background: color, fontSize: "0.5625rem", fontWeight: 700 }}
+                >
+                  {ini}
+                </span>
+                <span className="text-[12px] font-medium text-gray-800 flex-1 truncate">{f.name}</span>
+                <span className="text-[10px] font-mono text-gray-400 shrink-0">{f.id}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -332,6 +449,13 @@ function RecoveryApprovalModal({
                 <p className="text-[15px] font-bold text-gray-900">GHS {req.amountPerFarmer}</p>
               </div>
             </div>
+
+            {/* FARMERS SUPPORTED */}
+            {req.farmersList && req.farmersList.length > 0 && (
+              <div>
+                <FarmerListAccordion farmers={req.farmersList} />
+              </div>
+            )}
 
             {/* DISBURSEMENT */}
             <div>
