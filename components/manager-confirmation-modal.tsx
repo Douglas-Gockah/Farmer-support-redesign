@@ -47,7 +47,7 @@ function ApprovedContextPanel({ card }: { card: FarmerRequest }) {
 
   return (
     <div
-      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
+      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
       style={{ width: 310, borderRight: "1px solid #F3F4F6", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
