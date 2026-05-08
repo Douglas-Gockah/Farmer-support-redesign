@@ -49,7 +49,7 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest; }) {
 
   return (
     <div
-      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto"
+      className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
       style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
     >
       {/* Group identity */}
@@ -126,11 +126,11 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest; }) {
 
       {/* Interested farmers list — accordion */}
       {card.farmersList && card.farmersList.length > 0 && (
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-100)" }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gray-200)" }}>
           <button
             onClick={() => setFarmersOpen((v) => !v)}
             className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
-            style={{ background: farmersOpen ? "var(--gray-50)" : "#fff" }}
+            style={{ background: farmersOpen ? "var(--gray-50)" : "var(--gray-50)" }}
             aria-expanded={farmersOpen}
           >
             <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ function DisbursementContextPanel({ card }: { card: FarmerRequest; }) {
             </svg>
           </button>
           {farmersOpen && (
-            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px", maxHeight: 220, overflowY: "auto" }}>
+            <div style={{ borderTop: "1px solid var(--gray-100)", padding: "10px 12px" }}>
               <div className="space-y-2">
                 {card.farmersList.map((farmer) => {
                   const farmerInitials = initials(farmer.name);
