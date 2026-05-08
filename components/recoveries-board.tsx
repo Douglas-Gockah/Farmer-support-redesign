@@ -39,7 +39,7 @@ interface RecoveryRequest {
   disbursedDate:    string;
   transactionId:    string;
   actionHistory?:        ActionRecord[];
-  farmersList?:          Array<{ id: string; name: string }>;
+  farmersList?:          Array<{ id: string; name: string; recoveredKg?: number; recoveredDate?: string }>;
   bagWeightKg?:          number;
   wantsDouble?:          boolean;
   approvedUnitPrice?:    number;
@@ -214,6 +214,81 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "N111", name: "Ramatu Iddrisu" },      { id: "N112", name: "Fatimatu Alhassan" },
     ],
   },
+  {
+    id: "REC-007", groupName: "Yendi Grain Producers",
+    community: "Yendi", region: "Northern", district: "Yendi",
+    agent: "Kwame Asante", farmersSupported: 18, amountPerFarmer: 500, bagWeightKg: 100,
+    approvedUnitPrice: 2.80, approvedPurchasePrice: 2.60,
+    submittedDate: new Date(2025, 9, 5), stage: "rec_partial",
+    disbursedDate: "20 Jun 2025", transactionId: "TXN-FS-2024-007",
+    actionHistory: [
+      { id: "r007-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 77% to the group",                                  timestamp: "2025-04-05T09:00:00" },
+      { id: "r007-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 500/farmer for 18 farmers, totalling GHS 9,000",            timestamp: "2025-04-08T10:00:00" },
+      { id: "r007-3", stage: "agent_confirmation",   actor: "Kwame Asante",   action: "Confirmed participating farmers", summary: "Kwame Asante confirmed 18 farmers and submitted MoMo for disbursement",                  timestamp: "2025-04-20T08:00:00" },
+      { id: "r007-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 9,000 disbursed to group via MoMo · TXN-FS-2024-007",                             timestamp: "2025-06-20T11:00:00" },
+      { id: "r007-5", stage: "disbursed",            actor: "Kwame Asante",   action: "Fulfilment completed",            summary: "Kwame Asante confirmed all 18 farmers received their support",                          timestamp: "2025-08-15T09:00:00" },
+      { id: "r007-6", stage: "disbursed",            actor: "Kwame Asante",   action: "Recovery request submitted",      summary: "Kwame Asante submitted a recovery request — 18 farmers at GHS 500/farmer",            timestamp: "2025-10-05T08:30:00" },
+      { id: "r007-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.80/kg and extra commodity purchase price to GHS 2.60/kg. Forwarded to finance for activation.", timestamp: "2025-10-07T10:00:00" },
+      { id: "r007-8", stage: "rec_approved",         actor: "Finance Officer", action: "Recovery request activated",     summary: "Recovery activated. Purchase price confirmed at GHS 2.60/kg.",                         timestamp: "2025-10-08T14:00:00" },
+      { id: "r007-9", stage: "rec_partial",          actor: "Kwame Asante",   action: "Partial recovery recorded",       summary: "Kwame Asante recorded recoveries for 11 of 18 farmers. 7 farmers are still pending.",    timestamp: "2025-10-20T11:30:00" },
+    ],
+    farmersList: [
+      { id: "Y101", name: "Alidu Fuseini",    recoveredKg: 100, recoveredDate: "2025-10-20" },
+      { id: "Y102", name: "Rahinatu Yahaya",  recoveredKg: 100, recoveredDate: "2025-10-20" },
+      { id: "Y103", name: "Fuseini Dramani",  recoveredKg: 100, recoveredDate: "2025-10-18" },
+      { id: "Y104", name: "Mariama Issaka",   recoveredKg: 100, recoveredDate: "2025-10-18" },
+      { id: "Y105", name: "Issaka Sumaila",   recoveredKg: 100, recoveredDate: "2025-10-17" },
+      { id: "Y106", name: "Bintu Seidu",      recoveredKg: 100, recoveredDate: "2025-10-17" },
+      { id: "Y107", name: "Yakubu Bawah",     recoveredKg: 100, recoveredDate: "2025-10-16" },
+      { id: "Y108", name: "Fati Iddrissu",    recoveredKg: 100, recoveredDate: "2025-10-16" },
+      { id: "Y109", name: "Sulley Abukari",   recoveredKg: 100, recoveredDate: "2025-10-15" },
+      { id: "Y110", name: "Habiba Naabu",     recoveredKg: 100, recoveredDate: "2025-10-15" },
+      { id: "Y111", name: "Aminu Tampuri",    recoveredKg: 100, recoveredDate: "2025-10-14" },
+      { id: "Y112", name: "Zuwera Alhassan" },
+      { id: "Y113", name: "Alimatu Mahama" },
+      { id: "Y114", name: "Huseini Dauda" },
+      { id: "Y115", name: "Baba Ziblim" },
+      { id: "Y116", name: "Ramatu Fuseini" },
+      { id: "Y117", name: "Fatimatu Seidu" },
+      { id: "Y118", name: "Aminata Abukari" },
+    ],
+  },
+  {
+    id: "REC-008", groupName: "Damongo Women Farmers",
+    community: "Damongo", region: "Savannah", district: "West Gonja",
+    agent: "Ama Owusu", farmersSupported: 15, amountPerFarmer: 450, bagWeightKg: 100,
+    approvedUnitPrice: 2.70, approvedPurchasePrice: 2.50,
+    submittedDate: new Date(2025, 8, 18), stage: "rec_full",
+    disbursedDate: "10 Jun 2025", transactionId: "TXN-FS-2024-005",
+    actionHistory: [
+      { id: "r008-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 81% to the group",                                  timestamp: "2025-03-18T09:00:00" },
+      { id: "r008-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 450/farmer for 15 farmers, totalling GHS 6,750",            timestamp: "2025-03-20T10:00:00" },
+      { id: "r008-3", stage: "agent_confirmation",   actor: "Ama Owusu",      action: "Confirmed participating farmers", summary: "Ama Owusu confirmed 15 farmers and submitted MoMo for disbursement",                   timestamp: "2025-04-02T08:00:00" },
+      { id: "r008-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 6,750 disbursed to group via MoMo · TXN-FS-2024-005",                             timestamp: "2025-06-10T11:00:00" },
+      { id: "r008-5", stage: "disbursed",            actor: "Ama Owusu",      action: "Fulfilment completed",            summary: "Ama Owusu confirmed all 15 farmers received their support",                            timestamp: "2025-07-25T09:00:00" },
+      { id: "r008-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Recovery request submitted",      summary: "Ama Owusu submitted a recovery request — 15 farmers at GHS 450/farmer",             timestamp: "2025-09-18T08:30:00" },
+      { id: "r008-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.70/kg and extra commodity purchase price to GHS 2.50/kg. Forwarded to finance for activation.", timestamp: "2025-09-20T10:00:00" },
+      { id: "r008-8", stage: "rec_approved",         actor: "Finance Officer", action: "Recovery request activated",     summary: "Recovery activated. Purchase price confirmed at GHS 2.50/kg.",                         timestamp: "2025-09-21T14:00:00" },
+      { id: "r008-9", stage: "rec_full",             actor: "Ama Owusu",      action: "Full recovery recorded",          summary: "Ama Owusu recorded recoveries for all 15 farmers. Total recovered: 1,500 kg.",          timestamp: "2025-10-10T15:00:00" },
+    ],
+    farmersList: [
+      { id: "D101", name: "Abiba Fuseini",    recoveredKg: 100, recoveredDate: "2025-10-10" },
+      { id: "D102", name: "Fati Seidu",       recoveredKg: 100, recoveredDate: "2025-10-10" },
+      { id: "D103", name: "Rahinatu Bawah",   recoveredKg: 100, recoveredDate: "2025-10-09" },
+      { id: "D104", name: "Mariama Naabu",    recoveredKg: 100, recoveredDate: "2025-10-09" },
+      { id: "D105", name: "Bintu Alhassan",   recoveredKg: 100, recoveredDate: "2025-10-09" },
+      { id: "D106", name: "Zenabu Mahama",    recoveredKg: 100, recoveredDate: "2025-10-08" },
+      { id: "D107", name: "Habiba Ziblim",    recoveredKg: 100, recoveredDate: "2025-10-08" },
+      { id: "D108", name: "Hawa Abukari",     recoveredKg: 100, recoveredDate: "2025-10-08" },
+      { id: "D109", name: "Amina Iddrisu",    recoveredKg: 100, recoveredDate: "2025-10-07" },
+      { id: "D110", name: "Safiatu Tampuri",  recoveredKg: 100, recoveredDate: "2025-10-07" },
+      { id: "D111", name: "Ramatu Fuseini",   recoveredKg: 100, recoveredDate: "2025-10-07" },
+      { id: "D112", name: "Fatimatu Dauda",   recoveredKg: 100, recoveredDate: "2025-10-06" },
+      { id: "D113", name: "Huseini Seidu",    recoveredKg: 100, recoveredDate: "2025-10-06" },
+      { id: "D114", name: "Alidu Mahama",     recoveredKg: 100, recoveredDate: "2025-10-06" },
+      { id: "D115", name: "Issaka Abukari",   recoveredKg: 100, recoveredDate: "2025-10-05" },
+    ],
+  },
 ];
 
 const ALL_RECOVERY_AGENTS = [...new Set(MOCK_RECOVERY_REQUESTS.map((r) => r.agent))].sort();
@@ -245,12 +320,14 @@ function RecoveryCard({
   ctaLabel = "Review",
   ctaColor = "var(--green-600)",
   ctaHoverColor = "var(--green-700, #15803d)",
+  subText,
 }: {
   req: RecoveryRequest;
   onReview: () => void;
   ctaLabel?: string;
   ctaColor?: string;
   ctaHoverColor?: string;
+  subText?: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const agentColor    = avatarColor(req.agent);
@@ -283,7 +360,7 @@ function RecoveryCard({
 
         {/* Community · farmers */}
         <p style={{ fontSize: "0.75rem", color: "var(--gray-500)", marginBottom: 10 }}>
-          {req.community} · {req.farmersSupported} farmers supported
+          {subText ?? `${req.community} · ${req.farmersSupported} farmers supported`}
         </p>
 
         {/* Cash support pill */}
@@ -2123,6 +2200,652 @@ function CanceledSummaryModal({
   );
 }
 
+// ─── Partial Recovery Modal ───────────────────────────────────────────────────
+
+function PartialRecoveryModal({
+  req,
+  unitPrice,
+  purchasePrice,
+  onClose,
+}: {
+  req: RecoveryRequest;
+  unitPrice: number;
+  purchasePrice: number;
+  onClose: () => void;
+}) {
+  const [listOpen, setListOpen] = useState(true);
+
+  const bagWeightKg     = req.bagWeightKg ?? 100;
+  const wantsDouble     = req.wantsDouble ?? false;
+  const bagsExpected    = wantsDouble ? 2 : 1;
+  const weightPerFarmer = bagWeightKg * bagsExpected;
+  const totalExpected   = weightPerFarmer * req.farmersSupported;
+
+  const farmers         = req.farmersList ?? [];
+  const recovered       = farmers.filter((f) => f.recoveredKg != null);
+  const pending         = farmers.filter((f) => f.recoveredKg == null);
+  const totalRecovered  = recovered.reduce((s, f) => s + (f.recoveredKg ?? 0), 0);
+  const progressPct     = Math.round((recovered.length / farmers.length) * 100);
+
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+  const totalAmount   = req.farmersSupported * req.amountPerFarmer;
+
+  function fmtDate(ds: string) {
+    const [y, m, d] = ds.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="#f59e0b" strokeWidth="1.4" />
+                <path d="M4 8h4M8 5v6" stroke="#f59e0b" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-gray-900">Partially recovered</h2>
+              <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+                {recovered.length} of {farmers.length} farmers recovered · {totalRecovered.toLocaleString()} kg recorded
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+              <p className="text-[11px] text-gray-500">{req.community} · {req.farmersSupported} farmers</p>
+            </div>
+          </div>
+
+          {/* Left panel */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
+          >
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ background: agentColor }}>
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
+          </div>
+
+          {/* Right panel */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Progress banner */}
+              <div style={{ borderRadius: 12, background: "#fffbeb", border: "1px solid #fde68a", padding: "14px 16px" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#92400e", margin: 0 }}>Recovery in progress</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "2px 0 0", fontWeight: 500 }}>
+                      {recovered.length} of {farmers.length} farmers recovered · {pending.length} still pending
+                    </p>
+                  </div>
+                  <span style={{ fontSize: "1.25rem", fontWeight: 800, color: "#d97706" }}>{progressPct}%</span>
+                </div>
+                {/* Progress bar */}
+                <div style={{ height: 8, borderRadius: 4, background: "#fef3c7", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${progressPct}%`, background: "#f59e0b", borderRadius: 4, transition: "width 0.3s ease" }} />
+                </div>
+                <div className="flex justify-between mt-1.5">
+                  <span style={{ fontSize: "0.6875rem", color: "#b45309", fontWeight: 600 }}>
+                    {totalRecovered.toLocaleString()} kg recorded
+                  </span>
+                  <span style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>
+                    {(totalExpected - totalRecovered).toLocaleString()} kg remaining
+                  </span>
+                </div>
+              </div>
+
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+
+              {/* Approved recovery parameters */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Approved recovery parameters
+                </p>
+                <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 500, margin: 0 }}>Recovery unit price</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>For calculating bag recovery value</p>
+                    </div>
+                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                      GHS {unitPrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/kg</span>
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "#f0fdf4" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 600, margin: 0 }}>Recovery value per farmer</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "2px 0 0" }}>{weightPerFarmer} kg × GHS {unitPrice.toFixed(2)}</p>
+                    </div>
+                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                      GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Farmer recovery list */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <button
+                  onClick={() => setListOpen((v) => !v)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: listOpen ? "#f9fafb" : "#fff", borderBottom: listOpen ? "1px solid #e5e7eb" : "none", cursor: "pointer", border: "none", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "#6b7280" }}>
+                      <circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M1 14c0-3 2.2-5 5-5h1c2.8 0 5 2 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                    </svg>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#374151" }}>Farmer recovery list</span>
+                    <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 20 }}>
+                      {recovered.length} recovered
+                    </span>
+                    <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fffbeb", padding: "2px 8px", borderRadius: 20 }}>
+                      {pending.length} pending
+                    </span>
+                  </div>
+                  <svg
+                    width="13" height="13" viewBox="0 0 13 13" fill="none"
+                    style={{ color: "#9ca3af", transform: listOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}
+                  >
+                    <path d="M2 4.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                {listOpen && farmers.length > 0 && (
+                  <>
+                    {/* Column headers */}
+                    <div style={{ display: "flex", alignItems: "center", padding: "7px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                      <span style={{ flex: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farmer</span>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 110 }}>Weight recorded</span>
+                    </div>
+
+                    {/* Recovered farmers */}
+                    {recovered.map((f, idx) => {
+                      const color = avatarColor(f.name);
+                      const ini   = initials(f.name);
+                      return (
+                        <div
+                          key={f.id}
+                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: "#f0fdf4" }}
+                        >
+                          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
+                              {ini}
+                            </span>
+                            <div style={{ minWidth: 0 }}>
+                              <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{f.name}</span>
+                              {f.recoveredDate && (
+                                <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>{fmtDate(f.recoveredDate)}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", width: 110, flexShrink: 0 }}>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#16a34a" }}>{f.recoveredKg} kg</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Pending farmers */}
+                    {pending.map((f, idx) => {
+                      const color  = avatarColor(f.name);
+                      const ini    = initials(f.name);
+                      const isLast = idx === pending.length - 1;
+                      return (
+                        <div
+                          key={f.id}
+                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: isLast ? "none" : "1px solid #f3f4f6" }}
+                        >
+                          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
+                              {ini}
+                            </span>
+                            <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                          </div>
+                          <div style={{ textAlign: "right", width: 110, flexShrink: 0 }}>
+                            <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: 600 }}>Pending</span>
+                            <span style={{ display: "block", fontSize: "0.6875rem", color: "#9ca3af" }}>exp. {weightPerFarmer} kg</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Summary footer */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#fffbeb", borderTop: "1px solid #fde68a" }}>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e" }}>
+                        Total recovered so far
+                      </span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#d97706" }}>
+                        {totalRecovered.toLocaleString()} kg
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#9ca3af", marginLeft: 4 }}>
+                          of {totalExpected.toLocaleString()} kg expected
+                        </span>
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
+              <button
+                onClick={onClose}
+                className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Full Recovery Modal ───────────────────────────────────────────────────────
+
+function FullRecoveryModal({
+  req,
+  unitPrice,
+  purchasePrice,
+  onClose,
+}: {
+  req: RecoveryRequest;
+  unitPrice: number;
+  purchasePrice: number;
+  onClose: () => void;
+}) {
+  const [listOpen, setListOpen] = useState(true);
+
+  const bagWeightKg     = req.bagWeightKg ?? 100;
+  const wantsDouble     = req.wantsDouble ?? false;
+  const bagsExpected    = wantsDouble ? 2 : 1;
+  const weightPerFarmer = bagWeightKg * bagsExpected;
+
+  const farmers        = req.farmersList ?? [];
+  const totalRecovered = farmers.reduce((s, f) => s + (f.recoveredKg ?? 0), 0);
+  const totalValue     = totalRecovered * unitPrice;
+
+  const agentColor    = avatarColor(req.agent);
+  const agentInitials = initials(req.agent);
+  const totalAmount   = req.farmersSupported * req.amountPerFarmer;
+
+  function fmtDate(ds: string) {
+    const [y, m, d] = ds.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col"
+        style={{ width: "min(960px, 95vw)", maxHeight: "92vh", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="#059669" strokeWidth="1.4" />
+                <path d="M5 8l2.5 2.5 4-5" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-gray-900">Fully recovered</h2>
+              <p className="text-[12px] font-medium text-gray-400 mt-0.5">
+                All {farmers.length} farmers recovered · {totalRecovered.toLocaleString()} kg total
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+
+          {/* Mobile strip */}
+          <div className="md:hidden flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+              <p className="text-[13px] font-bold text-gray-900">{req.groupName}</p>
+              <p className="text-[11px] text-gray-500">{req.community} · {req.farmersSupported} farmers</p>
+            </div>
+          </div>
+
+          {/* Left panel */}
+          <div
+            className="hidden md:flex flex-col gap-5 shrink-0 overflow-y-auto min-h-0"
+            style={{ width: 310, borderRight: "1px solid var(--gray-100)", padding: "22px 20px 22px 24px" }}
+          >
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Group</p>
+              <p className="text-[15px] font-bold text-gray-900 leading-snug">{req.groupName}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{req.community}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
+                <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
+                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
+                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Disbursement</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {([
+                  { label: "Transaction ID", value: req.transactionId },
+                  { label: "Date disbursed",  value: req.disbursedDate },
+                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between px-3 py-2.5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--gray-100)" : "none" }}
+                  >
+                    <span className="text-[11px] text-gray-400">{label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Field Agent</p>
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ background: agentColor }}>
+                  {agentInitials}
+                </span>
+                <p className="text-[13px] font-semibold text-gray-800">{req.agent}</p>
+              </div>
+            </div>
+
+            {req.actionHistory && req.actionHistory.length > 0 && (
+              <div>
+                <ActionTimeline records={req.actionHistory} accordion />
+              </div>
+            )}
+          </div>
+
+          {/* Right panel */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+              {/* Completion banner */}
+              <div style={{ borderRadius: 12, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "16px 16px" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#14532d", margin: 0 }}>Recovery complete</p>
+                    <p style={{ fontSize: "0.75rem", color: "#16a34a", margin: "2px 0 0" }}>
+                      All {farmers.length} farmers have been recovered from
+                    </p>
+                  </div>
+                </div>
+                {/* Summary stats */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
+                    <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "0 0 2px" }}>Total commodity recovered</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 800, color: "#059669", margin: 0 }}>{totalRecovered.toLocaleString()} kg</p>
+                  </div>
+                  <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
+                    <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "0 0 2px" }}>Total recovery value</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 800, color: "#059669", margin: 0 }}>GHS {totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Double bag notice */}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+
+              {/* Approved recovery parameters */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Approved recovery parameters
+                </p>
+                <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 500, margin: 0 }}>Recovery unit price</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>For calculating bag recovery value</p>
+                    </div>
+                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                      GHS {unitPrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/kg</span>
+                    </span>
+                  </div>
+                  {purchasePrice > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <div>
+                        <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 500, margin: 0 }}>Extra commodity purchase price</p>
+                        <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>For surplus purchases beyond recovery</p>
+                      </div>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+                        GHS {purchasePrice.toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>/kg</span>
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "#f0fdf4" }}>
+                    <div>
+                      <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 600, margin: 0 }}>Recovery value per farmer</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "2px 0 0" }}>{weightPerFarmer} kg × GHS {unitPrice.toFixed(2)}</p>
+                    </div>
+                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                      GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* All farmers list */}
+              <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <button
+                  onClick={() => setListOpen((v) => !v)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: listOpen ? "#f9fafb" : "#fff", borderBottom: listOpen ? "1px solid #e5e7eb" : "none", cursor: "pointer", border: "none", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "#6b7280" }}>
+                      <circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M1 14c0-3 2.2-5 5-5h1c2.8 0 5 2 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                    </svg>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#374151" }}>All farmers</span>
+                    <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#059669", background: "#f0fdf4", padding: "2px 8px", borderRadius: 20 }}>
+                      {farmers.length} fully recovered
+                    </span>
+                  </div>
+                  <svg
+                    width="13" height="13" viewBox="0 0 13 13" fill="none"
+                    style={{ color: "#9ca3af", transform: listOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}
+                  >
+                    <path d="M2 4.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                {listOpen && farmers.length > 0 && (
+                  <>
+                    {/* Column headers */}
+                    <div style={{ display: "flex", alignItems: "center", padding: "7px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                      <span style={{ flex: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farmer</span>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 130 }}>Weight recorded</span>
+                    </div>
+
+                    {farmers.map((f, idx) => {
+                      const color  = avatarColor(f.name);
+                      const ini    = initials(f.name);
+                      const isLast = idx === farmers.length - 1;
+                      return (
+                        <div
+                          key={f.id}
+                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: isLast ? "none" : "1px solid #f3f4f6", background: "#f0fdf4" }}
+                        >
+                          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
+                              {ini}
+                            </span>
+                            <div style={{ minWidth: 0 }}>
+                              <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{f.name}</span>
+                              {f.recoveredDate && (
+                                <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>{fmtDate(f.recoveredDate)}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", width: 130, flexShrink: 0 }}>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="#059669" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#059669" }}>{f.recoveredKg ?? weightPerFarmer} kg</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Total footer */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#dcfce7", borderTop: "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#14532d" }}>Total recovered</span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#059669" }}>
+                        {totalRecovered.toLocaleString()} kg
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>
+                          ({farmers.length} × {weightPerFarmer} kg)
+                        </span>
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
+              <button
+                onClick={onClose}
+                className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Set Timeframe Modal ──────────────────────────────────────────────────────
 
 function SetTimeframeModal({
@@ -2345,6 +3068,8 @@ export default function RecoveriesBoard() {
   const [activatedReq,       setActivatedReq]       = useState<RecoveryRequest | null>(null);
   const [pendingRecoveryReq, setPendingRecoveryReq] = useState<RecoveryRequest | null>(null);
   const [canceledReq,        setCanceledReq]        = useState<RecoveryRequest | null>(null);
+  const [partialReq,         setPartialReq]         = useState<RecoveryRequest | null>(null);
+  const [fullReq,            setFullReq]            = useState<RecoveryRequest | null>(null);
   const [stageOverrides, setStageOverrides] = useState<Record<string, RecoveryStage>>({});
   const [priceOverrides, setPriceOverrides] = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
   const [dynamicActions, setDynamicActions] = useState<Record<string, ActionRecord[]>>({});
@@ -2528,7 +3253,9 @@ export default function RecoveriesBoard() {
             const isFinanceCol          = mobileColId === "rec_finance_review";
             const isPendingRecoveryCol  = mobileColId === "rec_pending_recovery";
             const isCanceledCol         = mobileColId === "rec_rejected";
-            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol;
+            const isPartialCol          = mobileColId === "rec_partial";
+            const isFullCol             = mobileColId === "rec_full";
+            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol || isPartialCol || isFullCol;
             const ctaColor =
               isActivatedCol ? "#2563eb" :
               isCanceledCol  ? "#6b7280" :
@@ -2537,22 +3264,33 @@ export default function RecoveriesBoard() {
               isActivatedCol ? "#1d4ed8" :
               isCanceledCol  ? "#4b5563" :
               "var(--green-700, #15803d)";
-            return cards.map((r) => (
-              <RecoveryCard
-                key={r.id}
-                req={r}
-                ctaLabel={isViewOnly ? "View details" : "Review"}
-                ctaColor={ctaColor}
-                ctaHoverColor={ctaHoverColor}
-                onReview={() => {
-                  if (isActivatedCol)           setActivatedReq(r);
-                  else if (isFinanceCol)         setFinancingReq(r);
-                  else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
-                  else if (isCanceledCol)        setCanceledReq(r);
-                  else                           setReviewingReq(r);
-                }}
-              />
-            ));
+            return cards.map((r) => {
+              const farmers = r.farmersList ?? [];
+              const recovered = farmers.filter((f) => f.recoveredKg != null);
+              const cardSubText =
+                isPartialCol ? `${recovered.length}/${farmers.length} farmers recovered` :
+                isFullCol    ? `All ${farmers.length} farmers recovered` :
+                undefined;
+              return (
+                <RecoveryCard
+                  key={r.id}
+                  req={r}
+                  ctaLabel={isViewOnly ? "View details" : "Review"}
+                  ctaColor={ctaColor}
+                  ctaHoverColor={ctaHoverColor}
+                  subText={cardSubText}
+                  onReview={() => {
+                    if (isActivatedCol)           setActivatedReq(r);
+                    else if (isFinanceCol)         setFinancingReq(r);
+                    else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
+                    else if (isCanceledCol)        setCanceledReq(r);
+                    else if (isPartialCol)         setPartialReq(r);
+                    else if (isFullCol)            setFullReq(r);
+                    else                           setReviewingReq(r);
+                  }}
+                />
+              );
+            });
           })()}
         </div>
       </div>
@@ -2570,7 +3308,9 @@ export default function RecoveriesBoard() {
             const isFinanceCol         = col.id === "rec_finance_review";
             const isPendingRecoveryCol = col.id === "rec_pending_recovery";
             const isCanceledCol        = col.id === "rec_rejected";
-            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol;
+            const isPartialCol         = col.id === "rec_partial";
+            const isFullCol            = col.id === "rec_full";
+            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol || isPartialCol || isFullCol;
             const colCtaColor =
               isActivatedCol ? "#2563eb" :
               isCanceledCol  ? "#6b7280" :
@@ -2595,22 +3335,33 @@ export default function RecoveriesBoard() {
                   <div style={{ paddingTop: 8, paddingBottom: 16 }}>
                     {cards.length === 0
                       ? <EmptyColState />
-                      : cards.map((r) => (
-                          <RecoveryCard
-                            key={r.id}
-                            req={r}
-                            ctaLabel={isViewOnly ? "View details" : "Review"}
-                            ctaColor={colCtaColor}
-                            ctaHoverColor={colCtaHoverColor}
-                            onReview={() => {
-                              if (isActivatedCol)            setActivatedReq(r);
-                              else if (isFinanceCol)         setFinancingReq(r);
-                              else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
-                              else if (isCanceledCol)        setCanceledReq(r);
-                              else                           setReviewingReq(r);
-                            }}
-                          />
-                        ))
+                      : cards.map((r) => {
+                          const _farmers  = r.farmersList ?? [];
+                          const _recovered = _farmers.filter((f) => f.recoveredKg != null);
+                          const _subText  =
+                            isPartialCol ? `${_recovered.length}/${_farmers.length} farmers recovered` :
+                            isFullCol    ? `All ${_farmers.length} farmers recovered` :
+                            undefined;
+                          return (
+                            <RecoveryCard
+                              key={r.id}
+                              req={r}
+                              ctaLabel={isViewOnly ? "View details" : "Review"}
+                              ctaColor={colCtaColor}
+                              ctaHoverColor={colCtaHoverColor}
+                              subText={_subText}
+                              onReview={() => {
+                                if (isActivatedCol)            setActivatedReq(r);
+                                else if (isFinanceCol)         setFinancingReq(r);
+                                else if (isPendingRecoveryCol) setPendingRecoveryReq(r);
+                                else if (isCanceledCol)        setCanceledReq(r);
+                                else if (isPartialCol)         setPartialReq(r);
+                                else if (isFullCol)            setFullReq(r);
+                                else                           setReviewingReq(r);
+                              }}
+                            />
+                          );
+                        })
                     }
                   </div>
                 </ScrollArea>
@@ -2673,6 +3424,32 @@ export default function RecoveriesBoard() {
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
             onClose={() => setCanceledReq(null)}
+          />
+        );
+      })()}
+
+      {/* ── Partial recovery modal ── */}
+      {partialReq && (() => {
+        const { unitPrice, purchasePrice } = resolvedPrices(partialReq);
+        return (
+          <PartialRecoveryModal
+            req={enrichActions(partialReq)}
+            unitPrice={unitPrice}
+            purchasePrice={purchasePrice}
+            onClose={() => setPartialReq(null)}
+          />
+        );
+      })()}
+
+      {/* ── Full recovery modal ── */}
+      {fullReq && (() => {
+        const { unitPrice, purchasePrice } = resolvedPrices(fullReq);
+        return (
+          <FullRecoveryModal
+            req={enrichActions(fullReq)}
+            unitPrice={unitPrice}
+            purchasePrice={purchasePrice}
+            onClose={() => setFullReq(null)}
           />
         );
       })()}
