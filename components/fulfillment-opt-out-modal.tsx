@@ -61,9 +61,11 @@ function FileChip({
 export default function FulfillmentOptOutModal({
   req,
   onClose,
+  onReconcile,
 }: {
   req: FulfillmentRequest;
   onClose: () => void;
+  onReconcile?: () => void;
 }) {
   const farmers         = req.optedOutFarmers ?? [];
   const refundPerFarmer = req.approvedAmountPerFarmer;
@@ -108,6 +110,7 @@ export default function FulfillmentOptOutModal({
   function handleSubmit() {
     if (!canSubmit) return;
     setRecord({ fileNames: pendingFiles.map((f) => f.name), comment: pendingComment.trim() });
+    onReconcile?.();
   }
 
   // ── left-panel meta ───────────────────────────────────────────────────────
