@@ -7,9 +7,10 @@ import { initials, avatarColor } from "./helpers";
 interface FulfillmentCardProps {
   req: FulfillmentRequest;
   onView: () => void;
+  isReconciled?: boolean;
 }
 
-export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
+export function FulfillmentCard({ req, onView, isReconciled = false }: FulfillmentCardProps) {
   const [hovered, setHovered] = useState(false);
 
   const received      = req.confirmedFarmers.filter((f) => f.received).length;
@@ -33,9 +34,12 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
           : "0px 1px 3px rgba(16,24,40,0.06)",
         transform:  hovered ? "translateY(-2px)" : "none",
         transition: "box-shadow 0.2s, transform 0.2s",
-        border: isOptedOut
+        border: isOptedOut && isReconciled
+          ? "1.5px solid #86efac"
+          : isOptedOut
           ? "1.5px dashed var(--yellow-500)"
           : "1px solid var(--gray-200)",
+        background: isOptedOut && isReconciled ? "#f0fdf4" : "#ffffff",
       }}
       onClick={onView}
       onMouseEnter={() => setHovered(true)}
@@ -52,23 +56,41 @@ export function FulfillmentCard({ req, onView }: FulfillmentCardProps) {
           {req.community} &middot; {total} farmers confirmed
         </p>
 
-        {/* Opted-out warning chip */}
+        {/* Opted-out chip — amber when pending, green when reconciled */}
         {isOptedOut && optedOutCount > 0 && (
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3"
-            style={{ background: "var(--yellow-50)", border: "1px solid var(--yellow-200)" }}
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6.5" stroke="var(--yellow-600)" strokeWidth="1.4" />
-              <path d="M8 5v3.5M8 10.5v.5" stroke="var(--yellow-600)" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--yellow-700)" }}>
-              {optedOutCount} farmer{optedOutCount !== 1 ? "s" : ""} opted out
-            </span>
-            <span style={{ marginLeft: "auto", fontSize: "0.6875rem", fontWeight: 500, color: "var(--yellow-600)" }}>
-              GHS {(optedOutCount * req.approvedAmountPerFarmer).toLocaleString()} to refund
-            </span>
-          </div>
+          isReconciled ? (
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3"
+              style={{ background: "#dcfce7", border: "1px solid #86efac" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="#16a34a" strokeWidth="1.4" />
+                <path d="M5 8l2.5 2.5 4-4" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#15803d" }}>
+                Refunds reconciled
+              </span>
+              <span style={{ marginLeft: "auto", fontSize: "0.6875rem", fontWeight: 500, color: "#16a34a" }}>
+                {optedOutCount} farmer{optedOutCount !== 1 ? "s" : ""} covered
+              </span>
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3"
+              style={{ background: "var(--yellow-50)", border: "1px solid var(--yellow-200)" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="var(--yellow-600)" strokeWidth="1.4" />
+                <path d="M8 5v3.5M8 10.5v.5" stroke="var(--yellow-600)" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--yellow-700)" }}>
+                {optedOutCount} farmer{optedOutCount !== 1 ? "s" : ""} opted out
+              </span>
+              <span style={{ marginLeft: "auto", fontSize: "0.6875rem", fontWeight: 500, color: "var(--yellow-600)" }}>
+                GHS {(optedOutCount * req.approvedAmountPerFarmer).toLocaleString()} to refund
+              </span>
+            </div>
+          )
         )}
 
         {/* Amount row */}

@@ -376,9 +376,10 @@ const DEFAULT_FILTERS: FulfillmentFilters = {
 // ---------------------------------------------------------------------------
 export default function FulfillmentBoard() {
   const [mobileColId, setMobileColId] = useState(FULFILLMENT_COLUMNS[0].id);
-  const [selectedReq, setSelectedReq] = useState<FulfillmentRequest | null>(null);
-  const [optOutReq,   setOptOutReq]   = useState<FulfillmentRequest | null>(null);
-  const [filters,     setFilters]     = useState<FulfillmentFilters>(DEFAULT_FILTERS);
+  const [selectedReq,      setSelectedReq]      = useState<FulfillmentRequest | null>(null);
+  const [optOutReq,        setOptOutReq]        = useState<FulfillmentRequest | null>(null);
+  const [reconciledIds,    setReconciledIds]    = useState<Set<string>>(new Set());
+  const [filters,          setFilters]          = useState<FulfillmentFilters>(DEFAULT_FILTERS);
 
   const communities = useMemo(
     () => Array.from(new Set(MOCK_FULFILLMENT_REQUESTS.map((r) => r.community))).sort(),
@@ -419,7 +420,11 @@ export default function FulfillmentBoard() {
         <FulfillmentSlideOver req={selectedReq} onClose={() => setSelectedReq(null)} />
       )}
       {optOutReq && (
-        <FulfillmentOptOutModal req={optOutReq} onClose={() => setOptOutReq(null)} />
+        <FulfillmentOptOutModal
+          req={optOutReq}
+          onClose={() => setOptOutReq(null)}
+          onReconcile={() => setReconciledIds((prev) => new Set([...prev, optOutReq.id]))}
+        />
       )}
 
       {/* ── Filter bar ── */}
@@ -460,7 +465,7 @@ export default function FulfillmentBoard() {
             const cards = cardsForCol(mobileColId);
             if (cards.length === 0) return <EmptyColState />;
             return cards.map((r) => (
-              <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} />
+              <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} isReconciled={reconciledIds.has(r.id)} />
             ));
           })()}
         </div>
@@ -488,7 +493,7 @@ export default function FulfillmentBoard() {
                       <EmptyColState />
                     ) : (
                       cards.map((r) => (
-                        <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} />
+                        <FulfillmentCard key={r.id} req={r} onView={() => handleCardClick(r)} isReconciled={reconciledIds.has(r.id)} />
                       ))
                     )}
                   </div>
