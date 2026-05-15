@@ -6,33 +6,51 @@ import { initials, avatarColor } from "@/components/kanban/helpers";
 import { ActionTimeline } from "@/components/kanban/action-timeline";
 
 // ---------------------------------------------------------------------------
-// Per-farmer refund record (after submission)
+// Per-farmer reconciliation record (after submission)
 // ---------------------------------------------------------------------------
 interface RefundRecord {
-  fileName: string;
-  actualAmount: number;
+  fileNames: string[];
+  comment:   string;
 }
 
 // ---------------------------------------------------------------------------
-// Document placeholder thumbnail
+// File chip — shown in the upload list and on completed rows
 // ---------------------------------------------------------------------------
-function DocThumb({ fileName }: { fileName: string }) {
+function FileChip({
+  fileName,
+  onRemove,
+}: {
+  fileName: string;
+  onRemove?: () => void;
+}) {
   return (
     <div
-      className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-      style={{ background: "var(--green-50)", border: "1px solid var(--green-200)" }}
+      className="flex items-center gap-1.5 rounded-lg px-2 py-1"
+      style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", maxWidth: "100%" }}
     >
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
         <rect x="2" y="1" width="10" height="14" rx="1.5" stroke="var(--green-600)" strokeWidth="1.4" />
         <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--green-600)" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
       <span
         className="truncate"
-        style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)", maxWidth: 120 }}
+        style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)" }}
         title={fileName}
       >
         {fileName}
       </span>
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center transition-colors"
+          style={{ color: "var(--green-600)", background: "var(--green-100)" }}
+          aria-label={`Remove ${fileName}`}
+        >
+          <svg width="7" height="7" viewBox="0 0 10 10" fill="none">
+            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -57,8 +75,8 @@ export default function FulfillmentOptOutModal({
   const [completed, setCompleted] = useState<Record<string, RefundRecord>>({});
 
   // ── pending action panel state ───────────────────────────────────────────
-  const [pendingFile,   setPendingFile]   = useState<File | null>(null);
-  const [pendingAmount, setPendingAmount] = useState("");
+  const [pendingFiles,   setPendingFiles]   = useState<File[]>([]);
+  const [pendingComment, setPendingComment] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,15 +91,12 @@ export default function FulfillmentOptOutModal({
   const completedCount = Object.keys(completed).length;
   const allComplete    = farmers.length > 0 && completedCount === farmers.length;
 
-  // Farmers that are selected AND not yet completed
   const activeSelected = [...selectedIds].filter((id) => !completed[id]);
   const hasSelection   = activeSelected.length > 0;
 
-  const expectedForSelection = activeSelected.length * refundPerFarmer;
-  const parsedAmount         = parseFloat(pendingAmount.replace(/,/g, ""));
-  const amountEntered        = pendingAmount.trim() !== "" && !isNaN(parsedAmount);
-  const amountMismatch       = amountEntered && parsedAmount !== expectedForSelection;
-  const canSubmit            = hasSelection && pendingFile !== null && amountEntered;
+  const hasFiles   = pendingFiles.length > 0;
+  const hasComment = pendingComment.trim().length > 0;
+  const canSubmit  = hasSelection && hasFiles && hasComment;
 
   // ── handlers ──────────────────────────────────────────────────────────────
   function toggleFarmer(id: string) {
@@ -104,16 +119,26 @@ export default function FulfillmentOptOutModal({
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setPendingFile(file);
+    const incoming = Array.from(e.target.files ?? []) as File[];
+    if (incoming.length > 0) {
+      setPendingFiles((prev) => {
+        const existingNames = new Set(prev.map((f) => f.name));
+        const fresh = incoming.filter((f) => !existingNames.has(f.name));
+        return [...prev, ...fresh];
+      });
+    }
     e.target.value = "";
+  }
+
+  function removeFile(name: string) {
+    setPendingFiles((prev) => prev.filter((f) => f.name !== name));
   }
 
   function handleSubmit() {
     if (!canSubmit) return;
     const record: RefundRecord = {
-      fileName:     pendingFile!.name,
-      actualAmount: parsedAmount,
+      fileNames: pendingFiles.map((f) => f.name),
+      comment:   pendingComment.trim(),
     };
     setCompleted((prev) => {
       const next = { ...prev };
@@ -121,8 +146,8 @@ export default function FulfillmentOptOutModal({
       return next;
     });
     setSelectedIds(new Set());
-    setPendingFile(null);
-    setPendingAmount("");
+    setPendingFiles([]);
+    setPendingComment("");
   }
 
   // ── render ────────────────────────────────────────────────────────────────
@@ -163,7 +188,7 @@ export default function FulfillmentOptOutModal({
               <div>
                 <h2 className="text-[17px] font-bold text-gray-900">Cash opt-out refunds</h2>
                 <p className="text-[12px] font-medium text-gray-400 mt-0.5">
-                  {farmers.length} farmer{farmers.length !== 1 ? "s" : ""} opted out of commodity · refunds to process
+                  {farmers.length} farmer{farmers.length !== 1 ? "s" : ""} opted out of commodity · refunds to reconcile
                 </p>
               </div>
             </div>
@@ -272,15 +297,15 @@ export default function FulfillmentOptOutModal({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="text-[11px] text-amber-600 font-semibold">Refund progress</p>
+                      <p className="text-[11px] text-amber-600 font-semibold">Reconciliation progress</p>
                       <p className="text-[16px] font-bold text-amber-800">
-                        {completedCount} / {farmers.length} completed
+                        {completedCount} / {farmers.length} reconciled
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[11px] text-amber-600">Remaining</p>
+                      <p className="text-[11px] text-amber-600">Pending</p>
                       <p className="text-[14px] font-bold text-amber-800">
-                        GHS {((farmers.length - completedCount) * refundPerFarmer).toLocaleString()}
+                        {farmers.length - completedCount} farmer{farmers.length - completedCount !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
@@ -298,7 +323,7 @@ export default function FulfillmentOptOutModal({
 
               {/* Instructions */}
               <p className="px-6 pt-4 pb-2 text-[12px] text-gray-500 shrink-0">
-                Select one or more farmers, upload proof of refund and enter the actual amount received, then submit.
+                Select one or more farmers, upload proof documents, add a reconciliation note describing the amount received and reasons, then mark as reconciled.
               </p>
 
               {/* Farmer list (scrollable) */}
@@ -361,7 +386,7 @@ export default function FulfillmentOptOutModal({
                       >
                         <div className="flex items-start gap-3">
 
-                          {/* Checkbox / status */}
+                          {/* Checkbox / status indicator */}
                           {isComplete ? (
                             <span
                               className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-1"
@@ -398,13 +423,19 @@ export default function FulfillmentOptOutModal({
                             {initials(farmer.name)}
                           </span>
 
-                          {/* Name + details */}
+                          {/* Name + completion detail */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <p className="text-[13px] font-semibold text-gray-800 truncate">{farmer.name}</p>
                               {isComplete ? (
-                                <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--green-600)" }}>
-                                  GHS {record.actualAmount.toLocaleString()}
+                                <span
+                                  className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                                  style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)" }}
+                                >
+                                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                                    <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  Reconciled
                                 </span>
                               ) : (
                                 <p className="shrink-0 text-[11px] text-gray-400">
@@ -413,27 +444,22 @@ export default function FulfillmentOptOutModal({
                               )}
                             </div>
 
-                            {/* Completed: proof chip */}
+                            {/* Completed: proof files + comment */}
                             {isComplete && (
-                              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                                <span
-                                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                                  style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)" }}
+                              <div className="mt-2 space-y-1.5">
+                                {/* File chips */}
+                                <div className="flex flex-wrap gap-1.5">
+                                  {record.fileNames.map((name) => (
+                                    <FileChip key={name} fileName={name} />
+                                  ))}
+                                </div>
+                                {/* Comment */}
+                                <p
+                                  className="text-[11px] text-gray-500 leading-relaxed line-clamp-2"
+                                  style={{ fontStyle: "italic" }}
                                 >
-                                  <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                  Refund complete
-                                </span>
-                                <DocThumb fileName={record.fileName} />
-                                {record.actualAmount !== refundPerFarmer && (
-                                  <span
-                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                                    style={{ background: "#FFFBEB", border: "1px solid #FDE68A", fontSize: "0.6875rem", fontWeight: 600, color: "#92400E" }}
-                                  >
-                                    Partial (expected GHS {refundPerFarmer.toLocaleString()})
-                                  </span>
-                                )}
+                                  &ldquo;{record.comment}&rdquo;
+                                </p>
                               </div>
                             )}
                           </div>
@@ -447,59 +473,62 @@ export default function FulfillmentOptOutModal({
               {/* ── Selection action panel ── */}
               {hasSelection && (
                 <div
-                  className="shrink-0 px-6 py-4"
+                  className="shrink-0 px-6 py-4 space-y-3"
                   style={{ borderTop: "1px solid var(--gray-100)", background: "#F9FAFB" }}
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  {/* Selection summary */}
+                  <div className="flex items-center justify-between">
                     <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--gray-900)" }}>
                       {activeSelected.length} farmer{activeSelected.length !== 1 ? "s" : ""} selected
                     </span>
-                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--gray-600)" }}>
-                      Expected: <span style={{ color: "var(--gray-900)" }}>GHS {expectedForSelection.toLocaleString()}</span>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "var(--gray-500)" }}>
+                      Expected: <span style={{ fontWeight: 700, color: "var(--gray-800)" }}>GHS {(activeSelected.length * refundPerFarmer).toLocaleString()}</span>
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    {/* File upload */}
+                  {/* ── Step 1: File upload ── */}
+                  <div>
+                    <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--gray-700)", marginBottom: 6 }}>
+                      Step 1 — Upload proof documents
+                    </p>
+
+                    {/* Hidden multi-file input */}
                     <input
                       ref={fileInputRef}
                       type="file"
+                      multiple
                       className="hidden"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={handleFileChange}
                     />
-                    {pendingFile ? (
+
+                    {pendingFiles.length > 0 ? (
                       <div
-                        className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                        style={{ background: "var(--green-50)", border: "1px solid var(--green-200)" }}
+                        className="rounded-xl p-3 space-y-2"
+                        style={{ background: "#fff", border: "1.5px solid var(--green-200)" }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                          <rect x="2" y="1" width="10" height="14" rx="1.5" stroke="var(--green-600)" strokeWidth="1.4" />
-                          <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--green-600)" strokeWidth="1.2" strokeLinecap="round" />
-                        </svg>
-                        <span
-                          className="flex-1 truncate"
-                          style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--green-800)" }}
-                          title={pendingFile.name}
-                        >
-                          {pendingFile.name}
-                        </span>
+                        {/* Chips for each uploaded file */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {pendingFiles.map((f) => (
+                            <FileChip
+                              key={f.name}
+                              fileName={f.name}
+                              onRemove={() => removeFile(f.name)}
+                            />
+                          ))}
+                        </div>
+                        {/* Add more button */}
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="shrink-0 text-[11px] font-bold rounded-md px-2 py-1 transition-colors"
-                          style={{ color: "var(--green-700)", background: "var(--green-100)" }}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors"
+                          style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)", background: "var(--green-50)", border: "1px dashed var(--green-300)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-100)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-50)")}
                         >
-                          Change
-                        </button>
-                        <button
-                          onClick={() => setPendingFile(null)}
-                          className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-                          style={{ color: "var(--green-600)", background: "var(--green-100)" }}
-                          aria-label="Remove file"
-                        >
-                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                           </svg>
+                          Add more files
                         </button>
                       </div>
                     ) : (
@@ -516,96 +545,72 @@ export default function FulfillmentOptOutModal({
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = "var(--green-400)";
-                          e.currentTarget.style.color = "var(--green-600)";
-                          e.currentTarget.style.background = "var(--green-25)";
+                          e.currentTarget.style.color       = "var(--green-600)";
+                          e.currentTarget.style.background  = "var(--green-25)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.borderColor = "var(--gray-300)";
-                          e.currentTarget.style.color = "var(--gray-500)";
-                          e.currentTarget.style.background = "#ffffff";
+                          e.currentTarget.style.color       = "var(--gray-500)";
+                          e.currentTarget.style.background  = "#ffffff";
                         }}
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                           <path d="M8 2v8M5.5 4.5L8 2l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
-                        Upload proof of refund (PDF, JPG, PNG)
+                        Upload proof documents (PDF, JPG, PNG) — multiple allowed
                       </button>
                     )}
-
-                    {/* Actual amount input */}
-                    <div className="relative">
-                      <span
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold"
-                        style={{ color: "var(--gray-500)" }}
-                      >
-                        GHS
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder={`${expectedForSelection} (expected)`}
-                        value={pendingAmount}
-                        onChange={(e) => setPendingAmount(e.target.value)}
-                        className="w-full h-10 rounded-xl pl-12 pr-4"
-                        style={{
-                          border: amountMismatch
-                            ? "1.5px solid #F59E0B"
-                            : "1.5px solid var(--gray-200)",
-                          background: "#ffffff",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          color: "var(--gray-900)",
-                          outline: "none",
-                        }}
-                        onFocus={(e) => {
-                          if (!amountMismatch) e.currentTarget.style.borderColor = "var(--green-500)";
-                        }}
-                        onBlur={(e) => {
-                          if (!amountMismatch) e.currentTarget.style.borderColor = "var(--gray-200)";
-                        }}
-                      />
-                    </div>
-
-                    {/* Amount mismatch warning */}
-                    {amountMismatch && (
-                      <div
-                        className="flex items-start gap-2 rounded-lg px-3 py-2"
-                        style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-                          <circle cx="8" cy="8" r="6.5" stroke="#D97706" strokeWidth="1.4" />
-                          <path d="M8 5v3.5M8 10.5v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        <p style={{ fontSize: "0.75rem", color: "#92400E", lineHeight: 1.4 }}>
-                          Amount entered (GHS {parsedAmount.toLocaleString()}) doesn&apos;t match expected
-                          (GHS {expectedForSelection.toLocaleString()}). You can still mark as complete.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Submit button */}
-                    <button
-                      onClick={handleSubmit}
-                      disabled={!canSubmit}
-                      className="w-full h-10 rounded-xl text-[13px] font-bold text-white transition-all"
-                      style={
-                        !canSubmit
-                          ? { background: "var(--gray-200)", color: "var(--gray-400)", cursor: "not-allowed" }
-                          : amountMismatch
-                          ? { background: "#D97706" }
-                          : { background: "var(--green-600)" }
-                      }
-                    >
-                      {!pendingFile
-                        ? "Upload proof to continue"
-                        : !amountEntered
-                        ? "Enter actual amount"
-                        : amountMismatch
-                        ? "Mark complete anyway"
-                        : "Submit refund"}
-                    </button>
                   </div>
+
+                  {/* ── Step 2: Reconciliation comment ── */}
+                  <div>
+                    <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--gray-700)", marginBottom: 6 }}>
+                      Step 2 — Reconciliation note <span style={{ color: "var(--gray-400)", fontWeight: 500 }}>(required)</span>
+                    </p>
+                    <textarea
+                      rows={3}
+                      placeholder="Describe the amount received as refund and the reasons behind the amount — e.g. 'Farmer received GHS 400 in full. Cash collected on 12 Jan 2026 at community meeting.'"
+                      value={pendingComment}
+                      onChange={(e) => setPendingComment(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2.5 resize-none"
+                      style={{
+                        border: "1.5px solid var(--gray-200)",
+                        background: "#ffffff",
+                        fontSize: "0.8125rem",
+                        color: "var(--gray-800)",
+                        lineHeight: 1.5,
+                        outline: "none",
+                      }}
+                      onFocus={(e)  => (e.currentTarget.style.borderColor = "var(--green-500)")}
+                      onBlur={(e)   => (e.currentTarget.style.borderColor = "var(--gray-200)")}
+                    />
+                    {pendingComment.trim().length > 0 && (
+                      <p style={{ fontSize: "0.6875rem", color: "var(--gray-400)", marginTop: 4, textAlign: "right" }}>
+                        {pendingComment.trim().length} characters
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ── Submit ── */}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="w-full h-10 rounded-xl text-[13px] font-bold text-white transition-all"
+                    style={
+                      !canSubmit
+                        ? { background: "var(--gray-200)", color: "var(--gray-400)", cursor: "not-allowed" }
+                        : { background: "var(--green-600)" }
+                    }
+                    onMouseEnter={(e) => { if (canSubmit) e.currentTarget.style.background = "var(--green-700, #15803d)"; }}
+                    onMouseLeave={(e) => { if (canSubmit) e.currentTarget.style.background = "var(--green-600)"; }}
+                  >
+                    {!hasFiles
+                      ? "Upload proof documents to continue"
+                      : !hasComment
+                      ? "Add a reconciliation note to continue"
+                      : `Mark ${activeSelected.length} farmer${activeSelected.length !== 1 ? "s" : ""} as reconciled`}
+                  </button>
                 </div>
               )}
 
@@ -622,8 +627,10 @@ export default function FulfillmentOptOutModal({
                     onClick={onClose}
                     className="flex-1 h-9 rounded-lg text-[13px] font-bold text-white transition-colors"
                     style={{ background: "var(--green-600)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-700, #15803d)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-600)")}
                   >
-                    All complete — done
+                    All reconciled — done
                   </button>
                 )}
               </div>
