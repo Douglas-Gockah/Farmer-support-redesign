@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 
-export type AppScreen = "dashboard" | "kanban";
+export type AppScreen =
+  | "dashboard"
+  | "kanban"
+  | "purchases-dashboard"
+  | "purchases-list"
+  | "purchases-requests"
+  | "purchases-reconciliations"
+  | "purchases-pres"
+  | "purchases-warehouse";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,7 +31,18 @@ const NAV_ITEMS: NavItem[] = [
   { icon: "edit_document",   label: "Forms"          },
   { icon: "group",           label: "Profiles",       children: [] },
   { icon: "forest",          label: "Green Tracker",  children: [] },
-  { icon: "barcode_scanner", label: "Purchases",      children: [] },
+  {
+    icon: "barcode_scanner",
+    label: "Purchases",
+    children: [
+      { label: "Dashboard",      screen: "purchases-dashboard"      },
+      { label: "Purchase List",  screen: "purchases-list"           },
+      { label: "Purchase Requests", screen: "purchases-requests"    },
+      { label: "Reconciliations", screen: "purchases-reconciliations" },
+      { label: "PREs",           screen: "purchases-pres"           },
+      { label: "Warehouse stock", screen: "purchases-warehouse"     },
+    ],
+  },
   {
     icon: "handshake",
     label: "Farmer support",
