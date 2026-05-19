@@ -75,6 +75,35 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   },
 ];
 
+// ─── PRE data ────────────────────────────────────────────────────────────────
+
+type PaymentStatus = "Full Payment" | "Pending payment" | "Partial payment";
+
+interface PRERequest {
+  id:                 string;
+  dateOfRequest:      string;
+  requestingOfficer:  string;
+  community:          string;
+  subRequests:        number;
+  noOfBags:           number;
+  totalExpense:       number;
+  progress:           string;
+  paymentStatus:      PaymentStatus;
+}
+
+const MOCK_PRE_REQUESTS: PRERequest[] = [
+  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 5,  noOfBags: 5,  totalExpense: 82000, progress: "5/5",  paymentStatus: "Full Payment" },
+  { id: "2",  dateOfRequest: "Nov 25, 2025", requestingOfficer: "Ama Kusi",       community: "Amsterdam",   subRequests: 9,  noOfBags: 50, totalExpense: 82000, progress: "0/9",  paymentStatus: "Pending payment" },
+  { id: "3",  dateOfRequest: "Nov 18, 2025", requestingOfficer: "Ama Appiah",     community: "Aba",         subRequests: 4,  noOfBags: 2,  totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
+  { id: "4",  dateOfRequest: "Nov 19, 2025", requestingOfficer: "Joseph Mensah",  community: "Akosa",       subRequests: 5,  noOfBags: 25, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment" },
+  { id: "5",  dateOfRequest: "Nov 20, 2025", requestingOfficer: "Bernard Bortey", community: "Kowie",       subRequests: 3,  noOfBags: 15, totalExpense: 82000, progress: "2/3",  paymentStatus: "Partial payment" },
+  { id: "6",  dateOfRequest: "Nov 21, 2025", requestingOfficer: "Bernard Bortey", community: "Dagbanjado",  subRequests: 1,  noOfBags: 30, totalExpense: 82000, progress: "1/6",  paymentStatus: "Partial payment" },
+  { id: "7",  dateOfRequest: "Nov 22, 2025", requestingOfficer: "Bernard Bortey", community: "Bachuriyiri", subRequests: 3,  noOfBags: 8,  totalExpense: 82000, progress: "2/3",  paymentStatus: "Partial payment" },
+  { id: "8",  dateOfRequest: "Nov 23, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 4,  noOfBags: 40, totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
+  { id: "9",  dateOfRequest: "Nov 24, 2025", requestingOfficer: "Ama Kusi",       community: "Nasia",       subRequests: 5,  noOfBags: 22, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment" },
+  { id: "10", dateOfRequest: "Nov 24, 2025", requestingOfficer: "Ama Kusi",       community: "Apengu",      subRequests: 14, noOfBags: 22, totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
+];
+
 // ─── Screen label map ─────────────────────────────────────────────────────────
 
 const SCREEN_LABELS: Partial<Record<AppScreen, string>> = {
@@ -111,6 +140,25 @@ function approvalChip(status: ApprovalStatus) {
   );
 }
 
+function paymentChip(status: PaymentStatus) {
+  const cfg: Record<PaymentStatus, { bg: string; color: string }> = {
+    "Full Payment":    { bg: "#f0fdf4", color: "#15803d" },
+    "Pending payment": { bg: "#fffbeb", color: "#d97706" },
+    "Partial payment": { bg: "#eff6ff", color: "#1d4ed8" },
+  };
+  const s = cfg[status];
+  return (
+    <span
+      style={{
+        display: "inline-block", padding: "3px 10px", borderRadius: 20,
+        fontSize: 12, fontWeight: 600, background: s.bg, color: s.color, whiteSpace: "nowrap",
+      }}
+    >
+      {status}
+    </span>
+  );
+}
+
 function CopyIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -138,6 +186,19 @@ function ChevronIcon({ dir }: { dir: "left" | "right" }) {
       aria-hidden="true"
     >
       <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DoubleChevronIcon({ dir }: { dir: "left" | "right" }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 14 14" fill="none"
+      style={{ transform: dir === "right" ? "rotate(180deg)" : undefined }}
+      aria-hidden="true"
+    >
+      <path d="M7 10L3 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 10L7 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -199,7 +260,7 @@ function RecoveryIndicator() {
 
 // ─── Filter pill ──────────────────────────────────────────────────────────────
 
-function FilterPill({ label }: { label: string }) {
+function FilterPill({ label, calendar }: { label: string; calendar?: boolean }) {
   return (
     <button
       className="inline-flex items-center gap-1.5 transition-colors"
@@ -209,6 +270,13 @@ function FilterPill({ label }: { label: string }) {
         background: "#fff", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap",
       }}
     >
+      {calendar && (
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1" y="2.5" width="12" height="10" rx="1.5" stroke="#6b7280" strokeWidth="1.3" />
+          <path d="M4 1v3M10 1v3" stroke="#6b7280" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M1 5.5h12" stroke="#6b7280" strokeWidth="1.3" />
+        </svg>
+      )}
       {label}
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
         <path d="M3 5l4 4 4-4" stroke="#6b7280" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -428,6 +496,135 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
   );
 }
 
+// ─── PREs table ──────────────────────────────────────────────────────────────
+
+function PREsTable() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10;
+
+  const PRETH = ({ children, right, center }: { children?: React.ReactNode; right?: boolean; center?: boolean }) => (
+    <th
+      style={{
+        padding: "10px 14px",
+        textAlign: center ? "center" : right ? "right" : "left",
+        fontSize: 11, fontWeight: 600, color: "#6b7280",
+        textTransform: "uppercase", letterSpacing: "0.05em",
+        borderBottom: "1px solid #e5e7eb", background: "#f9fafb", whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </th>
+  );
+
+  return (
+    <div className="flex flex-col" style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
+          <thead>
+            <tr>
+              <PRETH>Date of request</PRETH>
+              <PRETH>Requesting officer</PRETH>
+              <PRETH>Community</PRETH>
+              <PRETH center>Sub requests</PRETH>
+              <PRETH center>No of bags</PRETH>
+              <PRETH right>Total expense</PRETH>
+              <PRETH right>Progress</PRETH>
+              <PRETH>Payment Status</PRETH>
+            </tr>
+          </thead>
+          <tbody>
+            {MOCK_PRE_REQUESTS.map((row, i) => (
+              <tr
+                key={row.id}
+                style={{ borderBottom: i < MOCK_PRE_REQUESTS.length - 1 ? "1px solid #f3f4f6" : undefined, transition: "background 0.1s" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
+              >
+                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>{row.dateOfRequest}</td>
+                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.requestingOfficer}</td>
+                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.community}</td>
+                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", textAlign: "center" }}>{row.subRequests}</td>
+                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", textAlign: "center" }}>{row.noOfBags}</td>
+                <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
+                  GHS {fmtPrice(row.totalExpense)}
+                </td>
+                <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500, color: "#374151", textAlign: "right" }}>{row.progress}</td>
+                <td style={{ padding: "12px 14px" }}>{paymentChip(row.paymentStatus)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
+      <div
+        className="flex items-center justify-between"
+        style={{ padding: "12px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexWrap: "wrap", gap: 12 }}
+      >
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          Total Rows: <strong style={{ color: "#111827" }}>{MOCK_PRE_REQUESTS.length}</strong>
+        </span>
+
+        <div className="flex items-center gap-1.5">
+          {/* First */}
+          <button
+            onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
+            style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: currentPage === 1 ? "#d1d5db" : "#374151", cursor: currentPage === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          ><DoubleChevronIcon dir="left" /></button>
+
+          {/* Prev */}
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+            style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: currentPage === 1 ? "#d1d5db" : "#374151", cursor: currentPage === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          ><ChevronIcon dir="left" /></button>
+
+          {/* Page numbers */}
+          {[1, 2, 3, 4].map((p) => (
+            <button
+              key={p} onClick={() => setCurrentPage(p)}
+              style={{ width: 30, height: 30, borderRadius: 6, border: currentPage === p ? "1.5px solid #1ab373" : "1px solid #e5e7eb", background: currentPage === p ? "#f0fdf4" : "#fff", color: currentPage === p ? "#15803d" : "#374151", fontSize: 13, fontWeight: currentPage === p ? 600 : 400, cursor: "pointer" }}
+            >{p}</button>
+          ))}
+
+          {/* Next */}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+            style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: currentPage === totalPages ? "#d1d5db" : "#374151", cursor: currentPage === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          ><ChevronIcon dir="right" /></button>
+
+          {/* Last */}
+          <button
+            onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}
+            style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: currentPage === totalPages ? "#d1d5db" : "#374151", cursor: currentPage === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          ><DoubleChevronIcon dir="right" /></button>
+
+          <span style={{ fontSize: 13, color: "#9ca3af", padding: "0 2px" }}>. . . . .</span>
+
+          {/* Last page number button */}
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            style={{ width: 30, height: 30, borderRadius: 6, border: currentPage === totalPages ? "1.5px solid #1ab373" : "1px solid #e5e7eb", background: currentPage === totalPages ? "#f0fdf4" : "#fff", color: currentPage === totalPages ? "#15803d" : "#374151", fontSize: 13, fontWeight: currentPage === totalPages ? 600 : 400, cursor: "pointer" }}
+          >{totalPages}</button>
+
+          <div className="flex items-center gap-1.5" style={{ marginLeft: 8 }}>
+            <span style={{ fontSize: 12, color: "#6b7280" }}>Go to</span>
+            <input
+              type="number" min={1} max={totalPages} defaultValue="" placeholder="—"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const v = parseInt((e.target as HTMLInputElement).value, 10);
+                  if (!isNaN(v) && v >= 1 && v <= totalPages) setCurrentPage(v);
+                }
+              }}
+              style={{ width: 48, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", padding: "0 8px", fontSize: 13, textAlign: "center", outline: "none" }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Placeholder panel ────────────────────────────────────────────────────────
 
 function PlaceholderPanel({ title }: { title: string }) {
@@ -453,6 +650,7 @@ interface PurchasesScreenProps {
 export default function PurchasesScreen({ activeSubScreen, onNavigate }: PurchasesScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const isRequests = activeSubScreen === "purchases-requests";
+  const isPres     = activeSubScreen === "purchases-pres";
   const label = SCREEN_LABELS[activeSubScreen] ?? "Purchases";
 
   return (
@@ -512,13 +710,18 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
           </div>
         )}
 
-        {/* Non-requests header: just title + export */}
+        {/* Non-requests header: title + export */}
         {!isRequests && (
-          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: isPres ? 14 : 16 }}>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: 0 }}>{label}</h1>
             <button
               className="inline-flex items-center gap-2"
-              style={{ height: 36, paddingLeft: 14, paddingRight: 14, borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", fontSize: 13, fontWeight: 500, color: "#374151", cursor: "pointer" }}
+              style={{
+                height: isPres ? 40 : 36, paddingLeft: 14, paddingRight: 14, borderRadius: 8,
+                border: isPres ? "1.5px solid #1ab373" : "1px solid #e5e7eb",
+                background: "#fff", fontSize: 13, fontWeight: 500,
+                color: isPres ? "#1ab373" : "#374151", cursor: "pointer",
+              }}
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -530,25 +733,36 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
         )}
       </div>
 
-      {/* ── Filter bar (Purchase Requests only) ── */}
-      {isRequests && (
+      {/* ── Filter bar ── */}
+      {(isRequests || isPres) && (
         <div
           className="flex items-center gap-2"
           style={{ padding: "12px 28px", background: "#fff", borderBottom: "1px solid #f3f4f6", overflowX: "auto", flexShrink: 0 }}
         >
-          <FilterPill label="All Time" />
-          <FilterPill label="All Agents" />
-          <FilterPill label="All Communities" />
-          <FilterPill label="Approval Status" />
-          <button
-            className="inline-flex items-center gap-1.5"
-            style={{ height: 34, paddingLeft: 10, paddingRight: 12, borderRadius: 8, border: "1px dashed #d1d5db", background: "transparent", fontSize: 13, fontWeight: 500, color: "#6b7280", whiteSpace: "nowrap", cursor: "pointer" }}
-          >
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2v10M2 7h10" stroke="#6b7280" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            Add filter
-          </button>
+          {isRequests ? (
+            <>
+              <FilterPill label="All Time" calendar />
+              <FilterPill label="All Agents" />
+              <FilterPill label="All Communities" />
+              <FilterPill label="Approval Status" />
+              <button
+                className="inline-flex items-center gap-1.5"
+                style={{ height: 34, paddingLeft: 10, paddingRight: 12, borderRadius: 8, border: "1px dashed #d1d5db", background: "transparent", fontSize: 13, fontWeight: 500, color: "#6b7280", whiteSpace: "nowrap", cursor: "pointer" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 2v10M2 7h10" stroke="#6b7280" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                Add filter
+              </button>
+            </>
+          ) : (
+            <>
+              <FilterPill label="All time" calendar />
+              <FilterPill label="All Agents" />
+              <FilterPill label="All Communities" />
+              <FilterPill label="Payment Status" />
+            </>
+          )}
         </div>
       )}
 
@@ -556,6 +770,8 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
       <div style={{ padding: "20px 28px", flex: 1 }}>
         {isRequests ? (
           <PurchaseRequestsTable searchQuery={searchQuery} />
+        ) : isPres ? (
+          <PREsTable />
         ) : (
           <PlaceholderPanel title={label} />
         )}
