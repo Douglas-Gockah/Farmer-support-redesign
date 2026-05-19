@@ -500,7 +500,8 @@ function FarmerListAccordion({ farmers }: { farmers: Array<{ id: string; name: s
 
 // ─── Double Bag Banner ────────────────────────────────────────────────────────
 
-function DoubleBagBanner({ bagWeightKg }: { bagWeightKg: number }) {
+function DoubleBagBanner({ bagWeightKg, bagsExpected, amountPerFarmer }: { bagWeightKg: number; bagsExpected: number; amountPerFarmer: number }) {
+  const actualPerFarmer = amountPerFarmer * bagsExpected;
   return (
     <div style={{ borderRadius: 10, background: "#fffbeb", border: "1.5px solid #f59e0b", padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 12 }}>
       <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -511,9 +512,12 @@ function DoubleBagBanner({ bagWeightKg }: { bagWeightKg: number }) {
         </svg>
       </div>
       <div>
-        <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e", margin: "0 0 3px" }}>Double bag amount opted</p>
+        <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e", margin: "0 0 3px" }}>
+          Enhanced bag amount opted
+          <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem", color: "#b45309" }}>({bagsExpected}× bags)</span>
+        </p>
         <p style={{ fontSize: "0.75rem", color: "#b45309", margin: 0, lineHeight: 1.5 }}>
-          Each farmer in this group is expected to return <strong>2 bags ({bagWeightKg * 2} kg)</strong> instead of the standard 1 bag ({bagWeightKg} kg).
+          Each farmer received <strong>GHS {actualPerFarmer.toLocaleString()}</strong> ({bagsExpected}× the standard GHS {amountPerFarmer.toLocaleString()}) and is expected to return <strong>{bagsExpected} bags ({bagWeightKg * bagsExpected} kg)</strong> instead of the standard 1 bag ({bagWeightKg} kg).
         </p>
       </div>
     </div>
@@ -613,14 +617,6 @@ function RecoveryApprovalModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             {/* DISBURSEMENT */}
@@ -630,8 +626,8 @@ function RecoveryApprovalModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -717,7 +713,7 @@ function RecoveryApprovalModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Recovery unit price input */}
               <div>
@@ -781,22 +777,37 @@ function RecoveryApprovalModal({
                         GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
-                    {/* Bags expected — always show, highlight double */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                    {/* Bags expected — always show, highlight enhanced */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: bagsExpected > 1 ? "#fffbeb" : "transparent" }}>
                       <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
-                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: bagsExpected > 1 ? "#d97706" : "#111827" }}>
                         {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
-                        {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                        {bagsExpected > 1 && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>({bagsExpected}× bags opted)</span>}
                       </span>
                     </div>
+                    {/* Amount received per farmer — enhanced groups only */}
+                    {bagsExpected > 1 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: "#fffbeb" }}>
+                        <div>
+                          <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Amount received per farmer</span>
+                          <span style={{ display: "block", fontSize: "0.6875rem", color: "#9ca3af" }}>{bagsExpected}× GHS {req.amountPerFarmer.toFixed(2)}</span>
+                        </div>
+                        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#d97706" }}>
+                          GHS {(req.amountPerFarmer * bagsExpected).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
                     {/* Total recovery per farmer */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
                       <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>
                         Total recovery per farmer
                       </span>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
-                        GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                          GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1014,14 +1025,6 @@ function FinanceReviewModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             {/* Disbursement */}
@@ -1031,8 +1034,8 @@ function FinanceReviewModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -1115,7 +1118,7 @@ function FinanceReviewModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Recovery unit price — read-only */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
@@ -1153,18 +1156,32 @@ function FinanceReviewModal({
                       GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: bagsExpected > 1 ? "#fffbeb" : "transparent" }}>
                     <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
-                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: bagsExpected > 1 ? "#d97706" : "#111827" }}>
                       {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
-                      {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                      {bagsExpected > 1 && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>({bagsExpected}× bags opted)</span>}
                     </span>
                   </div>
+                  {bagsExpected > 1 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: "#fffbeb" }}>
+                      <div>
+                        <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Amount received per farmer</span>
+                        <span style={{ display: "block", fontSize: "0.6875rem", color: "#9ca3af" }}>{bagsExpected}× GHS {req.amountPerFarmer.toFixed(2)}</span>
+                      </div>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#d97706" }}>
+                        GHS {(req.amountPerFarmer * bagsExpected).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
-                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
-                      GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                        GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1372,14 +1389,6 @@ function PendingRecoveryModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             <div>
@@ -1388,8 +1397,8 @@ function PendingRecoveryModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -1439,7 +1448,7 @@ function PendingRecoveryModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Approved recovery parameters */}
               <div>
@@ -1711,14 +1720,6 @@ function ActivatedSummaryModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             {/* Disbursement */}
@@ -1728,8 +1729,8 @@ function ActivatedSummaryModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -1791,7 +1792,7 @@ function ActivatedSummaryModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Recovery parameters heading */}
               <div>
@@ -1847,18 +1848,32 @@ function ActivatedSummaryModal({
                       GHS {bagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: wantsDouble ? "#fffbeb" : "transparent" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: bagsExpected > 1 ? "#fffbeb" : "transparent" }}>
                     <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Bags expected per farmer</span>
-                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: wantsDouble ? "#d97706" : "#111827" }}>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: bagsExpected > 1 ? "#d97706" : "#111827" }}>
                       {bagsExpected} bag{bagsExpected > 1 ? "s" : ""}
-                      {wantsDouble && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>(double amount opted)</span>}
+                      {bagsExpected > 1 && <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem" }}>({bagsExpected}× bags opted)</span>}
                     </span>
                   </div>
+                  {bagsExpected > 1 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: "#fffbeb" }}>
+                      <div>
+                        <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>Amount received per farmer</span>
+                        <span style={{ display: "block", fontSize: "0.6875rem", color: "#9ca3af" }}>{bagsExpected}× GHS {req.amountPerFarmer.toFixed(2)}</span>
+                      </div>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#d97706" }}>
+                        GHS {(req.amountPerFarmer * bagsExpected).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
-                    <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
-                      GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                        GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2009,6 +2024,8 @@ function CanceledSummaryModal({
   purchasePrice: number;
   onClose: () => void;
 }) {
+  const wantsDouble  = req.wantsDouble ?? false;
+  const bagsExpected = wantsDouble ? 2 : 1;
   const totalAmount  = req.farmersSupported * req.amountPerFarmer;
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
@@ -2074,14 +2091,6 @@ function CanceledSummaryModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             <div>
@@ -2090,8 +2099,8 @@ function CanceledSummaryModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -2300,14 +2309,6 @@ function PartialRecoveryModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             <div>
@@ -2316,8 +2317,8 @@ function PartialRecoveryModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -2378,7 +2379,7 @@ function PartialRecoveryModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Approved recovery parameters */}
               <div>
@@ -2629,14 +2630,6 @@ function FullRecoveryModal({
                 <p className="text-[10px] text-gray-400 mb-0.5">Farmers supported</p>
                 <p className="text-[20px] font-bold text-gray-900">{req.farmersSupported}</p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Pre-financing per Farmer</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {req.amountPerFarmer.toFixed(2)}</p>
-              </div>
-              <div className="rounded-xl p-3" style={{ background: "var(--gray-50)" }}>
-                <p className="text-[10px] text-gray-400 mb-0.5">Total Disbursed Pre-financing</p>
-                <p className="text-[20px] font-bold text-gray-900">GHS {totalAmount.toLocaleString("en-GH")}</p>
-              </div>
             </div>
 
             <div>
@@ -2645,8 +2638,8 @@ function FullRecoveryModal({
                 {([
                   { label: "Transaction ID", value: req.transactionId },
                   { label: "Date disbursed",  value: req.disbursedDate },
-                  { label: "Total amount",    value: `GHS ${totalAmount.toLocaleString("en-GH")}` },
-                  { label: "Per farmer",      value: `GHS ${req.amountPerFarmer.toFixed(2)}` },
+                  { label: "Total amount",    value: `GHS ${(req.farmersSupported * req.amountPerFarmer * bagsExpected).toLocaleString("en-GH")}` },
+                  { label: "Per farmer",      value: `GHS ${(req.amountPerFarmer * bagsExpected).toFixed(2)}` },
                 ] as { label: string; value: string }[]).map(({ label, value }, i, arr) => (
                   <div
                     key={label}
@@ -2710,7 +2703,7 @@ function FullRecoveryModal({
               </div>
 
               {/* Double bag notice */}
-              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} />}
+              {wantsDouble && <DoubleBagBanner bagWeightKg={bagWeightKg} bagsExpected={bagsExpected} amountPerFarmer={req.amountPerFarmer} />}
 
               {/* Approved recovery parameters */}
               <div>
@@ -2997,13 +2990,13 @@ function RecoveryBanner({
   const isExpired    = daysLeft < 0;
   const isEndingSoon = !isExpired && daysLeft <= 3;
 
-  const dotColor  = isExpired ? "#ef4444" : isEndingSoon ? "#f59e0b" : "#16a34a";
-  const bgColor   = isExpired ? "#fef2f2" : isEndingSoon ? "#fffbeb" : "#f0fdf4";
-  const bdColor   = isExpired ? "#fecaca" : isEndingSoon ? "#fde68a" : "#bbf7d0";
-  const headColor = isExpired ? "#991b1b" : isEndingSoon ? "#92400e" : "#14532d";
-  const subColor  = isExpired ? "#dc2626" : isEndingSoon ? "#b45309" : "#16a34a";
-  const btnBorder = isExpired ? "#fca5a5" : isEndingSoon ? "#fcd34d" : "#86efac";
-  const btnColor  = isExpired ? "#991b1b" : isEndingSoon ? "#92400e" : "#15803d";
+  const dotColor  = isExpired ? "#ef4444" : isEndingSoon ? "#f59e0b" : "#f97316";
+  const bgColor   = isExpired ? "#fef2f2" : isEndingSoon ? "#fffbeb" : "#fff7ed";
+  const bdColor   = isExpired ? "#fecaca" : isEndingSoon ? "#fde68a" : "#fed7aa";
+  const headColor = isExpired ? "#991b1b" : isEndingSoon ? "#92400e" : "#7c2d12";
+  const subColor  = isExpired ? "#dc2626" : isEndingSoon ? "#b45309" : "#ea580c";
+  const btnBorder = isExpired ? "#fca5a5" : isEndingSoon ? "#fcd34d" : "#fdba74";
+  const btnColor  = isExpired ? "#991b1b" : isEndingSoon ? "#92400e" : "#9a3412";
 
   const label = isExpired
     ? "Recovery period has ended"
