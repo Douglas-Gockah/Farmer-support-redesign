@@ -26,7 +26,7 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "1", refCode: "CS-2410-00111-DMF", dateOfRequest: "Jul 13, 2025",
     community: "Boro",        agentName: "Hashim Sufyan Tagra",   commodity: "Soybeans",
-    expectedQty: "5,000.00 kg", approvalStatus: "Ticket activated", totalPrice: 25000, isRecoveryPurchase: true,
+    expectedQty: "5,000.00 kg", approvalStatus: "Pending", totalPrice: 25000, isRecoveryPurchase: true,
   },
   {
     id: "2", refCode: "CS-2410-00111-DMF", dateOfRequest: "Jul 15, 2025",
@@ -41,7 +41,7 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "4", refCode: "CS-2410-00108-AA",  dateOfRequest: "Jun 1, 2025",
     community: "Linpou",      agentName: "Zakaria Yakubu",        commodity: "Shea nuts",
-    expectedQty: "10,000.00 kg",approvalStatus: "Ticket activated", totalPrice: 50000, isRecoveryPurchase: true,
+    expectedQty: "10,000.00 kg",approvalStatus: "Pending", totalPrice: 50000, isRecoveryPurchase: true,
   },
   {
     id: "5", refCode: "CS-2410-00107-AA",  dateOfRequest: "Jun 3, 2025",
@@ -51,7 +51,7 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "6", refCode: "CS-2410-00106-SM",  dateOfRequest: "Jun 10, 2025",
     community: "Tambiigu",    agentName: "Inusah Bukari",         commodity: "Soybeans",
-    expectedQty: "4,000.00 kg", approvalStatus: "Ticket activated", totalPrice: 20000, isRecoveryPurchase: true,
+    expectedQty: "4,000.00 kg", approvalStatus: "Pending", totalPrice: 20000, isRecoveryPurchase: true,
   },
   {
     id: "7", refCode: "CS-2410-00105-KSS", dateOfRequest: "Jun 23, 2025",
@@ -66,7 +66,7 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "9", refCode: "CS-2410-00103-ABY", dateOfRequest: "May 16, 2025",
     community: "Jablajo",     agentName: "Fusheni Tinaibei",      commodity: "Soybeans",
-    expectedQty: "10,000.00 kg",approvalStatus: "Ticket activated", totalPrice: 60000, isRecoveryPurchase: true,
+    expectedQty: "10,000.00 kg",approvalStatus: "Pending", totalPrice: 60000, isRecoveryPurchase: true,
   },
   {
     id: "10",refCode: "CS-2410-00102-JB",  dateOfRequest: "May 14, 2025",
