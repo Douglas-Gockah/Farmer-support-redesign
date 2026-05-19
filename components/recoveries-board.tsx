@@ -39,11 +39,24 @@ interface RecoveryRequest {
   disbursedDate:    string;
   transactionId:    string;
   actionHistory?:        ActionRecord[];
-  farmersList?:          Array<{ id: string; name: string; recoveredKg?: number; recoveredDate?: string }>;
+  farmersList?:          Array<{
+    id:             string;
+    name:           string;
+    recoveredDate?: string;
+    recoveryMode?:  "in_kind" | "cash" | "mixed";
+    recoveredKg?:   number;
+    cashAmount?:    number;
+    hasPenalty?:    boolean;
+    penaltyAmount?: number;
+    partKg?:        number;
+    cashTopUp?:     number;
+  }>;
   bagWeightKg?:          number;
   wantsDouble?:          boolean;
   approvedUnitPrice?:    number;
   approvedPurchasePrice?: number;
+  thumbprintImages?:     string[];
+  recoveryRating?:       { experience: string; lendAgain: string };
 }
 
 // ─── Mock recovery requests ───────────────────────────────────────────────────
@@ -233,17 +246,17 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r007-9", stage: "rec_partial",          actor: "Kwame Asante",   action: "Partial recovery recorded",       summary: "Kwame Asante recorded recoveries for 11 of 18 farmers. 7 farmers are still pending.",    timestamp: "2025-10-20T11:30:00" },
     ],
     farmersList: [
-      { id: "Y101", name: "Alidu Fuseini",    recoveredKg: 100, recoveredDate: "2025-10-20" },
-      { id: "Y102", name: "Rahinatu Yahaya",  recoveredKg: 100, recoveredDate: "2025-10-20" },
-      { id: "Y103", name: "Fuseini Dramani",  recoveredKg: 100, recoveredDate: "2025-10-18" },
-      { id: "Y104", name: "Mariama Issaka",   recoveredKg: 100, recoveredDate: "2025-10-18" },
-      { id: "Y105", name: "Issaka Sumaila",   recoveredKg: 100, recoveredDate: "2025-10-17" },
-      { id: "Y106", name: "Bintu Seidu",      recoveredKg: 100, recoveredDate: "2025-10-17" },
-      { id: "Y107", name: "Yakubu Bawah",     recoveredKg: 100, recoveredDate: "2025-10-16" },
-      { id: "Y108", name: "Fati Iddrissu",    recoveredKg: 100, recoveredDate: "2025-10-16" },
-      { id: "Y109", name: "Sulley Abukari",   recoveredKg: 100, recoveredDate: "2025-10-15" },
-      { id: "Y110", name: "Habiba Naabu",     recoveredKg: 100, recoveredDate: "2025-10-15" },
-      { id: "Y111", name: "Aminu Tampuri",    recoveredKg: 100, recoveredDate: "2025-10-14" },
+      { id: "Y101", name: "Alidu Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-20" },
+      { id: "Y102", name: "Rahinatu Yahaya",  recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-20" },
+      { id: "Y103", name: "Fuseini Dramani",  recoveryMode: "cash",    cashAmount: 500,  recoveredDate: "2025-10-18" },
+      { id: "Y104", name: "Mariama Issaka",   recoveryMode: "cash",    cashAmount: 500, hasPenalty: true, penaltyAmount: 75, recoveredDate: "2025-10-18" },
+      { id: "Y105", name: "Issaka Sumaila",   recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-17" },
+      { id: "Y106", name: "Bintu Seidu",      recoveryMode: "mixed",   partKg: 60, cashTopUp: 196, recoveredDate: "2025-10-17" },
+      { id: "Y107", name: "Yakubu Bawah",     recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-16" },
+      { id: "Y108", name: "Fati Iddrissu",    recoveryMode: "cash",    cashAmount: 500,  recoveredDate: "2025-10-16" },
+      { id: "Y109", name: "Sulley Abukari",   recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-15" },
+      { id: "Y110", name: "Habiba Naabu",     recoveryMode: "mixed",   partKg: 50, cashTopUp: 360, recoveredDate: "2025-10-15" },
+      { id: "Y111", name: "Aminu Tampuri",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-14" },
       { id: "Y112", name: "Zuwera Alhassan" },
       { id: "Y113", name: "Alimatu Mahama" },
       { id: "Y114", name: "Huseini Dauda" },
@@ -272,22 +285,24 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r008-9", stage: "rec_full",             actor: "Ama Owusu",      action: "Full recovery recorded",          summary: "Ama Owusu recorded recoveries for all 15 farmers. Total recovered: 1,500 kg.",          timestamp: "2025-10-10T15:00:00" },
     ],
     farmersList: [
-      { id: "D101", name: "Abiba Fuseini",    recoveredKg: 100, recoveredDate: "2025-10-10" },
-      { id: "D102", name: "Fati Seidu",       recoveredKg: 100, recoveredDate: "2025-10-10" },
-      { id: "D103", name: "Rahinatu Bawah",   recoveredKg: 100, recoveredDate: "2025-10-09" },
-      { id: "D104", name: "Mariama Naabu",    recoveredKg: 100, recoveredDate: "2025-10-09" },
-      { id: "D105", name: "Bintu Alhassan",   recoveredKg: 100, recoveredDate: "2025-10-09" },
-      { id: "D106", name: "Zenabu Mahama",    recoveredKg: 100, recoveredDate: "2025-10-08" },
-      { id: "D107", name: "Habiba Ziblim",    recoveredKg: 100, recoveredDate: "2025-10-08" },
-      { id: "D108", name: "Hawa Abukari",     recoveredKg: 100, recoveredDate: "2025-10-08" },
-      { id: "D109", name: "Amina Iddrisu",    recoveredKg: 100, recoveredDate: "2025-10-07" },
-      { id: "D110", name: "Safiatu Tampuri",  recoveredKg: 100, recoveredDate: "2025-10-07" },
-      { id: "D111", name: "Ramatu Fuseini",   recoveredKg: 100, recoveredDate: "2025-10-07" },
-      { id: "D112", name: "Fatimatu Dauda",   recoveredKg: 100, recoveredDate: "2025-10-06" },
-      { id: "D113", name: "Huseini Seidu",    recoveredKg: 100, recoveredDate: "2025-10-06" },
-      { id: "D114", name: "Alidu Mahama",     recoveredKg: 100, recoveredDate: "2025-10-06" },
-      { id: "D115", name: "Issaka Abukari",   recoveredKg: 100, recoveredDate: "2025-10-05" },
+      { id: "D101", name: "Abiba Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-10" },
+      { id: "D102", name: "Fati Seidu",       recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-10" },
+      { id: "D103", name: "Rahinatu Bawah",   recoveryMode: "cash",    cashAmount: 450,  recoveredDate: "2025-10-09" },
+      { id: "D104", name: "Mariama Naabu",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-09" },
+      { id: "D105", name: "Bintu Alhassan",   recoveryMode: "cash",    cashAmount: 450, hasPenalty: true, penaltyAmount: 67, recoveredDate: "2025-10-09" },
+      { id: "D106", name: "Zenabu Mahama",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-08" },
+      { id: "D107", name: "Habiba Ziblim",    recoveryMode: "mixed",   partKg: 55, cashTopUp: 302, recoveredDate: "2025-10-08" },
+      { id: "D108", name: "Hawa Abukari",     recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-08" },
+      { id: "D109", name: "Amina Iddrisu",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-07" },
+      { id: "D110", name: "Safiatu Tampuri",  recoveryMode: "cash",    cashAmount: 450,  recoveredDate: "2025-10-07" },
+      { id: "D111", name: "Ramatu Fuseini",   recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-07" },
+      { id: "D112", name: "Fatimatu Dauda",   recoveryMode: "mixed",   partKg: 70, cashTopUp: 261, recoveredDate: "2025-10-06" },
+      { id: "D113", name: "Huseini Seidu",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-06" },
+      { id: "D114", name: "Alidu Mahama",     recoveryMode: "cash",    cashAmount: 450, hasPenalty: true, penaltyAmount: 67, recoveredDate: "2025-10-06" },
+      { id: "D115", name: "Issaka Abukari",   recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-05" },
     ],
+    thumbprintImages: ["thumb-1", "thumb-2", "thumb-3", "thumb-4", "thumb-5", "thumb-6"],
+    recoveryRating: { experience: "excellent", lendAgain: "yes" },
   },
 ];
 
@@ -513,7 +528,7 @@ function DoubleBagBanner({ bagWeightKg, bagsExpected, amountPerFarmer }: { bagWe
       </div>
       <div>
         <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e", margin: "0 0 3px" }}>
-          Enhanced bag amount opted
+          Bag amount opted
           <span style={{ fontWeight: 500, marginLeft: 6, fontSize: "0.75rem", color: "#b45309" }}>({bagsExpected}× bags)</span>
         </p>
         <p style={{ fontSize: "0.75rem", color: "#b45309", margin: 0, lineHeight: 1.5 }}>
@@ -802,11 +817,14 @@ function RecoveryApprovalModal({
                       <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>
                         Total recovery per farmer
                       </span>
-                      <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
                           GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
-                        <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                        <span style={{ color: "#d1d5db" }}>·</span>
+                        <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                          {bagWeightKg * bagsExpected} kg
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -854,14 +872,20 @@ function RecoveryApprovalModal({
                     />
                   </div>
                   {parseFloat(purchasePriceStr) > 0 && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="7" fill="#dcfce7" />
-                        <path d="M5 8l2 2 4-4" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 500 }}>
-                        GHS {parseFloat(purchasePriceStr).toFixed(2)} / kg set for extra purchases
-                      </span>
+                    <div style={{ marginTop: 12, borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" fill="#16a34a" />
+                          <path d="M5 8l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: "0.6875rem", color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Purchase price confirmed</p>
+                        <p style={{ margin: "2px 0 0", fontSize: "1rem", fontWeight: 800, color: "#14532d" }}>
+                          GHS {parseFloat(purchasePriceStr).toFixed(2)}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#16a34a", marginLeft: 4 }}>/ kg</span>
+                        </p>
+                        <p style={{ margin: "1px 0 0", fontSize: "0.6875rem", color: "#16a34a", fontWeight: 500 }}>for extra commodity purchases</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2231,10 +2255,20 @@ function PartialRecoveryModal({
   const totalExpected   = weightPerFarmer * req.farmersSupported;
 
   const farmers         = req.farmersList ?? [];
-  const recovered       = farmers.filter((f) => f.recoveredKg != null);
-  const pending         = farmers.filter((f) => f.recoveredKg == null);
-  const totalRecovered  = recovered.reduce((s, f) => s + (f.recoveredKg ?? 0), 0);
+  const recovered       = farmers.filter((f) => f.recoveryMode != null || f.recoveredKg != null);
+  const pending         = farmers.filter((f) => f.recoveryMode == null && f.recoveredKg == null);
   const progressPct     = Math.round((recovered.length / farmers.length) * 100);
+
+  const totalRecoveredKg = recovered.reduce((s, f) => {
+    if (!f.recoveryMode || f.recoveryMode === "in_kind") return s + (f.recoveredKg ?? 0);
+    if (f.recoveryMode === "mixed") return s + (f.partKg ?? 0);
+    return s;
+  }, 0);
+  const totalCashRecovered = recovered.reduce((s, f) => {
+    if (f.recoveryMode === "cash") return s + (f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0);
+    if (f.recoveryMode === "mixed") return s + (f.cashTopUp ?? 0);
+    return s;
+  }, 0);
 
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
@@ -2267,7 +2301,7 @@ function PartialRecoveryModal({
             <div>
               <h2 className="text-[17px] font-bold text-gray-900">Partially recovered</h2>
               <p className="text-[12px] font-medium text-gray-400 mt-0.5">
-                {recovered.length} of {farmers.length} farmers recovered · {totalRecovered.toLocaleString()} kg recorded
+                {recovered.length} of {farmers.length} farmers recovered · {pending.length} pending
               </p>
             </div>
           </div>
@@ -2370,10 +2404,10 @@ function PartialRecoveryModal({
                 </div>
                 <div className="flex justify-between mt-1.5">
                   <span style={{ fontSize: "0.6875rem", color: "#b45309", fontWeight: 600 }}>
-                    {totalRecovered.toLocaleString()} kg recorded
+                    {recovered.length} of {farmers.length} farmers recovered
                   </span>
                   <span style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>
-                    {(totalExpected - totalRecovered).toLocaleString()} kg remaining
+                    {pending.length} still pending
                   </span>
                 </div>
               </div>
@@ -2440,13 +2474,14 @@ function PartialRecoveryModal({
                     {/* Column headers */}
                     <div style={{ display: "flex", alignItems: "center", padding: "7px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
                       <span style={{ flex: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farmer</span>
-                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 110 }}>Weight recorded</span>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 150 }}>Recovery</span>
                     </div>
 
                     {/* Recovered farmers */}
                     {recovered.map((f, idx) => {
                       const color = avatarColor(f.name);
                       const ini   = initials(f.name);
+                      const mode  = f.recoveryMode ?? "in_kind";
                       return (
                         <div
                           key={f.id}
@@ -2463,13 +2498,30 @@ function PartialRecoveryModal({
                               )}
                             </div>
                           </div>
-                          <div style={{ textAlign: "right", width: 110, flexShrink: 0 }}>
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                              <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#16a34a" }}>{f.recoveredKg} kg</span>
-                            </div>
+                          <div style={{ textAlign: "right", width: 150, flexShrink: 0 }}>
+                            {mode === "in_kind" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#16a34a" }}>{f.recoveredKg} kg</span>
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#059669", background: "#dcfce7", padding: "1px 6px", borderRadius: 10 }}>In kind</span>
+                              </div>
+                            )}
+                            {mode === "cash" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb" }}>
+                                  GHS {((f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0)).toLocaleString()}
+                                </span>
+                                {f.hasPenalty && (
+                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>GHS {f.cashAmount} + GHS {f.penaltyAmount} penalty</span>
+                                )}
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#1d4ed8", background: "#eff6ff", padding: "1px 6px", borderRadius: 10 }}>{f.hasPenalty ? "Cash + penalty" : "Cash"}</span>
+                              </div>
+                            )}
+                            {mode === "mixed" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#7c3aed" }}>{f.partKg} kg + GHS {f.cashTopUp}</span>
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#6d28d9", background: "#f5f3ff", padding: "1px 6px", borderRadius: 10 }}>Mixed</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -2504,12 +2556,18 @@ function PartialRecoveryModal({
                       <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e" }}>
                         Total recovered so far
                       </span>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#d97706" }}>
-                        {totalRecovered.toLocaleString()} kg
-                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#9ca3af", marginLeft: 4 }}>
-                          of {totalExpected.toLocaleString()} kg expected
-                        </span>
-                      </span>
+                      <div style={{ textAlign: "right" }}>
+                        {totalRecoveredKg > 0 && (
+                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#d97706", display: "block" }}>
+                            {totalRecoveredKg.toLocaleString()} kg commodity
+                          </span>
+                        )}
+                        {totalCashRecovered > 0 && (
+                          <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb", display: "block" }}>
+                            GHS {totalCashRecovered.toLocaleString()} cash
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
@@ -2553,9 +2611,19 @@ function FullRecoveryModal({
   const bagsExpected    = wantsDouble ? 2 : 1;
   const weightPerFarmer = bagWeightKg * bagsExpected;
 
-  const farmers        = req.farmersList ?? [];
-  const totalRecovered = farmers.reduce((s, f) => s + (f.recoveredKg ?? 0), 0);
-  const totalValue     = totalRecovered * unitPrice;
+  const farmers          = req.farmersList ?? [];
+  const totalRecoveredKg = farmers.reduce((s, f) => {
+    const mode = f.recoveryMode ?? "in_kind";
+    if (mode === "in_kind") return s + (f.recoveredKg ?? 0);
+    if (mode === "mixed")   return s + (f.partKg ?? 0);
+    return s;
+  }, 0);
+  const totalCashRecovered = farmers.reduce((s, f) => {
+    if (f.recoveryMode === "cash")  return s + (f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0);
+    if (f.recoveryMode === "mixed") return s + (f.cashTopUp ?? 0);
+    return s;
+  }, 0);
+  const totalValue = totalRecoveredKg * unitPrice + totalCashRecovered;
 
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
@@ -2588,7 +2656,7 @@ function FullRecoveryModal({
             <div>
               <h2 className="text-[17px] font-bold text-gray-900">Fully recovered</h2>
               <p className="text-[12px] font-medium text-gray-400 mt-0.5">
-                All {farmers.length} farmers recovered · {totalRecovered.toLocaleString()} kg total
+                All {farmers.length} farmers recovered
               </p>
             </div>
           </div>
@@ -2693,7 +2761,7 @@ function FullRecoveryModal({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
                     <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "0 0 2px" }}>Total commodity recovered</p>
-                    <p style={{ fontSize: "1.125rem", fontWeight: 800, color: "#059669", margin: 0 }}>{totalRecovered.toLocaleString()} kg</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 800, color: "#059669", margin: 0 }}>{totalRecoveredKg.toLocaleString()} kg</p>
                   </div>
                   <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
                     <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "0 0 2px" }}>Total recovery value</p>
@@ -2743,6 +2811,118 @@ function FullRecoveryModal({
                 </div>
               </div>
 
+              {/* Thumbprint images */}
+              {req.thumbprintImages && req.thumbprintImages.length > 0 && (
+                <div>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Evidence photos · Thumbprints
+                  </p>
+                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 14 }}>
+                    <p style={{ fontSize: "0.75rem", color: "#6b7280", margin: "0 0 12px" }}>
+                      {req.thumbprintImages.length} image{req.thumbprintImages.length !== 1 ? "s" : ""} uploaded as evidence of recovery confirmation
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                      {req.thumbprintImages.map((_, idx) => (
+                        <div
+                          key={idx}
+                          style={{ borderRadius: 8, background: "#f3f4f6", border: "1px solid #e5e7eb", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: 8, minHeight: 80 }}
+                        >
+                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round">
+                            <path d="M12 3C7.6 3 4 6.6 4 11" /><path d="M20 11c0-4.4-3.6-8-8-8" />
+                            <path d="M7 11c0-2.8 2.2-5 5-5s5 2.2 5 5" />
+                            <path d="M7 13c0 3 1.5 6 5 8" /><path d="M12 11v2" />
+                            <path d="M15 12.5c0 2.5-1 5-3 7" /><path d="M17 14c0 2-1 4-2.5 6" />
+                          </svg>
+                          <span style={{ fontSize: "0.625rem", color: "#9ca3af", fontWeight: 500 }}>Thumbprint {idx + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recovery rating */}
+              {req.recoveryRating && (
+                <div>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Recovery experience rating
+                  </p>
+                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                    <div style={{ padding: "14px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        How was your recovery experience with the farmer group?
+                      </p>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {([
+                          { value: "excellent", label: "Excellent",  emoji: "🌟" },
+                          { value: "very_good", label: "Very Good",  emoji: "😊" },
+                          { value: "average",   label: "Average",    emoji: "😐" },
+                          { value: "difficult", label: "Difficult",  emoji: "😕" },
+                          { value: "very_bad",  label: "Very Bad",   emoji: "😞" },
+                        ] as { value: string; label: string; emoji: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.experience === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 12px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
+                                background: sel ? "#f0fdf4" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#16a34a" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.emoji}</span>
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ padding: "14px 16px" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        Would you suggest we lend again?
+                      </p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {([
+                          { value: "yes",   label: "Yes"   },
+                          { value: "maybe", label: "Maybe" },
+                          { value: "no",    label: "No"    },
+                        ] as { value: string; label: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.lendAgain === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 18px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
+                                background: sel ? "#f0fdf4" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#16a34a" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* All farmers list */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
                 <button
@@ -2772,13 +2952,14 @@ function FullRecoveryModal({
                     {/* Column headers */}
                     <div style={{ display: "flex", alignItems: "center", padding: "7px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
                       <span style={{ flex: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farmer</span>
-                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 130 }}>Weight recorded</span>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right", width: 150 }}>Recovery</span>
                     </div>
 
                     {farmers.map((f, idx) => {
                       const color  = avatarColor(f.name);
                       const ini    = initials(f.name);
                       const isLast = idx === farmers.length - 1;
+                      const mode   = f.recoveryMode ?? "in_kind";
                       return (
                         <div
                           key={f.id}
@@ -2795,13 +2976,30 @@ function FullRecoveryModal({
                               )}
                             </div>
                           </div>
-                          <div style={{ textAlign: "right", width: 130, flexShrink: 0 }}>
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6l3 3 5-5" stroke="#059669" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                              <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#059669" }}>{f.recoveredKg ?? weightPerFarmer} kg</span>
-                            </div>
+                          <div style={{ textAlign: "right", width: 150, flexShrink: 0 }}>
+                            {mode === "in_kind" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#059669" }}>{f.recoveredKg ?? weightPerFarmer} kg</span>
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#059669", background: "#dcfce7", padding: "1px 6px", borderRadius: 10 }}>In kind</span>
+                              </div>
+                            )}
+                            {mode === "cash" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb" }}>
+                                  GHS {((f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0)).toLocaleString()}
+                                </span>
+                                {f.hasPenalty && (
+                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>GHS {f.cashAmount} + GHS {f.penaltyAmount} penalty</span>
+                                )}
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#1d4ed8", background: "#eff6ff", padding: "1px 6px", borderRadius: 10 }}>{f.hasPenalty ? "Cash + penalty" : "Cash"}</span>
+                              </div>
+                            )}
+                            {mode === "mixed" && (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#7c3aed" }}>{f.partKg} kg + GHS {f.cashTopUp}</span>
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#6d28d9", background: "#f5f3ff", padding: "1px 6px", borderRadius: 10 }}>Mixed</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -2810,12 +3008,18 @@ function FullRecoveryModal({
                     {/* Total footer */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#dcfce7", borderTop: "1px solid #bbf7d0" }}>
                       <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#14532d" }}>Total recovered</span>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#059669" }}>
-                        {totalRecovered.toLocaleString()} kg
-                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", marginLeft: 4 }}>
-                          ({farmers.length} × {weightPerFarmer} kg)
-                        </span>
-                      </span>
+                      <div style={{ textAlign: "right" }}>
+                        {totalRecoveredKg > 0 && (
+                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#059669", display: "block" }}>
+                            {totalRecoveredKg.toLocaleString()} kg commodity
+                          </span>
+                        )}
+                        {totalCashRecovered > 0 && (
+                          <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb", display: "block" }}>
+                            GHS {totalCashRecovered.toLocaleString()} cash
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
