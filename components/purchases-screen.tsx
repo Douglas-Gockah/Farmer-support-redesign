@@ -26,11 +26,11 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "1", refCode: "CS-2410-00111-DMF", dateOfRequest: "Jul 13, 2025",
     community: "Boro",        agentName: "Hashim Sufyan Tagra",   commodity: "Soybeans",
-    expectedQty: "5,000.00 kg", approvalStatus: "Pending", totalPrice: 25000, isRecoveryPurchase: true,
+    expectedQty: "5,000.00 kg", approvalStatus: "Ticket activated", totalPrice: 25000, isRecoveryPurchase: true,
   },
   {
     id: "2", refCode: "CS-2410-00111-DMF", dateOfRequest: "Jul 15, 2025",
-    community: "Kolbayiri",   agentName: "Abdul Jalilu Mohammed", commodity: "Soybeans",
+    community: "Kolbayiri",   agentName: "Abdul Jalilu Mohammed", commodity: "Shea nuts",
     expectedQty: "1.00 kg",     approvalStatus: "Pending",          totalPrice: 4.80,
   },
   {
@@ -41,36 +41,36 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
   {
     id: "4", refCode: "CS-2410-00108-AA",  dateOfRequest: "Jun 1, 2025",
     community: "Linpou",      agentName: "Zakaria Yakubu",        commodity: "Shea nuts",
-    expectedQty: "10,000.00 kg",approvalStatus: "Pending", totalPrice: 50000, isRecoveryPurchase: true,
+    expectedQty: "10,000.00 kg",approvalStatus: "Ticket activated", totalPrice: 50000, isRecoveryPurchase: true,
   },
   {
     id: "5", refCode: "CS-2410-00107-AA",  dateOfRequest: "Jun 3, 2025",
-    community: "Badimsuguru", agentName: "Damtonu Bariche",       commodity: "Soybeans",
+    community: "Badimsuguru", agentName: "Damtonu Bariche",       commodity: "Shea nuts",
     expectedQty: "1.00 kg",     approvalStatus: "Pending",          totalPrice: 4.80,
   },
   {
     id: "6", refCode: "CS-2410-00106-SM",  dateOfRequest: "Jun 10, 2025",
-    community: "Tambiigu",    agentName: "Inusah Bukari",         commodity: "Soybeans",
-    expectedQty: "4,000.00 kg", approvalStatus: "Pending", totalPrice: 20000, isRecoveryPurchase: true,
+    community: "Tambiigu",    agentName: "Inusah Bukari",         commodity: "Shea nuts",
+    expectedQty: "4,000.00 kg", approvalStatus: "Ticket activated", totalPrice: 20000, isRecoveryPurchase: true,
   },
   {
     id: "7", refCode: "CS-2410-00105-KSS", dateOfRequest: "Jun 23, 2025",
-    community: "TUVUU",       agentName: "Mutari Ibrahim",        commodity: "Soybeans",
+    community: "TUVUU",       agentName: "Mutari Ibrahim",        commodity: "Shea nuts",
     expectedQty: "3,000.00 kg", approvalStatus: "Pending",          totalPrice: 18000,
   },
   {
     id: "8", refCode: "CS-2410-00104-AS",  dateOfRequest: "May 12, 2025",
-    community: "Jablajo",     agentName: "Fusheni Tinaibei",      commodity: "Soybeans",
+    community: "Jablajo",     agentName: "Fusheni Tinaibei",      commodity: "Shea nuts",
     expectedQty: "6,000.00 kg", approvalStatus: "Pending",          totalPrice: 36000,
   },
   {
     id: "9", refCode: "CS-2410-00103-ABY", dateOfRequest: "May 16, 2025",
-    community: "Jablajo",     agentName: "Fusheni Tinaibei",      commodity: "Soybeans",
-    expectedQty: "10,000.00 kg",approvalStatus: "Pending", totalPrice: 60000, isRecoveryPurchase: true,
+    community: "Jablajo",     agentName: "Fusheni Tinaibei",      commodity: "Shea nuts",
+    expectedQty: "10,000.00 kg",approvalStatus: "Ticket activated", totalPrice: 60000, isRecoveryPurchase: true,
   },
   {
     id: "10",refCode: "CS-2410-00102-JB",  dateOfRequest: "May 14, 2025",
-    community: "Puzene",      agentName: "Abass Sakulo",          commodity: "Maize",
+    community: "Puzene",      agentName: "Abass Sakulo",          commodity: "Shea nuts",
     expectedQty: "10,000.00 kg",approvalStatus: "Pending",          totalPrice: 60000,
   },
 ];
@@ -242,15 +242,15 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
     setTimeout(() => setCopied(null), 1500);
   }
 
-  const TH = ({ children, right, checkbox }: { children?: React.ReactNode; right?: boolean; checkbox?: boolean }) => (
+  const TH = ({ children, right, sticky }: { children?: React.ReactNode; right?: boolean; sticky?: boolean }) => (
     <th
       style={{
-        padding: checkbox ? "10px 8px 10px 14px" : "10px 14px",
+        padding: "10px 14px",
         textAlign: right ? "right" : "left",
         fontSize: 11, fontWeight: 600, color: "#6b7280",
         textTransform: "uppercase", letterSpacing: "0.05em",
         borderBottom: "1px solid #e5e7eb", background: "#f9fafb", whiteSpace: "nowrap",
-        width: checkbox ? 40 : undefined,
+        ...(sticky ? { position: "sticky", left: 0, zIndex: 2 } : {}),
       }}
     >
       {children}
@@ -263,10 +263,7 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 920 }}>
           <thead>
             <tr>
-              <TH checkbox>
-                <input type="checkbox" style={{ width: 14, height: 14, cursor: "pointer" }} />
-              </TH>
-              <TH>Reference Code</TH>
+              <TH sticky>Reference Code</TH>
               <TH>Date of Request</TH>
               <TH>Community</TH>
               <TH>Agent's Name</TH>
@@ -280,7 +277,7 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={10} style={{ padding: "40px 14px", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                <td colSpan={9} style={{ padding: "40px 14px", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
                   No results match your search
                 </td>
               </tr>
@@ -291,13 +288,8 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
                 onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
               >
-                {/* Checkbox */}
-                <td style={{ padding: "12px 8px 12px 14px", width: 40 }}>
-                  <input type="checkbox" style={{ width: 14, height: 14, cursor: "pointer" }} />
-                </td>
-
                 {/* Reference Code */}
-                <td style={{ padding: "12px 14px" }}>
+                <td style={{ padding: "12px 14px", position: "sticky", left: 0, zIndex: 1, background: "#fff", whiteSpace: "nowrap" }}>
                   <div className="flex items-center gap-2">
                     <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "#111827", letterSpacing: "0.03em" }}>
                       {row.refCode}
