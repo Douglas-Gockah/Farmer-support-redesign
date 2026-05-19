@@ -1200,11 +1200,14 @@ function FinanceReviewModal({
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
                         GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                      <span style={{ color: "#d1d5db" }}>·</span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                        {bagWeightKg * bagsExpected} kg
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1508,9 +1511,15 @@ function PendingRecoveryModal({
                       <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 600, margin: 0 }}>Recovery value per farmer</p>
                       <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "2px 0 0" }}>{weightPerFarmer} kg × GHS {unitPrice.toFixed(2)}</p>
                     </div>
-                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
-                      GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ color: "#d1d5db" }}>·</span>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        {weightPerFarmer} kg
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1892,11 +1901,14 @@ function ActivatedSummaryModal({
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", background: "#f0fdf4" }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#111827" }}>Total recovery per farmer</span>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a", display: "block" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
                         GHS {totalBagValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>= {bagWeightKg * bagsExpected} kg</span>
+                      <span style={{ color: "#d1d5db" }}>·</span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#16a34a" }}>
+                        {bagWeightKg * bagsExpected} kg
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2435,9 +2447,15 @@ function PartialRecoveryModal({
                       <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 600, margin: 0 }}>Recovery value per farmer</p>
                       <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "2px 0 0" }}>{weightPerFarmer} kg × GHS {unitPrice.toFixed(2)}</p>
                     </div>
-                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
-                      GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ color: "#d1d5db" }}>·</span>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        {weightPerFarmer} kg
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2804,42 +2822,18 @@ function FullRecoveryModal({
                       <p style={{ fontSize: "0.8125rem", color: "#374151", fontWeight: 600, margin: 0 }}>Recovery value per farmer</p>
                       <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "2px 0 0" }}>{weightPerFarmer} kg × GHS {unitPrice.toFixed(2)}</p>
                     </div>
-                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
-                      GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Thumbprint images */}
-              {req.thumbprintImages && req.thumbprintImages.length > 0 && (
-                <div>
-                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                    Evidence photos · Thumbprints
-                  </p>
-                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 14 }}>
-                    <p style={{ fontSize: "0.75rem", color: "#6b7280", margin: "0 0 12px" }}>
-                      {req.thumbprintImages.length} image{req.thumbprintImages.length !== 1 ? "s" : ""} uploaded as evidence of recovery confirmation
-                    </p>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                      {req.thumbprintImages.map((_, idx) => (
-                        <div
-                          key={idx}
-                          style={{ borderRadius: 8, background: "#f3f4f6", border: "1px solid #e5e7eb", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: 8, minHeight: 80 }}
-                        >
-                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round">
-                            <path d="M12 3C7.6 3 4 6.6 4 11" /><path d="M20 11c0-4.4-3.6-8-8-8" />
-                            <path d="M7 11c0-2.8 2.2-5 5-5s5 2.2 5 5" />
-                            <path d="M7 13c0 3 1.5 6 5 8" /><path d="M12 11v2" />
-                            <path d="M15 12.5c0 2.5-1 5-3 7" /><path d="M17 14c0 2-1 4-2.5 6" />
-                          </svg>
-                          <span style={{ fontSize: "0.625rem", color: "#9ca3af", fontWeight: 500 }}>Thumbprint {idx + 1}</span>
-                        </div>
-                      ))}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        GHS {(unitPrice * weightPerFarmer).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ color: "#d1d5db" }}>·</span>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "#16a34a" }}>
+                        {weightPerFarmer} kg
+                      </span>
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Recovery rating */}
               {req.recoveryRating && (
