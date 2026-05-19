@@ -103,7 +103,7 @@ function approvalChip(status: ApprovalStatus) {
   return (
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-      style={{ background: s.bg, color: s.color }}
+      style={{ background: s.bg, color: s.color, whiteSpace: "nowrap" }}
     >
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
       {status}
@@ -322,7 +322,14 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
                 </td>
 
                 {/* Agent */}
-                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.agentName}</td>
+                <td style={{ padding: "12px 14px", maxWidth: 160 }}>
+                  <span
+                    title={row.agentName}
+                    style={{ fontSize: 13, color: "#374151", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {row.agentName}
+                  </span>
+                </td>
 
                 {/* Commodity */}
                 <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.commodity}</td>
@@ -333,7 +340,7 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
                 </td>
 
                 {/* Approval Status */}
-                <td style={{ padding: "12px 14px" }}>{approvalChip(row.approvalStatus)}</td>
+                <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{approvalChip(row.approvalStatus)}</td>
 
                 {/* Total Price */}
                 <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, fontWeight: 600, color: "#111827", whiteSpace: "nowrap" }}>
