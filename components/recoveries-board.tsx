@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ColumnHeader } from "@/components/kanban/column-header";
 import { RECOVERIES_COLUMNS } from "@/components/kanban/constants";
@@ -178,7 +178,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     community: "Savelugu", region: "Northern", district: "Savelugu",
     agent: "Kofi Mensah", farmersSupported: 16, amountPerFarmer: 450, bagWeightKg: 100,
     approvedUnitPrice: 2.50, approvedPurchasePrice: 2.20,
-    submittedDate: new Date(2025, 10, 20), stage: "rec_pending_recovery",
+    submittedDate: new Date(2025, 10, 20), stage: "rec_finance_review",
     disbursedDate: "5 Jul 2025", transactionId: "TXN-FS-2024-009",
     actionHistory: [
       { id: "r005-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 79% to the group",                                  timestamp: "2025-05-10T09:00:00" },
@@ -206,7 +206,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     community: "Nalerigu", region: "North East", district: "Nalerigu",
     agent: "Ama Owusu", farmersSupported: 12, amountPerFarmer: 600, bagWeightKg: 100, wantsDouble: true,
     approvedUnitPrice: 3.00, approvedPurchasePrice: 2.80,
-    submittedDate: new Date(2025, 10, 15), stage: "rec_pending_recovery",
+    submittedDate: new Date(2025, 10, 15), stage: "rec_approved",
     disbursedDate: "20 Jul 2025", transactionId: "TXN-FS-2024-011",
     actionHistory: [
       { id: "r006-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 83% to the group",                                  timestamp: "2025-05-20T09:00:00" },
@@ -303,6 +303,114 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
     ],
     thumbprintImages: ["thumb-1", "thumb-2", "thumb-3", "thumb-4", "thumb-5", "thumb-6"],
     recoveryRating: { experience: "excellent", lendAgain: "yes" },
+  },
+  {
+    id: "REC-009", groupName: "Gushegu Agric Cooperative",
+    community: "Gushegu", region: "Northern", district: "Gushegu",
+    agent: "Akosua Boateng", farmersSupported: 19, amountPerFarmer: 450, bagWeightKg: 100,
+    approvedUnitPrice: 2.55, approvedPurchasePrice: 2.35,
+    submittedDate: new Date(2025, 11, 5), stage: "rec_finance_review",
+    disbursedDate: "8 Oct 2025", transactionId: "TXN-FS-2024-020",
+    actionHistory: [
+      { id: "r009-1", stage: "synced",              actor: "Douglas Gockah",  action: "Scored request",                  summary: "Douglas Gockah assigned a score of 78% to the group",                                                   timestamp: "2025-09-05T09:00:00" },
+      { id: "r009-2", stage: "pending_approval",     actor: "Douglas Gockah",  action: "Approved cash support",           summary: "Douglas Gockah approved GHS 450/farmer for 19 farmers, totalling GHS 8,550",                           timestamp: "2025-09-08T10:00:00" },
+      { id: "r009-3", stage: "agent_confirmation",   actor: "Akosua Boateng",  action: "Confirmed participating farmers", summary: "Akosua Boateng confirmed 19 farmers and submitted MoMo for disbursement",                              timestamp: "2025-09-20T08:00:00" },
+      { id: "r009-4", stage: "finance_disbursement", actor: "Douglas Gockah",  action: "Funds disbursed",                 summary: "GHS 8,550 disbursed to group via MoMo · TXN-FS-2024-020",                                             timestamp: "2025-10-08T11:00:00" },
+      { id: "r009-5", stage: "disbursed",            actor: "Akosua Boateng",  action: "Fulfilment completed",            summary: "Akosua Boateng confirmed all 19 farmers received their support",                                       timestamp: "2025-11-15T09:00:00" },
+      { id: "r009-6", stage: "disbursed",            actor: "Akosua Boateng",  action: "Recovery request submitted",      summary: "Akosua Boateng submitted a recovery request — 19 farmers at GHS 450/farmer",                         timestamp: "2025-12-05T08:30:00" },
+      { id: "r009-7", stage: "rec_finance_review",   actor: "Agent Manager",   action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.55/kg and extra commodity purchase price to GHS 2.35/kg. Forwarded to finance for activation.", timestamp: "2025-12-07T10:00:00" },
+    ],
+    farmersList: [
+      { id: "G901", name: "Alhassan Tampuri" }, { id: "G902", name: "Rahinatu Wumbei" },
+      { id: "G903", name: "Fuseini Naabu" },   { id: "G904", name: "Mariama Abukari" },
+      { id: "G905", name: "Issaka Iddrisu" },  { id: "G906", name: "Bintu Ziblim" },
+      { id: "G907", name: "Yakubu Seidu" },    { id: "G908", name: "Fati Mahama" },
+      { id: "G909", name: "Sulley Alhassan" }, { id: "G910", name: "Habiba Bawah" },
+      { id: "G911", name: "Aminu Dauda" },     { id: "G912", name: "Zuwera Tampuri" },
+      { id: "G913", name: "Alimatu Fuseini" }, { id: "G914", name: "Huseini Abukari" },
+      { id: "G915", name: "Baba Naabu" },      { id: "G916", name: "Ramatu Seidu" },
+      { id: "G917", name: "Sumaila Alhassan" },{ id: "G918", name: "Fatima Iddrisu" },
+      { id: "G919", name: "Alhassan Amadu" },
+    ],
+  },
+  {
+    id: "REC-010", groupName: "Karaga Farmers Union",
+    community: "Karaga", region: "Northern", district: "Karaga",
+    agent: "Kwame Asante", farmersSupported: 15, amountPerFarmer: 500, bagWeightKg: 100,
+    approvedUnitPrice: 2.70, approvedPurchasePrice: 2.50,
+    submittedDate: new Date(2025, 10, 25), stage: "rec_approved",
+    disbursedDate: "15 Sep 2025", transactionId: "TXN-FS-2024-017",
+    actionHistory: [
+      { id: "r010-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 82% to the group",                                                    timestamp: "2025-08-15T09:00:00" },
+      { id: "r010-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 500/farmer for 15 farmers, totalling GHS 7,500",                            timestamp: "2025-08-18T10:00:00" },
+      { id: "r010-3", stage: "agent_confirmation",   actor: "Kwame Asante",   action: "Confirmed participating farmers", summary: "Kwame Asante confirmed 15 farmers and submitted MoMo for disbursement",                                  timestamp: "2025-08-28T08:00:00" },
+      { id: "r010-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 7,500 disbursed to group via MoMo · TXN-FS-2024-017",                                               timestamp: "2025-09-15T11:00:00" },
+      { id: "r010-5", stage: "disbursed",            actor: "Kwame Asante",   action: "Fulfilment completed",            summary: "Kwame Asante confirmed all 15 farmers received their support",                                           timestamp: "2025-10-20T09:00:00" },
+      { id: "r010-6", stage: "disbursed",            actor: "Kwame Asante",   action: "Recovery request submitted",      summary: "Kwame Asante submitted a recovery request — 15 farmers at GHS 500/farmer",                            timestamp: "2025-11-25T08:30:00" },
+      { id: "r010-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.70/kg and extra commodity purchase price to GHS 2.50/kg. Forwarded to finance for activation.", timestamp: "2025-11-27T10:00:00" },
+      { id: "r010-8", stage: "rec_approved",         actor: "Finance Officer", action: "Recovery request activated",     summary: "Recovery activated. Purchase price confirmed at GHS 2.50/kg.",                                          timestamp: "2025-11-28T14:00:00" },
+    ],
+    farmersList: [
+      { id: "K101", name: "Alidu Seidu" },     { id: "K102", name: "Rahinatu Mahama" },
+      { id: "K103", name: "Fuseini Bawah" },   { id: "K104", name: "Mariama Abukari" },
+      { id: "K105", name: "Issaka Naabu" },    { id: "K106", name: "Bintu Tampuri" },
+      { id: "K107", name: "Yakubu Alhassan" }, { id: "K108", name: "Fati Ziblim" },
+      { id: "K109", name: "Sulley Iddrisu" },  { id: "K110", name: "Habiba Seidu" },
+      { id: "K111", name: "Aminu Dauda" },     { id: "K112", name: "Zuwera Fuseini" },
+      { id: "K113", name: "Alimatu Abukari" }, { id: "K114", name: "Huseini Mahama" },
+      { id: "K115", name: "Baba Naabu" },
+    ],
+  },
+  {
+    id: "REC-011", groupName: "Nkoranza Crop Producers",
+    community: "Nkoranza", region: "Bono East", district: "Nkoranza North",
+    agent: "Kofi Mensah", farmersSupported: 11, amountPerFarmer: 400, bagWeightKg: 100,
+    approvedUnitPrice: 2.40, approvedPurchasePrice: 2.20,
+    submittedDate: new Date(2025, 10, 10), stage: "rec_rejected",
+    disbursedDate: "1 Aug 2025", transactionId: "TXN-FS-2024-013",
+    actionHistory: [
+      { id: "r011-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 58% to the group",                                                    timestamp: "2025-07-01T09:00:00" },
+      { id: "r011-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 400/farmer for 11 farmers, totalling GHS 4,400",                            timestamp: "2025-07-03T10:00:00" },
+      { id: "r011-3", stage: "agent_confirmation",   actor: "Kofi Mensah",    action: "Confirmed participating farmers", summary: "Kofi Mensah confirmed 11 farmers and submitted MoMo for disbursement",                                   timestamp: "2025-07-15T08:00:00" },
+      { id: "r011-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 4,400 disbursed to group via MoMo · TXN-FS-2024-013",                                               timestamp: "2025-08-01T11:00:00" },
+      { id: "r011-5", stage: "disbursed",            actor: "Kofi Mensah",    action: "Fulfilment completed",            summary: "Kofi Mensah confirmed all 11 farmers received their support",                                            timestamp: "2025-09-15T09:00:00" },
+      { id: "r011-6", stage: "disbursed",            actor: "Kofi Mensah",    action: "Recovery request submitted",      summary: "Kofi Mensah submitted a recovery request — 11 farmers at GHS 400/farmer",                             timestamp: "2025-10-10T08:30:00" },
+      { id: "r011-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed",       summary: "Recovery request reviewed. Concerns raised about group reliability. Forwarded for final decision.",       timestamp: "2025-10-12T10:00:00" },
+      { id: "r011-8", stage: "rec_rejected",         actor: "Finance Officer", action: "Recovery request rejected",      summary: "Recovery request rejected due to insufficient group compliance history and outstanding repayment concerns.", timestamp: "2025-10-13T14:00:00" },
+    ],
+    farmersList: [
+      { id: "N201", name: "Kwame Asiedu" },   { id: "N202", name: "Abena Mensah" },
+      { id: "N203", name: "Kofi Antwi" },     { id: "N204", name: "Akua Boateng" },
+      { id: "N205", name: "Yaw Darko" },      { id: "N206", name: "Adwoa Appiah" },
+      { id: "N207", name: "Kwesi Ofori" },    { id: "N208", name: "Afua Frimpong" },
+      { id: "N209", name: "Kojo Adjei" },     { id: "N210", name: "Akosua Asare" },
+      { id: "N211", name: "Nana Boakye" },
+    ],
+  },
+  {
+    id: "REC-012", groupName: "Berekum Shea Growers",
+    community: "Berekum", region: "Bono", district: "Berekum",
+    agent: "Ama Owusu", farmersSupported: 9, amountPerFarmer: 350, bagWeightKg: 100,
+    approvedUnitPrice: 2.30, approvedPurchasePrice: 2.10,
+    submittedDate: new Date(2025, 9, 28), stage: "rec_rejected",
+    disbursedDate: "20 Jul 2025", transactionId: "TXN-FS-2024-010",
+    actionHistory: [
+      { id: "r012-1", stage: "synced",              actor: "Douglas Gockah", action: "Scored request",                  summary: "Douglas Gockah assigned a score of 51% to the group",                                                    timestamp: "2025-06-28T09:00:00" },
+      { id: "r012-2", stage: "pending_approval",     actor: "Douglas Gockah", action: "Approved cash support",           summary: "Douglas Gockah approved GHS 350/farmer for 9 farmers, totalling GHS 3,150",                             timestamp: "2025-07-01T10:00:00" },
+      { id: "r012-3", stage: "agent_confirmation",   actor: "Ama Owusu",      action: "Confirmed participating farmers", summary: "Ama Owusu confirmed 9 farmers and submitted MoMo for disbursement",                                     timestamp: "2025-07-12T08:00:00" },
+      { id: "r012-4", stage: "finance_disbursement", actor: "Douglas Gockah", action: "Funds disbursed",                 summary: "GHS 3,150 disbursed to group via MoMo · TXN-FS-2024-010",                                               timestamp: "2025-07-20T11:00:00" },
+      { id: "r012-5", stage: "disbursed",            actor: "Ama Owusu",      action: "Fulfilment completed",            summary: "Ama Owusu confirmed all 9 farmers received their support",                                               timestamp: "2025-08-30T09:00:00" },
+      { id: "r012-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Recovery request submitted",      summary: "Ama Owusu submitted a recovery request — 9 farmers at GHS 350/farmer",                              timestamp: "2025-10-28T08:30:00" },
+      { id: "r012-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed",       summary: "Recovery request reviewed. Issues identified with documentation and farmer participation.",                timestamp: "2025-10-30T10:00:00" },
+      { id: "r012-8", stage: "rec_rejected",         actor: "Finance Officer", action: "Recovery request rejected",      summary: "Recovery request rejected. Missing required documentation and low group participation rate.",               timestamp: "2025-10-31T14:00:00" },
+    ],
+    farmersList: [
+      { id: "B101", name: "Kwame Asante" },  { id: "B102", name: "Abena Owusu" },
+      { id: "B103", name: "Kofi Adjei" },    { id: "B104", name: "Akua Mensah" },
+      { id: "B105", name: "Yaw Boateng" },   { id: "B106", name: "Adwoa Antwi" },
+      { id: "B107", name: "Kwesi Darko" },   { id: "B108", name: "Afua Appiah" },
+      { id: "B109", name: "Kojo Asiedu" },
+    ],
   },
 ];
 
@@ -2574,14 +2682,17 @@ function PartialRecoveryModal({
                       <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#92400e" }}>
                         Total recovered so far
                       </span>
-                      <div style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         {totalRecoveredKg > 0 && (
-                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#d97706", display: "block" }}>
+                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#d97706" }}>
                             {totalRecoveredKg.toLocaleString()} kg commodity
                           </span>
                         )}
+                        {totalRecoveredKg > 0 && totalCashRecovered > 0 && (
+                          <span style={{ color: "#d1d5db", fontWeight: 400, fontSize: "0.875rem" }}>·</span>
+                        )}
                         {totalCashRecovered > 0 && (
-                          <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb", display: "block" }}>
+                          <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#2563eb" }}>
                             GHS {totalCashRecovered.toLocaleString()} cash
                           </span>
                         )}
@@ -2622,7 +2733,8 @@ function FullRecoveryModal({
   purchasePrice: number;
   onClose: () => void;
 }) {
-  const [listOpen, setListOpen] = useState(true);
+  const [listOpen,    setListOpen]    = useState(true);
+  const [cashProofs,  setCashProofs]  = useState<Record<string, Array<{ url: string; isImage: boolean }>>>({});
 
   const bagWeightKg     = req.bagWeightKg ?? 100;
   const wantsDouble     = req.wantsDouble ?? false;
@@ -2950,14 +3062,16 @@ function FullRecoveryModal({
                     </div>
 
                     {farmers.map((f, idx) => {
-                      const color  = avatarColor(f.name);
-                      const ini    = initials(f.name);
-                      const isLast = idx === farmers.length - 1;
-                      const mode   = f.recoveryMode ?? "in_kind";
+                      const color      = avatarColor(f.name);
+                      const ini        = initials(f.name);
+                      const isLast     = idx === farmers.length - 1;
+                      const mode       = f.recoveryMode ?? "in_kind";
+                      const needsProof = mode === "cash" || mode === "mixed";
+                      const farmerId   = f.id;
                       return (
+                        <React.Fragment key={f.id}>
                         <div
-                          key={f.id}
-                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: isLast ? "none" : "1px solid #f3f4f6", background: "#f0fdf4" }}
+                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: (needsProof || !isLast) ? "1px solid #f3f4f6" : "none", background: "#f0fdf4" }}
                         >
                           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                             <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
@@ -2996,20 +3110,71 @@ function FullRecoveryModal({
                             )}
                           </div>
                         </div>
+                        {needsProof && (
+                          <div style={{ padding: "6px 16px 10px 52px", borderBottom: isLast ? "none" : "1px solid #f3f4f6", background: "#f8fafc" }}>
+                            <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
+                              Proof of refund
+                            </p>
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                              {(cashProofs[farmerId] ?? []).map((entry, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => window.open(entry.url, "_blank")}
+                                  style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                                  title="Click to view document"
+                                >
+                                  {entry.isImage ? (
+                                    <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  ) : (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+                                      <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                                      <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                    </svg>
+                                  )}
+                                </button>
+                              ))}
+                              <label
+                                style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
+                                title="Upload proof of refund"
+                              >
+                                <input
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  multiple
+                                  style={{ display: "none" }}
+                                  onChange={(e) => {
+                                    if (!e.target.files) return;
+                                    const entries = Array.from(e.target.files).map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
+                                    setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...entries] }));
+                                  }}
+                                />
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
+                                  <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                </svg>
+                                <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                        </React.Fragment>
                       );
                     })}
 
                     {/* Total footer */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#dcfce7", borderTop: "1px solid #bbf7d0" }}>
                       <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#14532d" }}>Total recovered</span>
-                      <div style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         {totalRecoveredKg > 0 && (
-                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#059669", display: "block" }}>
+                          <span style={{ fontSize: "0.875rem", fontWeight: 800, color: "#059669" }}>
                             {totalRecoveredKg.toLocaleString()} kg commodity
                           </span>
                         )}
+                        {totalRecoveredKg > 0 && totalCashRecovered > 0 && (
+                          <span style={{ color: "#bbf7d0", fontWeight: 400, fontSize: "0.875rem" }}>·</span>
+                        )}
                         {totalCashRecovered > 0 && (
-                          <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb", display: "block" }}>
+                          <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#2563eb" }}>
                             GHS {totalCashRecovered.toLocaleString()} cash
                           </span>
                         )}
@@ -3379,14 +3544,14 @@ export default function RecoveriesBoard() {
       style={{
         height: 34, padding: "0 14px",
         borderRadius: 8,
-        border: timeframe ? "1px solid #16a34a" : "1px solid #d1d5db",
-        background: timeframe ? "#f0fdf4" : "#fff",
+        border: timeframe ? "1px solid #ea580c" : "1px solid #d1d5db",
+        background: timeframe ? "#fff7ed" : "#fff",
         fontSize: "0.8125rem", fontWeight: 600,
-        color: timeframe ? "#15803d" : "#374151",
+        color: timeframe ? "#ea580c" : "#374151",
         cursor: "pointer",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = timeframe ? "#dcfce7" : "#f9fafb")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = timeframe ? "#f0fdf4" : "#fff")}
+      onMouseEnter={(e) => (e.currentTarget.style.background = timeframe ? "#fed7aa" : "#f9fafb")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = timeframe ? "#fff7ed" : "#fff")}
     >
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
         <rect x="1" y="2" width="14" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -3572,26 +3737,32 @@ export default function RecoveriesBoard() {
       )}
 
       {/* ── Finance review modal ── */}
-      {financingReq && priceOverrides[financingReq.id] && (
-        <FinanceReviewModal
-          req={enrichActions(financingReq)}
-          approvedUnitPrice={priceOverrides[financingReq.id].unitPrice}
-          approvedPurchasePrice={priceOverrides[financingReq.id].purchasePrice}
-          onClose={() => setFinancingReq(null)}
-          onActivate={handleFinanceActivate}
-        />
-      )}
+      {financingReq && (() => {
+        const { unitPrice, purchasePrice } = resolvedPrices(financingReq);
+        return (
+          <FinanceReviewModal
+            req={enrichActions(financingReq)}
+            approvedUnitPrice={unitPrice}
+            approvedPurchasePrice={purchasePrice}
+            onClose={() => setFinancingReq(null)}
+            onActivate={handleFinanceActivate}
+          />
+        );
+      })()}
 
       {/* ── Activated summary modal ── */}
-      {activatedReq && priceOverrides[activatedReq.id] && (
-        <ActivatedSummaryModal
-          req={enrichActions(activatedReq)}
-          approvedUnitPrice={priceOverrides[activatedReq.id].unitPrice}
-          approvedPurchasePrice={priceOverrides[activatedReq.id].purchasePrice}
-          onClose={() => setActivatedReq(null)}
-          onCancel={handleCancelRequest}
-        />
-      )}
+      {activatedReq && (() => {
+        const { unitPrice, purchasePrice } = resolvedPrices(activatedReq);
+        return (
+          <ActivatedSummaryModal
+            req={enrichActions(activatedReq)}
+            approvedUnitPrice={unitPrice}
+            approvedPurchasePrice={purchasePrice}
+            onClose={() => setActivatedReq(null)}
+            onCancel={handleCancelRequest}
+          />
+        );
+      })()}
 
       {/* ── Pending recovery modal ── */}
       {pendingRecoveryReq && (() => {
