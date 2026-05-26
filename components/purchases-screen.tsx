@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { AppScreen } from "./sidebar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,22 +78,45 @@ const MOCK_REQUESTS: PurchaseRequest[] = [
 // ─── PRE data ────────────────────────────────────────────────────────────────
 
 type PaymentStatus = "Full Payment" | "Pending payment" | "Partial payment";
+type DisbursementStatus = "Disbursed" | "Pending" | "Partial";
+
+interface SubRequestItem {
+  id:                 string;
+  refCode:            string;
+  itemDescription:    string;
+  unitCost:           number;
+  numberOfBags:       number;
+  momoName:           string;
+  momoNumber:         string;
+  disbursed1st:       boolean;
+  disbursed2nd:       boolean;
+  disbursed3rd:       boolean;
+  disbursementStatus: DisbursementStatus;
+}
 
 interface PRERequest {
-  id:                 string;
-  dateOfRequest:      string;
-  requestingOfficer:  string;
-  community:          string;
-  subRequests:        number;
-  noOfBags:           number;
-  totalExpense:       number;
-  progress:           string;
-  paymentStatus:      PaymentStatus;
-  isRecovery?:        boolean;
+  id:                      string;
+  dateOfRequest:           string;
+  requestingOfficer:       string;
+  community:               string;
+  subRequests:             number;
+  noOfBags:                number;
+  totalExpense:            number;
+  progress:                string;
+  paymentStatus:           PaymentStatus;
+  isRecovery?:             boolean;
+  commodity?:              string;
+  discussedWithLogistics?: boolean;
+  subRequestItems?:        SubRequestItem[];
 }
 
 const MOCK_PRE_REQUESTS: PRERequest[] = [
-  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 5,  noOfBags: 5,  totalExpense: 82000, progress: "5/5",  paymentStatus: "Full Payment",    isRecovery: true },
+  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Gbimsi",      subRequests: 4,  noOfBags: 147, totalExpense: 3087, progress: "4/4",  paymentStatus: "Full Payment",    isRecovery: true, commodity: "Shea nuts", discussedWithLogistics: true, subRequestItems: [
+    { id: "sr1-1", refCode: "PRE-2605-00156-ASH", itemDescription: "Sewing and weighing",    unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+    { id: "sr1-2", refCode: "PRE-2605-00157-ASH", itemDescription: "Offloading and Packing", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+    { id: "sr1-3", refCode: "PRE-2605-00158-ASH", itemDescription: "Loading from community", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+    { id: "sr1-4", refCode: "PRE-2605-00159-ASH", itemDescription: "Tricycle Transport",     unitCost: 15.00, numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+  ] },
   { id: "2",  dateOfRequest: "Nov 25, 2025", requestingOfficer: "Ama Kusi",       community: "Amsterdam",   subRequests: 9,  noOfBags: 50, totalExpense: 82000, progress: "0/9",  paymentStatus: "Pending payment" },
   { id: "3",  dateOfRequest: "Nov 18, 2025", requestingOfficer: "Ama Appiah",     community: "Aba",         subRequests: 4,  noOfBags: 2,  totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
   { id: "4",  dateOfRequest: "Nov 19, 2025", requestingOfficer: "Joseph Mensah",  community: "Akosa",       subRequests: 5,  noOfBags: 25, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment", isRecovery: true },
@@ -155,6 +178,36 @@ function paymentChip(status: PaymentStatus) {
         fontSize: 12, fontWeight: 600, background: s.bg, color: s.color, whiteSpace: "nowrap",
       }}
     >
+      {status}
+    </span>
+  );
+}
+
+// ─── Check circle (disbursement indicator) ───────────────────────────────────
+
+function CheckCircle({ checked }: { checked: boolean }) {
+  if (!checked) return (
+    <div style={{ width: 24, height: 24, borderRadius: "50%", border: "1.5px solid #d1d5db", background: "#fff", display: "inline-block" }} />
+  );
+  return (
+    <div style={{ width: 24, height: 24, borderRadius: "50%", border: "1.5px solid #16a34a", background: "#f0fdf4", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function disbursementChip(status: DisbursementStatus) {
+  const cfg: Record<DisbursementStatus, { bg: string; color: string; dot: string }> = {
+    "Disbursed": { bg: "#f0fdf4", color: "#15803d", dot: "#16a34a" },
+    "Pending":   { bg: "#fffbeb", color: "#d97706", dot: "#f59e0b" },
+    "Partial":   { bg: "#eff6ff", color: "#1d4ed8", dot: "#2563eb" },
+  };
+  const s = cfg[status];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: s.bg, color: s.color, whiteSpace: "nowrap" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
       {status}
     </span>
   );
@@ -502,7 +555,7 @@ function PurchaseRequestsTable({ searchQuery }: { searchQuery: string }) {
 
 // ─── PREs table ──────────────────────────────────────────────────────────────
 
-function PREsTable() {
+function PREsTable({ onRowClick }: { onRowClick: (id: string) => void }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 10;
 
@@ -540,7 +593,8 @@ function PREsTable() {
             {MOCK_PRE_REQUESTS.map((row, i) => (
               <tr
                 key={row.id}
-                style={{ borderBottom: i < MOCK_PRE_REQUESTS.length - 1 ? "1px solid #f3f4f6" : undefined, transition: "background 0.1s" }}
+                style={{ borderBottom: i < MOCK_PRE_REQUESTS.length - 1 ? "1px solid #f3f4f6" : undefined, transition: "background 0.1s", cursor: "pointer" }}
+                onClick={() => onRowClick(row.id)}
                 onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
               >
@@ -654,6 +708,197 @@ function PlaceholderPanel({ title }: { title: string }) {
   );
 }
 
+// ─── PREs sub-requests screen ─────────────────────────────────────────────────
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M6.5 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1V9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 2h5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13.5 2.5L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () => void }) {
+  const items = pre.subRequestItems ?? [];
+  const totalExpense = items.length > 0
+    ? items.reduce((sum, s) => sum + s.unitCost * s.numberOfBags, 0)
+    : pre.totalExpense;
+
+  const SubTH = ({
+    children, right, center,
+  }: { children?: React.ReactNode; right?: boolean; center?: boolean }) => (
+    <th style={{
+      padding: "10px 14px",
+      textAlign: center ? "center" : right ? "right" : "left",
+      fontSize: 11, fontWeight: 600, color: "#6b7280",
+      textTransform: "uppercase", letterSpacing: "0.05em",
+      borderBottom: "1px solid #e5e7eb", background: "#f9fafb", whiteSpace: "nowrap",
+    }}>
+      {children}
+    </th>
+  );
+
+  return (
+    <div className="flex flex-col" style={{ height: "100%", overflowY: "auto" }}>
+
+      {/* ── Page header ── */}
+      <div style={{ padding: "20px 28px 0", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0 }}>
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5" style={{ marginBottom: 16 }}>
+          <span style={{ fontSize: 13, color: "#9ca3af" }}>Purchases</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M5 10l4-3-4-3" stroke="#d1d5db" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <button
+            onClick={onBack}
+            style={{ fontSize: 13, color: "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            PREs
+          </button>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M5 10l4-3-4-3" stroke="#d1d5db" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Sub requests</span>
+        </div>
+
+        {/* Title + export */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: 0 }}>Sub requests</h1>
+          <button
+            className="inline-flex items-center gap-2"
+            style={{ height: 40, paddingLeft: 14, paddingRight: 14, borderRadius: 8, border: "1.5px solid #1ab373", background: "#fff", fontSize: 13, fontWeight: 500, color: "#1ab373", cursor: "pointer" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Export data
+          </button>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div style={{ padding: "20px 28px", flex: 1 }}>
+
+        {/* Purchase request details card */}
+        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "20px 24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: "0 0 16px" }}>Purchase request details</h2>
+
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 48, flexWrap: "wrap" }}>
+            {/* Key–value grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "10px 24px", alignItems: "start" }}>
+              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Community</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.community}</span>
+
+              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Commodity</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.commodity ?? "Shea nuts"}</span>
+
+              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap", paddingRight: 8 }}>Discussed the details with the logistics manager?</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.discussedWithLogistics ? "Yes" : "No"}</span>
+
+              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Total expenses</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>GHS {fmtPrice(totalExpense)}</span>
+            </div>
+
+            {/* Links */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <a
+                href="#"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+              >
+                <ExternalLinkIcon />
+                View purchase request
+              </a>
+              <a
+                href="#"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+              >
+                <ExternalLinkIcon />
+                View purchase reconciliations
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-requests table */}
+        {items.length > 0 ? (
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
+                <thead>
+                  <tr>
+                    <SubTH>Reference code</SubTH>
+                    <SubTH>Sub request items</SubTH>
+                    <SubTH right>Unit cost</SubTH>
+                    <SubTH center>No of bags</SubTH>
+                    <SubTH right>Total amount</SubTH>
+                    <SubTH>Momo name</SubTH>
+                    <SubTH>Momo number</SubTH>
+                    <SubTH center>1st</SubTH>
+                    <SubTH center>2nd</SubTH>
+                    <SubTH center>3rd</SubTH>
+                    <SubTH>Disbursement status</SubTH>
+                    <SubTH>Action</SubTH>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((sub, i) => (
+                    <tr
+                      key={sub.id}
+                      style={{ borderBottom: i < items.length - 1 ? "1px solid #f3f4f6" : undefined, transition: "background 0.1s" }}
+                      onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
+                      onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
+                    >
+                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                        <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "#111827", letterSpacing: "0.03em" }}>{sub.refCode}</span>
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{sub.itemDescription}</td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
+                        GHS {fmtPrice(sub.unitCost)}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", textAlign: "center" }}>{sub.numberOfBags}</td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
+                        GHS {fmtPrice(sub.unitCost * sub.numberOfBags)}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{sub.momoName}</td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>{sub.momoNumber}</td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ display: "flex", justifyContent: "center" }}><CheckCircle checked={sub.disbursed1st} /></div>
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ display: "flex", justifyContent: "center" }}><CheckCircle checked={sub.disbursed2nd} /></div>
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ display: "flex", justifyContent: "center" }}><CheckCircle checked={sub.disbursed3rd} /></div>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>{disbursementChip(sub.disbursementStatus)}</td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <button
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer" }}
+                          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
+                          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
+                          title="More actions"
+                        >
+                          <DotsIcon />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <PlaceholderPanel title="No sub-request items found" />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main PurchasesScreen ─────────────────────────────────────────────────────
 
 interface PurchasesScreenProps {
@@ -662,10 +907,25 @@ interface PurchasesScreenProps {
 }
 
 export default function PurchasesScreen({ activeSubScreen, onNavigate }: PurchasesScreenProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery,   setSearchQuery]   = useState("");
+  const [selectedPREId, setSelectedPREId] = useState<string | null>(null);
+
   const isRequests = activeSubScreen === "purchases-requests";
   const isPres     = activeSubScreen === "purchases-pres";
   const label = SCREEN_LABELS[activeSubScreen] ?? "Purchases";
+
+  // Reset sub-screen selection whenever the active module changes
+  useEffect(() => {
+    setSelectedPREId(null);
+  }, [activeSubScreen]);
+
+  const selectedPRE = isPres && selectedPREId
+    ? MOCK_PRE_REQUESTS.find((p) => p.id === selectedPREId) ?? null
+    : null;
+
+  if (isPres && selectedPRE) {
+    return <PREsSubRequestsScreen pre={selectedPRE} onBack={() => setSelectedPREId(null)} />;
+  }
 
   return (
     <div className="flex flex-col" style={{ height: "100%", overflowY: "auto" }}>
@@ -785,7 +1045,7 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
         {isRequests ? (
           <PurchaseRequestsTable searchQuery={searchQuery} />
         ) : isPres ? (
-          <PREsTable />
+          <PREsTable onRowClick={setSelectedPREId} />
         ) : (
           <PlaceholderPanel title={label} />
         )}

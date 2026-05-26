@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export type AppScreen =
   | "dashboard"
@@ -138,6 +138,8 @@ export default function Sidebar({
   const [expanded,   setExpanded]   = useState(false);
   const [openGroup,  setOpenGroup]  = useState<string | null>(null);
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null);
+  const [flyout,     setFlyout]     = useState<{ icon: string; top: number } | null>(null);
+  const flyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-open the parent group when sidebar expands or active screen changes
   useEffect(() => {
@@ -156,6 +158,22 @@ export default function Sidebar({
   }
   function hideTip() { setTooltip(null); }
 
+  function showFlyout(e: React.MouseEvent<HTMLButtonElement>, item: NavItem) {
+    if (expanded) return;
+    if (!item.children?.length) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
+    setFlyout({ icon: item.icon, top: r.top });
+  }
+
+  function hideFlyoutDelayed() {
+    flyoutTimerRef.current = setTimeout(() => setFlyout(null), 150);
+  }
+
+  function cancelHideFlyout() {
+    if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
+  }
+
   function toggleExpand() {
     setExpanded((v) => !v);
     hideTip();
@@ -170,6 +188,11 @@ export default function Sidebar({
     onClose?.();
     hideTip();
   }
+
+  // Derived: which nav item does the current flyout belong to?
+  const flyoutItem = (flyout && !expanded)
+    ? NAV_ITEMS.find((i) => i.icon === flyout.icon) ?? null
+    : null;
 
   return (
     <>
@@ -284,8 +307,14 @@ export default function Sidebar({
                       if (directScreen) navigate(directScreen);
                     }
                   }}
-                  onMouseEnter={(e) => showTip(e, label)}
-                  onMouseLeave={hideTip}
+                  onMouseEnter={(e) => {
+                    if (!expanded && hasChildren) showFlyout(e, item);
+                    else showTip(e, label);
+                  }}
+                  onMouseLeave={() => {
+                    if (!expanded && hasChildren) hideFlyoutDelayed();
+                    else hideTip();
+                  }}
                   className="flex items-center w-full transition-colors"
                   style={{
                     height:       48,
@@ -470,6 +499,102 @@ export default function Sidebar({
             }}
           />
           {tooltip.label}
+        </div>
+      )}
+
+      {/* ── Flyout panel (position:fixed, for collapsed nav items with children) ── */}
+      {flyoutItem && flyout && !expanded && flyoutItem.children && flyoutItem.children.length > 0 && (
+        <div
+          onMouseEnter={cancelHideFlyout}
+          onMouseLeave={hideFlyoutDelayed}
+          style={{
+            position:     "fixed",
+            left:         72,
+            top:          flyout.top,
+            zIndex:       9999,
+            background:   "#fff",
+            borderRadius: 10,
+            boxShadow:    "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.05)",
+            border:       "1px solid #e5e7eb",
+            minWidth:     210,
+            overflow:     "hidden",
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              display:       "flex",
+              alignItems:    "center",
+              gap:           8,
+              padding:       "10px 14px",
+              borderBottom:  "1px solid #f3f4f6",
+              background:    "#fafafa",
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 18, color: "#1ab373", lineHeight: 1 }}
+              aria-hidden="true"
+            >
+              {flyoutItem.icon}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>
+              {flyoutItem.label}
+            </span>
+          </div>
+
+          {/* Child links */}
+          <div style={{ padding: "6px 0" }}>
+            {flyoutItem.children.map((child) => {
+              const active = child.screen === activeScreen;
+              return (
+                <button
+                  key={child.screen}
+                  onClick={() => { navigate(child.screen); setFlyout(null); }}
+                  className="flex items-center w-full relative"
+                  style={{
+                    padding:    "8px 14px 8px 18px",
+                    background: active ? "#f0fdf6" : "transparent",
+                    border:     "none",
+                    cursor:     "pointer",
+                    textAlign:  "left",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = active ? "#f0fdf6" : "transparent";
+                  }}
+                >
+                  {/* Active left accent */}
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position:     "absolute",
+                        left:         0,
+                        top:          "50%",
+                        transform:    "translateY(-50%)",
+                        width:        3,
+                        height:       20,
+                        borderRadius: "0 2px 2px 0",
+                        background:   "#1ab373",
+                      }}
+                    />
+                  )}
+                  <span
+                    style={{
+                      fontSize:   13,
+                      fontWeight: active ? 600 : 400,
+                      color:      active ? "#1ab373" : "#374151",
+                    }}
+                  >
+                    {child.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </>
