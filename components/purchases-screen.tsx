@@ -744,10 +744,9 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
     <div className="flex flex-col" style={{ height: "100%", overflowY: "auto" }}>
 
       {/* ── Page header ── */}
-      <div style={{ padding: "20px 28px 0", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0 }}>
-
+      <div style={{ padding: "20px 28px", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0 }}>
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5" style={{ marginBottom: 16 }}>
+        <div className="flex items-center gap-1.5">
           <span style={{ fontSize: 13, color: "#9ca3af" }}>Purchases</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M5 10l4-3-4-3" stroke="#d1d5db" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -763,63 +762,63 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
           </svg>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Sub requests</span>
         </div>
-
-        {/* Title + export */}
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: 0 }}>Sub requests</h1>
-          <button
-            className="inline-flex items-center gap-2"
-            style={{ height: 40, paddingLeft: 14, paddingRight: 14, borderRadius: 8, border: "1.5px solid #1ab373", background: "#fff", fontSize: 13, fontWeight: 500, color: "#1ab373", cursor: "pointer" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            Export data
-          </button>
-        </div>
       </div>
 
       {/* ── Content ── */}
       <div style={{ padding: "20px 28px", flex: 1 }}>
 
         {/* Purchase request details card */}
-        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "20px 24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: "0 0 16px" }}>Purchase request details</h2>
+        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 20 }}>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 48, flexWrap: "wrap" }}>
-            {/* Key–value grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "10px 24px", alignItems: "start" }}>
-              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Community</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.community}</span>
+          {/* Card title row */}
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid #f3f4f6" }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>Purchase request details</h2>
+          </div>
 
-              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Commodity</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.commodity ?? "Shea nuts"}</span>
+          {/* 4-column horizontal field row */}
+          <div style={{ padding: "20px 24px 0", display: "flex", gap: 0 }}>
 
-              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap", paddingRight: 8 }}>Discussed the details with the logistics manager?</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{pre.discussedWithLogistics ? "Yes" : "No"}</span>
-
-              <span style={{ fontSize: 13, color: "#6b7280", whiteSpace: "nowrap" }}>Total expenses</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>GHS {fmtPrice(totalExpense)}</span>
+            <div style={{ flex: "0 0 160px", paddingRight: 32 }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Community</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{pre.community}</div>
             </div>
 
-            {/* Links */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <a
-                href="#"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
-              >
-                <ExternalLinkIcon />
-                View purchase request
-              </a>
-              <a
-                href="#"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
-              >
-                <ExternalLinkIcon />
-                View purchase reconciliations
-              </a>
+            <div style={{ flex: "0 0 160px", paddingRight: 32 }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Commodity</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{pre.commodity ?? "Shea nuts"}</div>
             </div>
+
+            <div style={{ flex: 1, paddingRight: 32 }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>
+                Discussed the details with the logistics manager?
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                {pre.discussedWithLogistics ? "Yes" : "No"}
+              </div>
+            </div>
+
+            <div style={{ flex: "0 0 180px", textAlign: "right" }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Total expenses</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>GHS {fmtPrice(totalExpense)}</div>
+            </div>
+          </div>
+
+          {/* Links row */}
+          <div style={{ padding: "16px 24px 20px", display: "flex", gap: 24 }}>
+            <a
+              href="#"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+            >
+              <ExternalLinkIcon />
+              View purchase request
+            </a>
+            <a
+              href="#"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+            >
+              <ExternalLinkIcon />
+              View purchase reconciliations
+            </a>
           </div>
         </div>
 
@@ -833,7 +832,7 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
                     <SubTH>Reference code</SubTH>
                     <SubTH>Sub request items</SubTH>
                     <SubTH right>Unit cost</SubTH>
-                    <SubTH center>No of bags</SubTH>
+                    <SubTH center>Number of bags</SubTH>
                     <SubTH right>Total amount</SubTH>
                     <SubTH>Momo name</SubTH>
                     <SubTH>Momo number</SubTH>
