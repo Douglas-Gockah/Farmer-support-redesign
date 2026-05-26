@@ -291,7 +291,7 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r008-11", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Bintu Alhassan",  action: "Receipt confirmation signed", summary: "Bintu Alhassan confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-09T11:30:00" },
       { id: "r008-12", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Safiatu Tampuri", action: "Receipt confirmation signed", summary: "Safiatu Tampuri confirmed receipt of cash refund — GHS 450. Signature captured on mobile app.", timestamp: "2025-10-07T14:00:00" },
       { id: "r008-13", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Alidu Mahama",    action: "Receipt confirmation signed", summary: "Alidu Mahama confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-06T09:55:00" },
-      { id: "r008-14", stage: "rec_full", type: "proof_upload" as const,         actor: "Ama Owusu",       action: "Proof of refund uploaded",    summary: "Ama Owusu uploaded proof of refund documents for all 4 cash payment farmers.", timestamp: "2025-10-10T14:45:00" },
+      { id: "r008-14", stage: "rec_full", type: "proof_upload" as const,         actor: "Ama Owusu",       action: "Proof uploaded",    summary: "Ama Owusu uploaded proof of refund documents for all cash payment farmers.", timestamp: "2025-10-10T14:45:00" },
     ],
     farmersList: [
       { id: "D101", name: "Abiba Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-10" },
@@ -3314,23 +3314,38 @@ function FullRecoveryModal({
                             </p>
                             {(cashProofs[farmerId] ?? []).length > 0 ? (
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                                {(cashProofs[farmerId] ?? []).map((entry, i) => (
-                                  <button
-                                    key={i}
-                                    onClick={() => window.open(entry.url, "_blank")}
-                                    style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                                    title="Click to view document"
-                                  >
-                                    {entry.isImage ? (
-                                      <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                    ) : (
-                                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-                                        <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                        <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                      </svg>
-                                    )}
-                                  </button>
-                                ))}
+                                {(cashProofs[farmerId] ?? []).map((entry, i) => {
+                                  const isPlaceholder = entry.url === "";
+                                  const tileStyle: React.CSSProperties = {
+                                    width: 52, height: 52, borderRadius: 8,
+                                    border: "1px solid #e5e7eb", overflow: "hidden",
+                                    background: "#fff", padding: 0,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    flexShrink: 0,
+                                  };
+                                  const inner = entry.isImage && entry.url ? (
+                                    <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  ) : (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+                                      <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                                      <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                    </svg>
+                                  );
+                                  return isPlaceholder ? (
+                                    <div key={i} style={tileStyle} title="Uploaded document">
+                                      {inner}
+                                    </div>
+                                  ) : (
+                                    <button
+                                      key={i}
+                                      onClick={() => window.open(entry.url, "_blank")}
+                                      style={{ ...tileStyle, cursor: "pointer" }}
+                                      title="Click to view document"
+                                    >
+                                      {inner}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             ) : (
                               <span style={{ fontSize: "0.75rem", color: "#d1d5db", fontStyle: "italic" }}>No files uploaded</span>
@@ -3609,7 +3624,18 @@ export default function RecoveriesBoard() {
   const [stageOverrides,  setStageOverrides]  = useState<Record<string, RecoveryStage>>({});
   const [priceOverrides,  setPriceOverrides]  = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
   const [dynamicActions,  setDynamicActions]  = useState<Record<string, ActionRecord[]>>({});
-  const [allCashProofs,   setAllCashProofs]   = useState<Record<string, Record<string, Array<{ url: string; isImage: boolean }>>>>({});
+  // Pre-populate proof thumbnails for already-completed recoveries (REC-008).
+  // Empty url ("") marks a placeholder (document was uploaded before this session).
+  const [allCashProofs,   setAllCashProofs]   = useState<Record<string, Record<string, Array<{ url: string; isImage: boolean }>>>>({
+    "REC-008": {
+      "D103": [{ url: "", isImage: false }],  // Rahinatu Bawah  — cash
+      "D105": [{ url: "", isImage: false }],  // Bintu Alhassan  — cash + penalty
+      "D107": [{ url: "", isImage: false }],  // Habiba Ziblim   — mixed
+      "D110": [{ url: "", isImage: false }],  // Safiatu Tampuri — cash
+      "D112": [{ url: "", isImage: false }],  // Fatimatu Dauda  — mixed
+      "D114": [{ url: "", isImage: false }],  // Alidu Mahama    — cash + penalty
+    },
+  });
   const [filters,         setFilters]         = useState<ActiveFilters>(DEFAULT_FILTERS);
 
   function enrichActions(req: RecoveryRequest): RecoveryRequest {
