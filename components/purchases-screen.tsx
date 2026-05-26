@@ -108,15 +108,23 @@ interface PRERequest {
   commodity?:              string;
   discussedWithLogistics?: boolean;
   subRequestItems?:        SubRequestItem[];
+  bagsRecovered?:          number;
+  bagsRecoveredWeight?:    number;
+  bagsPurchased?:          number;
+  bagsPurchasedWeight?:    number;
+  bagsMixed?:              number;
+  bagsMixedWeight?:        number;
 }
 
 const MOCK_PRE_REQUESTS: PRERequest[] = [
-  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Gbimsi",      subRequests: 4,  noOfBags: 147, totalExpense: 3087, progress: "4/4",  paymentStatus: "Full Payment",    isRecovery: true, commodity: "Shea nuts", discussedWithLogistics: true, subRequestItems: [
-    { id: "sr1-1", refCode: "PRE-2605-00156-ASH", itemDescription: "Sewing and weighing",    unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
-    { id: "sr1-2", refCode: "PRE-2605-00157-ASH", itemDescription: "Offloading and Packing", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
-    { id: "sr1-3", refCode: "PRE-2605-00158-ASH", itemDescription: "Loading from community", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
-    { id: "sr1-4", refCode: "PRE-2605-00159-ASH", itemDescription: "Tricycle Transport",     unitCost: 15.00, numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
-  ] },
+  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Gbimsi",      subRequests: 4,  noOfBags: 147, totalExpense: 3087, progress: "4/4",  paymentStatus: "Full Payment",    isRecovery: true, commodity: "Shea nuts", discussedWithLogistics: true,
+    bagsRecovered: 62, bagsRecoveredWeight: 4960, bagsPurchased: 60, bagsPurchasedWeight: 4800, bagsMixed: 25, bagsMixedWeight: 2000,
+    subRequestItems: [
+      { id: "sr1-1", refCode: "PRE-2605-00156-ASH", itemDescription: "Sewing and weighing",    unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+      { id: "sr1-2", refCode: "PRE-2605-00157-ASH", itemDescription: "Offloading and Packing", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+      { id: "sr1-3", refCode: "PRE-2605-00158-ASH", itemDescription: "Loading from community", unitCost: 2.00,  numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+      { id: "sr1-4", refCode: "PRE-2605-00159-ASH", itemDescription: "Tricycle Transport",     unitCost: 15.00, numberOfBags: 147, momoName: "Alhassan Saaka Haadi", momoNumber: "0245295772", disbursed1st: true, disbursed2nd: true, disbursed3rd: true, disbursementStatus: "Disbursed" },
+    ] },
   { id: "2",  dateOfRequest: "Nov 25, 2025", requestingOfficer: "Ama Kusi",       community: "Amsterdam",   subRequests: 9,  noOfBags: 50, totalExpense: 82000, progress: "0/9",  paymentStatus: "Pending payment" },
   { id: "3",  dateOfRequest: "Nov 18, 2025", requestingOfficer: "Ama Appiah",     community: "Aba",         subRequests: 4,  noOfBags: 2,  totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
   { id: "4",  dateOfRequest: "Nov 19, 2025", requestingOfficer: "Joseph Mensah",  community: "Akosa",       subRequests: 5,  noOfBags: 25, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment", isRecovery: true },
@@ -727,14 +735,15 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
     : pre.totalExpense;
 
   const SubTH = ({
-    children, right, center,
-  }: { children?: React.ReactNode; right?: boolean; center?: boolean }) => (
+    children, right, center, sticky,
+  }: { children?: React.ReactNode; right?: boolean; center?: boolean; sticky?: boolean }) => (
     <th style={{
       padding: "10px 14px",
       textAlign: center ? "center" : right ? "right" : "left",
       fontSize: 11, fontWeight: 600, color: "#6b7280",
       textTransform: "uppercase", letterSpacing: "0.05em",
       borderBottom: "1px solid #e5e7eb", background: "#f9fafb", whiteSpace: "nowrap",
+      ...(sticky ? { position: "sticky", left: 0, zIndex: 3 } : {}),
     }}>
       {children}
     </th>
@@ -803,6 +812,52 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
             </div>
           </div>
 
+          {/* Bag breakdown row */}
+          {(pre.bagsRecovered !== undefined || pre.bagsPurchased !== undefined || pre.bagsMixed !== undefined) && (
+            <>
+              <div style={{ height: 1, background: "#f3f4f6", margin: "0 24px" }} />
+              <div style={{ padding: "16px 24px 0", display: "flex", gap: 0, flexWrap: "wrap" }}>
+
+                {pre.bagsRecovered !== undefined && (
+                  <div style={{ flex: "0 0 220px", paddingRight: 32, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Number of bags recovered</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                      {pre.bagsRecovered.toLocaleString()} bags
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 400, marginLeft: 8 }}>
+                        {pre.bagsRecoveredWeight?.toLocaleString()} kg
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {pre.bagsPurchased !== undefined && (
+                  <div style={{ flex: "0 0 220px", paddingRight: 32, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Number of bags purchased</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                      {pre.bagsPurchased.toLocaleString()} bags
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 400, marginLeft: 8 }}>
+                        {pre.bagsPurchasedWeight?.toLocaleString()} kg
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {pre.bagsMixed !== undefined && (
+                  <div style={{ flex: "0 0 220px", paddingRight: 32, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Number of mixed bags</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                      {pre.bagsMixed.toLocaleString()} bags
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 400, marginLeft: 8 }}>
+                        {pre.bagsMixedWeight?.toLocaleString()} kg
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </>
+          )}
+
           {/* Links row */}
           <div style={{ padding: "16px 24px 20px", display: "flex", gap: 24 }}>
             <a
@@ -824,12 +879,12 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
 
         {/* Sub-requests table */}
         {items.length > 0 ? (
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "clip", background: "#fff" }}>
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200 }}>
                 <thead>
                   <tr>
-                    <SubTH>Reference code</SubTH>
+                    <SubTH sticky>Reference code</SubTH>
                     <SubTH>Sub request items</SubTH>
                     <SubTH right>Unit cost</SubTH>
                     <SubTH center>Number of bags</SubTH>
@@ -851,10 +906,19 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
                       onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
                       onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
                     >
-                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      {/* Reference code — sticky */}
+                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 1, background: "inherit" }}>
                         <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "#111827", letterSpacing: "0.03em" }}>{sub.refCode}</span>
                       </td>
-                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{sub.itemDescription}</td>
+                      {/* Sub request items — truncated with tooltip */}
+                      <td style={{ padding: "12px 14px", maxWidth: 160 }}>
+                        <span
+                          title={sub.itemDescription}
+                          style={{ fontSize: 13, color: "#374151", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        >
+                          {sub.itemDescription}
+                        </span>
+                      </td>
                       <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
                         GHS {fmtPrice(sub.unitCost)}
                       </td>
@@ -862,7 +926,15 @@ function PREsSubRequestsScreen({ pre, onBack }: { pre: PRERequest; onBack: () =>
                       <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
                         GHS {fmtPrice(sub.unitCost * sub.numberOfBags)}
                       </td>
-                      <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{sub.momoName}</td>
+                      {/* Momo name — truncated with tooltip */}
+                      <td style={{ padding: "12px 14px", maxWidth: 150 }}>
+                        <span
+                          title={sub.momoName}
+                          style={{ fontSize: 13, color: "#374151", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        >
+                          {sub.momoName}
+                        </span>
+                      </td>
                       <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>{sub.momoNumber}</td>
                       <td style={{ padding: "12px 14px", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center" }}><CheckCircle checked={sub.disbursed1st} /></div>
