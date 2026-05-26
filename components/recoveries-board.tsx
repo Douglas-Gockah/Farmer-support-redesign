@@ -243,8 +243,12 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r007-6", stage: "disbursed",            actor: "Kwame Asante",   action: "Recovery request submitted",      summary: "Kwame Asante submitted a recovery request — 18 farmers at GHS 500/farmer",            timestamp: "2025-10-05T08:30:00" },
       { id: "r007-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.80/kg and extra commodity purchase price to GHS 2.60/kg. Forwarded to finance for activation.", timestamp: "2025-10-07T10:00:00" },
       { id: "r007-8", stage: "rec_approved",         actor: "Finance Officer", action: "Recovery request activated",     summary: "Recovery activated. Purchase price confirmed at GHS 2.60/kg.",                         timestamp: "2025-10-08T14:00:00" },
-      { id: "r007-9", stage: "rec_partial",          actor: "Kwame Asante",   action: "Partial recovery recorded",       summary: "Kwame Asante recorded recoveries for 11 of 18 farmers. 7 farmers are still pending.",    timestamp: "2025-10-20T11:30:00" },
+      { id: "r007-9",  stage: "rec_partial",          actor: "Kwame Asante",   action: "Partial recovery recorded",       summary: "Kwame Asante recorded recoveries for 11 of 18 farmers. 7 farmers are still pending.",    timestamp: "2025-10-20T11:30:00" },
+      { id: "r007-10", stage: "rec_partial", type: "receipt_confirmation" as const, actor: "Fuseini Dramani", action: "Receipt confirmation signed", summary: "Fuseini Dramani confirmed receipt of cash refund — GHS 500. Signature captured on mobile app.", timestamp: "2025-10-18T14:05:00" },
+      { id: "r007-11", stage: "rec_partial", type: "receipt_confirmation" as const, actor: "Mariama Issaka",  action: "Receipt confirmation signed", summary: "Mariama Issaka confirmed receipt of cash refund — GHS 575 (incl. GHS 75 penalty). Signature captured on mobile app.", timestamp: "2025-10-18T15:20:00" },
+      { id: "r007-12", stage: "rec_partial", type: "receipt_confirmation" as const, actor: "Fati Iddrissu",   action: "Receipt confirmation signed", summary: "Fati Iddrissu confirmed receipt of cash refund — GHS 500. Signature captured on mobile app.", timestamp: "2025-10-16T09:45:00" },
     ],
+    recoveryRating: { experience: "very_good", lendAgain: "yes" },
     farmersList: [
       { id: "Y101", name: "Alidu Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-20" },
       { id: "Y102", name: "Rahinatu Yahaya",  recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-20" },
@@ -282,7 +286,12 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r008-6", stage: "disbursed",            actor: "Ama Owusu",      action: "Recovery request submitted",      summary: "Ama Owusu submitted a recovery request — 15 farmers at GHS 450/farmer",             timestamp: "2025-09-18T08:30:00" },
       { id: "r008-7", stage: "rec_finance_review",   actor: "Agent Manager",  action: "Recovery request reviewed & approved", summary: "Set recovery unit price to GHS 2.70/kg and extra commodity purchase price to GHS 2.50/kg. Forwarded to finance for activation.", timestamp: "2025-09-20T10:00:00" },
       { id: "r008-8", stage: "rec_approved",         actor: "Finance Officer", action: "Recovery request activated",     summary: "Recovery activated. Purchase price confirmed at GHS 2.50/kg.",                         timestamp: "2025-09-21T14:00:00" },
-      { id: "r008-9", stage: "rec_full",             actor: "Ama Owusu",      action: "Full recovery recorded",          summary: "Ama Owusu recorded recoveries for all 15 farmers. Total recovered: 1,500 kg.",          timestamp: "2025-10-10T15:00:00" },
+      { id: "r008-9",  stage: "rec_full",    actor: "Ama Owusu",       action: "Full recovery recorded",          summary: "Ama Owusu recorded recoveries for all 15 farmers. Total recovered: 1,500 kg.",              timestamp: "2025-10-10T15:00:00" },
+      { id: "r008-10", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Rahinatu Bawah",  action: "Receipt confirmation signed", summary: "Rahinatu Bawah confirmed receipt of cash refund — GHS 450. Signature captured on mobile app.", timestamp: "2025-10-09T10:12:00" },
+      { id: "r008-11", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Bintu Alhassan",  action: "Receipt confirmation signed", summary: "Bintu Alhassan confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-09T11:30:00" },
+      { id: "r008-12", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Safiatu Tampuri", action: "Receipt confirmation signed", summary: "Safiatu Tampuri confirmed receipt of cash refund — GHS 450. Signature captured on mobile app.", timestamp: "2025-10-07T14:00:00" },
+      { id: "r008-13", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Alidu Mahama",    action: "Receipt confirmation signed", summary: "Alidu Mahama confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-06T09:55:00" },
+      { id: "r008-14", stage: "rec_full", type: "proof_upload" as const,         actor: "Ama Owusu",       action: "Proof of refund uploaded",    summary: "Ama Owusu uploaded proof of refund documents for all 4 cash payment farmers.", timestamp: "2025-10-10T14:45:00" },
     ],
     farmersList: [
       { id: "D101", name: "Abiba Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-10" },
@@ -2359,11 +2368,17 @@ function PartialRecoveryModal({
   req,
   unitPrice,
   purchasePrice,
+  cashProofs,
+  setCashProofs,
+  onMarkFullyRecovered,
   onClose,
 }: {
   req: RecoveryRequest;
   unitPrice: number;
   purchasePrice: number;
+  cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
+  setCashProofs: (setter: (prev: Record<string, Array<{ url: string; isImage: boolean }>>) => Record<string, Array<{ url: string; isImage: boolean }>>) => void;
+  onMarkFullyRecovered: () => void;
   onClose: () => void;
 }) {
   const [listOpen, setListOpen] = useState(true);
@@ -2605,51 +2620,111 @@ function PartialRecoveryModal({
 
                     {/* Recovered farmers */}
                     {recovered.map((f, idx) => {
-                      const color = avatarColor(f.name);
-                      const ini   = initials(f.name);
-                      const mode  = f.recoveryMode ?? "in_kind";
+                      const color      = avatarColor(f.name);
+                      const ini        = initials(f.name);
+                      const mode       = f.recoveryMode ?? "in_kind";
+                      const needsProof = mode === "cash" || mode === "mixed";
+                      const farmerId   = f.id;
+                      const hasProof   = (cashProofs[farmerId] ?? []).length > 0;
                       return (
-                        <div
-                          key={f.id}
-                          style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: "1px solid #f3f4f6", background: "#f0fdf4" }}
-                        >
-                          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                            <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
-                              {ini}
-                            </span>
-                            <div style={{ minWidth: 0 }}>
-                              <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{f.name}</span>
-                              {f.recoveredDate && (
-                                <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>{fmtDate(f.recoveredDate)}</span>
+                        <React.Fragment key={f.id}>
+                          <div
+                            style={{ display: "flex", alignItems: "center", padding: "9px 16px", borderBottom: needsProof ? "none" : "1px solid #f3f4f6", background: "#f0fdf4" }}
+                          >
+                            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                              <span style={{ width: 26, height: 26, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5625rem", fontWeight: 700, flexShrink: 0 }}>
+                                {ini}
+                              </span>
+                              <div style={{ minWidth: 0 }}>
+                                <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{f.name}</span>
+                                {f.recoveredDate && (
+                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>{fmtDate(f.recoveredDate)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                              {needsProof && (
+                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, padding: "2px 7px", borderRadius: 10, background: hasProof ? "#dcfce7" : "#fef3c7", color: hasProof ? "#059669" : "#d97706" }}>
+                                  {hasProof ? "✓ Proof uploaded" : "Proof required"}
+                                </span>
                               )}
+                              <div style={{ textAlign: "right", width: 120 }}>
+                                {mode === "in_kind" && (
+                                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#16a34a" }}>{f.recoveredKg} kg</span>
+                                    <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#059669", background: "#dcfce7", padding: "1px 6px", borderRadius: 10 }}>In kind</span>
+                                  </div>
+                                )}
+                                {mode === "cash" && (
+                                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb" }}>
+                                      GHS {((f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0)).toLocaleString()}
+                                    </span>
+                                    {f.hasPenalty && (
+                                      <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>GHS {f.cashAmount} + GHS {f.penaltyAmount} penalty</span>
+                                    )}
+                                    <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#1d4ed8", background: "#eff6ff", padding: "1px 6px", borderRadius: 10 }}>{f.hasPenalty ? "Cash + penalty" : "Cash"}</span>
+                                  </div>
+                                )}
+                                {mode === "mixed" && (
+                                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                                    <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#7c3aed" }}>{f.partKg} kg + GHS {f.cashTopUp}</span>
+                                    <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#6d28d9", background: "#f5f3ff", padding: "1px 6px", borderRadius: 10 }}>Mixed</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div style={{ textAlign: "right", width: 150, flexShrink: 0 }}>
-                            {mode === "in_kind" && (
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#16a34a" }}>{f.recoveredKg} kg</span>
-                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#059669", background: "#dcfce7", padding: "1px 6px", borderRadius: 10 }}>In kind</span>
+
+                          {/* Proof of refund upload — cash/mixed farmers only */}
+                          {needsProof && (
+                            <div style={{ padding: "8px 16px 12px 52px", borderBottom: "1px solid #f3f4f6", background: "#f8fafc" }}>
+                              <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
+                                Proof of refund
+                              </p>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                                {(cashProofs[farmerId] ?? []).map((entry, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => window.open(entry.url, "_blank")}
+                                    style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                                    title="Click to view document"
+                                  >
+                                    {entry.isImage ? (
+                                      <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ) : (
+                                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+                                        <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                                        <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))}
+                                <label
+                                  style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
+                                  title="Upload proof of refund"
+                                >
+                                  <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    multiple
+                                    style={{ display: "none" }}
+                                    onChange={(e) => {
+                                      if (!e.target.files) return;
+                                      const entries = Array.from(e.target.files).map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
+                                      setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...entries] }));
+                                    }}
+                                  />
+                                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
+                                    <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                  </svg>
+                                  <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
+                                </label>
                               </div>
-                            )}
-                            {mode === "cash" && (
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#2563eb" }}>
-                                  GHS {((f.cashAmount ?? 0) + (f.hasPenalty ? (f.penaltyAmount ?? 0) : 0)).toLocaleString()}
-                                </span>
-                                {f.hasPenalty && (
-                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>GHS {f.cashAmount} + GHS {f.penaltyAmount} penalty</span>
-                                )}
-                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#1d4ed8", background: "#eff6ff", padding: "1px 6px", borderRadius: 10 }}>{f.hasPenalty ? "Cash + penalty" : "Cash"}</span>
-                              </div>
-                            )}
-                            {mode === "mixed" && (
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                                <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#7c3aed" }}>{f.partKg} kg + GHS {f.cashTopUp}</span>
-                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "#6d28d9", background: "#f5f3ff", padding: "1px 6px", borderRadius: 10 }}>Mixed</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                            </div>
+                          )}
+                        </React.Fragment>
                       );
                     })}
 
@@ -2702,17 +2777,138 @@ function PartialRecoveryModal({
                 )}
               </div>
 
+              {/* Recovery experience rating (if available) */}
+              {req.recoveryRating && (
+                <div>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Recovery experience rating
+                  </p>
+                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                    <div style={{ padding: "14px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        How was your recovery experience with the farmer group?
+                      </p>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {([
+                          { value: "excellent", label: "Excellent",  emoji: "🌟" },
+                          { value: "very_good", label: "Very Good",  emoji: "😊" },
+                          { value: "average",   label: "Average",    emoji: "😐" },
+                          { value: "difficult", label: "Difficult",  emoji: "😕" },
+                          { value: "very_bad",  label: "Very Bad",   emoji: "😞" },
+                        ] as { value: string; label: string; emoji: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.experience === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 12px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#f59e0b" : "#e5e7eb"}`,
+                                background: sel ? "#fffbeb" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#d97706" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.emoji}</span>
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ padding: "14px 16px" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        Would you suggest we lend again?
+                      </p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {([
+                          { value: "yes",   label: "Yes"   },
+                          { value: "maybe", label: "Maybe" },
+                          { value: "no",    label: "No"    },
+                        ] as { value: string; label: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.lendAgain === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 18px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#f59e0b" : "#e5e7eb"}`,
+                                background: sel ? "#fffbeb" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#d97706" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
-              <button
-                onClick={onClose}
-                className="h-9 px-6 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Close
-              </button>
-            </div>
+            {(() => {
+              const cashFarmers = recovered.filter(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
+              const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0);
+              const canMarkFull = pending.length === 0 && (cashFarmers.length === 0 || allProofsUploaded);
+              const proofsMissing = cashFarmers.length > 0 && !allProofsUploaded;
+              return (
+                <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-3">
+                  <div style={{ flex: 1 }}>
+                    {proofsMissing && (
+                      <p style={{ fontSize: "0.75rem", color: "#d97706", margin: 0 }}>
+                        Upload proof of refund for all cash payment farmers to mark as fully recovered.
+                      </p>
+                    )}
+                    {pending.length > 0 && (
+                      <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: 0 }}>
+                        {pending.length} farmer{pending.length > 1 ? "s" : ""} still pending recovery.
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+                    <button
+                      onClick={onClose}
+                      className="h-9 px-5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => { if (canMarkFull) onMarkFullyRecovered(); }}
+                      disabled={!canMarkFull}
+                      style={{
+                        height: 36, padding: "0 20px", borderRadius: 8, border: "none",
+                        background: canMarkFull ? "#059669" : "#d1d5db",
+                        fontSize: "0.8125rem", fontWeight: 600,
+                        color: canMarkFull ? "#fff" : "#9ca3af",
+                        cursor: canMarkFull ? "pointer" : "not-allowed",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={(e) => { if (canMarkFull) e.currentTarget.style.background = "#047857"; }}
+                      onMouseLeave={(e) => { if (canMarkFull) e.currentTarget.style.background = "#059669"; }}
+                      title={!canMarkFull ? (pending.length > 0 ? "All farmers must be recovered first" : "Upload proof of refund for all cash payment farmers") : "Mark as fully recovered"}
+                    >
+                      Mark as fully recovered
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -2726,15 +2922,16 @@ function FullRecoveryModal({
   req,
   unitPrice,
   purchasePrice,
+  cashProofs,
   onClose,
 }: {
   req: RecoveryRequest;
   unitPrice: number;
   purchasePrice: number;
+  cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
   onClose: () => void;
 }) {
-  const [listOpen,    setListOpen]    = useState(true);
-  const [cashProofs,  setCashProofs]  = useState<Record<string, Array<{ url: string; isImage: boolean }>>>({});
+  const [listOpen, setListOpen] = useState(true);
 
   const bagWeightKg     = req.bagWeightKg ?? 100;
   const wantsDouble     = req.wantsDouble ?? false;
@@ -3115,46 +3312,29 @@ function FullRecoveryModal({
                             <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
                               Proof of refund
                             </p>
-                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                              {(cashProofs[farmerId] ?? []).map((entry, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => window.open(entry.url, "_blank")}
-                                  style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                                  title="Click to view document"
-                                >
-                                  {entry.isImage ? (
-                                    <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  ) : (
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-                                      <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                      <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                    </svg>
-                                  )}
-                                </button>
-                              ))}
-                              <label
-                                style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
-                                title="Upload proof of refund"
-                              >
-                                <input
-                                  type="file"
-                                  accept="image/*,application/pdf"
-                                  multiple
-                                  style={{ display: "none" }}
-                                  onChange={(e) => {
-                                    if (!e.target.files) return;
-                                    const entries = Array.from(e.target.files).map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
-                                    setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...entries] }));
-                                  }}
-                                />
-                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
-                                  <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                </svg>
-                                <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
-                              </label>
-                            </div>
+                            {(cashProofs[farmerId] ?? []).length > 0 ? (
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                                {(cashProofs[farmerId] ?? []).map((entry, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => window.open(entry.url, "_blank")}
+                                    style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                                    title="Click to view document"
+                                  >
+                                    {entry.isImage ? (
+                                      <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ) : (
+                                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+                                        <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                                        <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: "0.75rem", color: "#d1d5db", fontStyle: "italic" }}>No files uploaded</span>
+                            )}
                           </div>
                         )}
                         </React.Fragment>
@@ -3426,10 +3606,11 @@ export default function RecoveriesBoard() {
   const [canceledReq,        setCanceledReq]        = useState<RecoveryRequest | null>(null);
   const [partialReq,         setPartialReq]         = useState<RecoveryRequest | null>(null);
   const [fullReq,            setFullReq]            = useState<RecoveryRequest | null>(null);
-  const [stageOverrides, setStageOverrides] = useState<Record<string, RecoveryStage>>({});
-  const [priceOverrides, setPriceOverrides] = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
-  const [dynamicActions, setDynamicActions] = useState<Record<string, ActionRecord[]>>({});
-  const [filters,        setFilters]        = useState<ActiveFilters>(DEFAULT_FILTERS);
+  const [stageOverrides,  setStageOverrides]  = useState<Record<string, RecoveryStage>>({});
+  const [priceOverrides,  setPriceOverrides]  = useState<Record<string, { unitPrice: number; purchasePrice: number }>>({});
+  const [dynamicActions,  setDynamicActions]  = useState<Record<string, ActionRecord[]>>({});
+  const [allCashProofs,   setAllCashProofs]   = useState<Record<string, Record<string, Array<{ url: string; isImage: boolean }>>>>({});
+  const [filters,         setFilters]         = useState<ActiveFilters>(DEFAULT_FILTERS);
 
   function enrichActions(req: RecoveryRequest): RecoveryRequest {
     const additions = dynamicActions[req.id] ?? [];
@@ -3535,6 +3716,25 @@ export default function RecoveriesBoard() {
       ],
     }));
     setActivatedReq(null);
+  }
+
+  function handleMarkAsFullyRecovered(id: string) {
+    setStageOverrides((prev) => ({ ...prev, [id]: "rec_full" }));
+    setDynamicActions((prev) => ({
+      ...prev,
+      [id]: [
+        ...(prev[id] ?? []),
+        {
+          id: `${id}-full-${Date.now()}`,
+          stage: "rec_full" as const,
+          actor: "Field Agent",
+          action: "Marked as fully recovered",
+          summary: "All farmer recoveries completed. Proofs of refund uploaded and verified for all cash payment farmers.",
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setPartialReq(null);
   }
 
   const timeframeRightSlot = (
@@ -3798,6 +3998,14 @@ export default function RecoveriesBoard() {
             req={enrichActions(partialReq)}
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
+            cashProofs={allCashProofs[partialReq.id] ?? {}}
+            setCashProofs={(setter) =>
+              setAllCashProofs((prev) => ({
+                ...prev,
+                [partialReq.id]: setter(prev[partialReq.id] ?? {}),
+              }))
+            }
+            onMarkFullyRecovered={() => handleMarkAsFullyRecovered(partialReq.id)}
             onClose={() => setPartialReq(null)}
           />
         );
@@ -3811,6 +4019,7 @@ export default function RecoveriesBoard() {
             req={enrichActions(fullReq)}
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
+            cashProofs={allCashProofs[fullReq.id] ?? {}}
             onClose={() => setFullReq(null)}
           />
         );

@@ -25,17 +25,35 @@ function TimelineItems({ records }: { records: ActionRecord[] }) {
           // keep raw timestamp
         }
 
+        const isReceipt = rec.type === "receipt_confirmation";
+        const isProof   = rec.type === "proof_upload";
+        const dotBg     = isReceipt ? "#2563eb" : isProof ? "#7c3aed" : "var(--green-600)";
+
         return (
           <div key={rec.id} className="flex gap-3">
             {/* Spine */}
             <div className="flex flex-col items-center shrink-0" style={{ width: 20 }}>
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: "var(--green-600)" }}
+                style={{ background: dotBg }}
               >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                  <path d="M2 5.5l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                {isReceipt ? (
+                  /* Receipt / ticket icon */
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <rect x="2" y="1" width="12" height="14" rx="2" stroke="white" strokeWidth="1.6"/>
+                    <path d="M5 5h6M5 8h6M5 11h3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ) : isProof ? (
+                  /* Upload / document icon */
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                    <path d="M2 5.5l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
               </div>
               {!isLast && (
                 <div className="flex-1 w-px mt-1" style={{ background: "var(--gray-200)", minHeight: 20 }} />

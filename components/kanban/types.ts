@@ -24,6 +24,8 @@ export interface ActionRecord {
   summary?: string;
   reason?: string;
   timestamp: string;
+  /** Optional type to render a distinct icon in the timeline */
+  type?: "default" | "receipt_confirmation" | "proof_upload";
 }
 
 // ---------------------------------------------------------------------------
