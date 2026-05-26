@@ -89,18 +89,19 @@ interface PRERequest {
   totalExpense:       number;
   progress:           string;
   paymentStatus:      PaymentStatus;
+  isRecovery?:        boolean;
 }
 
 const MOCK_PRE_REQUESTS: PRERequest[] = [
-  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 5,  noOfBags: 5,  totalExpense: 82000, progress: "5/5",  paymentStatus: "Full Payment" },
+  { id: "1",  dateOfRequest: "Nov 17, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 5,  noOfBags: 5,  totalExpense: 82000, progress: "5/5",  paymentStatus: "Full Payment",    isRecovery: true },
   { id: "2",  dateOfRequest: "Nov 25, 2025", requestingOfficer: "Ama Kusi",       community: "Amsterdam",   subRequests: 9,  noOfBags: 50, totalExpense: 82000, progress: "0/9",  paymentStatus: "Pending payment" },
   { id: "3",  dateOfRequest: "Nov 18, 2025", requestingOfficer: "Ama Appiah",     community: "Aba",         subRequests: 4,  noOfBags: 2,  totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
-  { id: "4",  dateOfRequest: "Nov 19, 2025", requestingOfficer: "Joseph Mensah",  community: "Akosa",       subRequests: 5,  noOfBags: 25, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment" },
+  { id: "4",  dateOfRequest: "Nov 19, 2025", requestingOfficer: "Joseph Mensah",  community: "Akosa",       subRequests: 5,  noOfBags: 25, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment", isRecovery: true },
   { id: "5",  dateOfRequest: "Nov 20, 2025", requestingOfficer: "Bernard Bortey", community: "Kowie",       subRequests: 3,  noOfBags: 15, totalExpense: 82000, progress: "2/3",  paymentStatus: "Partial payment" },
-  { id: "6",  dateOfRequest: "Nov 21, 2025", requestingOfficer: "Bernard Bortey", community: "Dagbanjado",  subRequests: 1,  noOfBags: 30, totalExpense: 82000, progress: "1/6",  paymentStatus: "Partial payment" },
+  { id: "6",  dateOfRequest: "Nov 21, 2025", requestingOfficer: "Bernard Bortey", community: "Dagbanjado",  subRequests: 1,  noOfBags: 30, totalExpense: 82000, progress: "1/6",  paymentStatus: "Partial payment", isRecovery: true },
   { id: "7",  dateOfRequest: "Nov 22, 2025", requestingOfficer: "Bernard Bortey", community: "Bachuriyiri", subRequests: 3,  noOfBags: 8,  totalExpense: 82000, progress: "2/3",  paymentStatus: "Partial payment" },
   { id: "8",  dateOfRequest: "Nov 23, 2025", requestingOfficer: "Joseph Mensah",  community: "Apengu",      subRequests: 4,  noOfBags: 40, totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
-  { id: "9",  dateOfRequest: "Nov 24, 2025", requestingOfficer: "Ama Kusi",       community: "Nasia",       subRequests: 5,  noOfBags: 22, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment" },
+  { id: "9",  dateOfRequest: "Nov 24, 2025", requestingOfficer: "Ama Kusi",       community: "Nasia",       subRequests: 5,  noOfBags: 22, totalExpense: 82000, progress: "0/5",  paymentStatus: "Pending payment", isRecovery: true },
   { id: "10", dateOfRequest: "Nov 24, 2025", requestingOfficer: "Ama Kusi",       community: "Apengu",      subRequests: 14, noOfBags: 22, totalExpense: 82000, progress: "0/4",  paymentStatus: "Pending payment" },
 ];
 
@@ -205,7 +206,10 @@ function DoubleChevronIcon({ dir }: { dir: "left" | "right" }) {
 
 // ─── Recovery indicator icon with tooltip ─────────────────────────────────────
 
-function RecoveryIndicator() {
+function RecoveryIndicator({
+  title = "Recovery purchase request",
+  body  = "This purchase request was submitted and activated as part of a pre-financing recovery request.",
+}: { title?: string; body?: string } = {}) {
   const [tip, setTip] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -223,7 +227,7 @@ function RecoveryIndicator() {
         onMouseEnter={showTip}
         onMouseLeave={() => setTip(null)}
         style={{ background: "none", border: "none", padding: 0, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center" }}
-        aria-label="Recovery purchase request"
+        aria-label={title}
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="7" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.2" />
@@ -247,10 +251,10 @@ function RecoveryIndicator() {
           }}
         >
           <p style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#f59e0b", margin: "0 0 8px" }}>
-            Recovery purchase request
+            {title}
           </p>
           <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0, lineHeight: 1.55 }}>
-            This purchase request was submitted and activated as part of a pre-financing recovery request.
+            {body}
           </p>
         </div>
       )}
@@ -542,7 +546,17 @@ function PREsTable() {
               >
                 <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>{row.dateOfRequest}</td>
                 <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.requestingOfficer}</td>
-                <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151" }}>{row.community}</td>
+                <td style={{ padding: "12px 14px" }}>
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: 13, color: "#374151" }}>{row.community}</span>
+                    {row.isRecovery && (
+                      <RecoveryIndicator
+                        title="Recovery PREs"
+                        body="This PREs was submitted and activated as part of a pre-financing recovery request."
+                      />
+                    )}
+                  </div>
+                </td>
                 <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", textAlign: "center" }}>{row.subRequests}</td>
                 <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", textAlign: "center" }}>{row.noOfBags}</td>
                 <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500, color: "#111827", textAlign: "right", whiteSpace: "nowrap" }}>
