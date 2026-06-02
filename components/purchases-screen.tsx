@@ -1347,6 +1347,7 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
 
   const isRequests = activeSubScreen === "purchases-requests";
   const isPres     = activeSubScreen === "purchases-pres";
+  const isList     = activeSubScreen === "purchases-list";
   const label = SCREEN_LABELS[activeSubScreen] ?? "Purchases";
 
   // Reset sub-screen selection whenever the active module changes
@@ -1360,6 +1361,10 @@ export default function PurchasesScreen({ activeSubScreen, onNavigate }: Purchas
 
   if (isPres && selectedPRE) {
     return <PREsSubRequestsScreen pre={selectedPRE} onBack={() => setSelectedPREId(null)} />;
+  }
+
+  if (isList) {
+    return <PurchaseListScreen />;
   }
 
   return (
