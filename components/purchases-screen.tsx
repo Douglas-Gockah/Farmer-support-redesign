@@ -706,44 +706,45 @@ function PREsTable({ onRowClick }: { onRowClick: (id: string) => void }) {
 type DisbursementStatusLabel = "Successful" | "Not applicable" | "Pending" | "Failed";
 
 interface PurchaseEntry {
-  id:                  string;
-  referenceCode:       string;
-  dateOfPurchase:      string;
-  agent:               string;
-  agentHasWarning?:    boolean;
-  farmerName:          string;
-  totalQuantityKg:     number;
-  totalPriceGHS:       number;
-  disbursementStatus:  DisbursementStatusLabel;
+  id:                   string;
+  referenceCode:        string;
+  dateOfPurchase:       string;
+  agent:                string;
+  agentHasWarning?:     boolean;
+  farmerName:           string;
+  isRecoveryPurchase?:  boolean;
+  totalQuantityKg:      number;
+  totalPriceGHS:        number;
+  disbursementStatus:   DisbursementStatusLabel;
 }
 
 const MOCK_ACTIVATED_ENTRIES: PurchaseEntry[] = [
   { id: "a1",  referenceCode: "CS-2605-00273-ARB-200263", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 32.88,    totalPriceGHS: 197.28,     disbursementStatus: "Successful" },
   { id: "a2",  referenceCode: "CS-2605-00273-ARB-200184", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 3921.20,  totalPriceGHS: 23527.20,   disbursementStatus: "Successful" },
-  { id: "a3",  referenceCode: "CS-2605-00271-ZY-200181",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        totalQuantityKg: 306.70,   totalPriceGHS: 1840.20,    disbursementStatus: "Not applicable" },
-  { id: "a4",  referenceCode: "CS-2605-00271-ZY-199989",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        totalQuantityKg: 18928.30, totalPriceGHS: 113569.80,  disbursementStatus: "Not applicable" },
+  { id: "a3",  referenceCode: "CS-2605-00271-ZY-200181",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        isRecoveryPurchase: true, totalQuantityKg: 306.70,   totalPriceGHS: 1840.20,    disbursementStatus: "Not applicable" },
+  { id: "a4",  referenceCode: "CS-2605-00271-ZY-199989",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        isRecoveryPurchase: true, totalQuantityKg: 18928.30, totalPriceGHS: 113569.80,  disbursementStatus: "Not applicable" },
   { id: "a5",  referenceCode: "CS-2605-00264-ZY-199985",  dateOfPurchase: "May 12, 2026", agent: "Zakaria Yakubu",                             farmerName: "Tettevi Belinda",     totalQuantityKg: 401.30,   totalPriceGHS: 2327.54,    disbursementStatus: "Successful" },
   { id: "a6",  referenceCode: "CS-2605-00260-KM-199812",  dateOfPurchase: "May 10, 2026", agent: "Kofi Mensah",                                farmerName: "Abena Owusu",         totalQuantityKg: 580.00,   totalPriceGHS: 3480.00,    disbursementStatus: "Successful" },
-  { id: "a7",  referenceCode: "CS-2605-00258-AO-199776",  dateOfPurchase: "May 8, 2026",  agent: "Ama Owusu",                                  farmerName: "Alidu Fuseini",       totalQuantityKg: 1200.50,  totalPriceGHS: 7203.00,    disbursementStatus: "Pending" },
+  { id: "a7",  referenceCode: "CS-2605-00258-AO-199776",  dateOfPurchase: "May 8, 2026",  agent: "Ama Owusu",                                  farmerName: "Alidu Fuseini",       isRecoveryPurchase: true, totalQuantityKg: 1200.50,  totalPriceGHS: 7203.00,    disbursementStatus: "Pending" },
   { id: "a8",  referenceCode: "CS-2605-00255-AB-199701",  dateOfPurchase: "May 5, 2026",  agent: "Akosua Boateng",                             farmerName: "Mariama Dauda",       totalQuantityKg: 750.00,   totalPriceGHS: 4500.00,    disbursementStatus: "Successful" },
   { id: "a9",  referenceCode: "CS-2605-00253-KA-199640",  dateOfPurchase: "May 3, 2026",  agent: "Kwame Asante",                               farmerName: "Rahinatu Yahaya",     totalQuantityKg: 430.60,   totalPriceGHS: 2583.60,    disbursementStatus: "Not applicable" },
-  { id: "a10", referenceCode: "CS-2605-00251-ZY-199588",  dateOfPurchase: "May 1, 2026",  agent: "Zakaria Yakubu",                             farmerName: "Fuseini Dramani",     totalQuantityKg: 2105.00,  totalPriceGHS: 12630.00,   disbursementStatus: "Successful" },
+  { id: "a10", referenceCode: "CS-2605-00251-ZY-199588",  dateOfPurchase: "May 1, 2026",  agent: "Zakaria Yakubu",                             farmerName: "Fuseini Dramani",     isRecoveryPurchase: true, totalQuantityKg: 2105.00,  totalPriceGHS: 12630.00,   disbursementStatus: "Successful" },
   { id: "a11", referenceCode: "CS-2605-00247-ARB-199410", dateOfPurchase: "Apr 28, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Issaka Sumaila",     totalQuantityKg: 875.20,   totalPriceGHS: 5251.20,    disbursementStatus: "Successful" },
   { id: "a12", referenceCode: "CS-2605-00244-KM-199325",  dateOfPurchase: "Apr 25, 2026", agent: "Kofi Mensah",                                farmerName: "Bawah Naabu",         totalQuantityKg: 320.00,   totalPriceGHS: 1920.00,    disbursementStatus: "Failed" },
-  { id: "a13", referenceCode: "CS-2605-00241-AO-199258",  dateOfPurchase: "Apr 22, 2026", agent: "Ama Owusu",                                  farmerName: "Habiba Ziblim",       totalQuantityKg: 615.80,   totalPriceGHS: 3694.80,    disbursementStatus: "Successful" },
+  { id: "a13", referenceCode: "CS-2605-00241-AO-199258",  dateOfPurchase: "Apr 22, 2026", agent: "Ama Owusu",                                  farmerName: "Habiba Ziblim",       isRecoveryPurchase: true, totalQuantityKg: 615.80,   totalPriceGHS: 3694.80,    disbursementStatus: "Successful" },
   { id: "a14", referenceCode: "CS-2605-00238-AB-199180",  dateOfPurchase: "Apr 19, 2026", agent: "Akosua Boateng",                             farmerName: "Sulley Abdulai",      totalQuantityKg: 490.00,   totalPriceGHS: 2940.00,    disbursementStatus: "Pending" },
-  { id: "a15", referenceCode: "CS-2605-00235-KA-199102",  dateOfPurchase: "Apr 16, 2026", agent: "Kwame Asante",                               farmerName: "Aminu Tampuri",       totalQuantityKg: 1050.40,  totalPriceGHS: 6302.40,    disbursementStatus: "Successful" },
+  { id: "a15", referenceCode: "CS-2605-00235-KA-199102",  dateOfPurchase: "Apr 16, 2026", agent: "Kwame Asante",                               farmerName: "Aminu Tampuri",       isRecoveryPurchase: true, totalQuantityKg: 1050.40,  totalPriceGHS: 6302.40,    disbursementStatus: "Successful" },
 ];
 
 const MOCK_DISBURSED_ENTRIES: PurchaseEntry[] = [
-  { id: "d1",  referenceCode: "CS-2602-00180-ZY-196340",  dateOfPurchase: "Mar 28, 2026", agent: "Zakaria Yakubu",    farmerName: "Abiba Mahama",       totalQuantityKg: 1500.00,  totalPriceGHS: 9000.00,    disbursementStatus: "Successful" },
+  { id: "d1",  referenceCode: "CS-2602-00180-ZY-196340",  dateOfPurchase: "Mar 28, 2026", agent: "Zakaria Yakubu",    farmerName: "Abiba Mahama",       isRecoveryPurchase: true, totalQuantityKg: 1500.00,  totalPriceGHS: 9000.00,    disbursementStatus: "Successful" },
   { id: "d2",  referenceCode: "CS-2602-00177-KM-196210",  dateOfPurchase: "Mar 25, 2026", agent: "Kofi Mensah",       farmerName: "Fati Seidu",         totalQuantityKg: 820.50,   totalPriceGHS: 4923.00,    disbursementStatus: "Successful" },
-  { id: "d3",  referenceCode: "CS-2602-00174-AO-196088",  dateOfPurchase: "Mar 22, 2026", agent: "Ama Owusu",         farmerName: "Rahinatu Bawah",     totalQuantityKg: 450.00,   totalPriceGHS: 2700.00,    disbursementStatus: "Successful" },
+  { id: "d3",  referenceCode: "CS-2602-00174-AO-196088",  dateOfPurchase: "Mar 22, 2026", agent: "Ama Owusu",         farmerName: "Rahinatu Bawah",     isRecoveryPurchase: true, totalQuantityKg: 450.00,   totalPriceGHS: 2700.00,    disbursementStatus: "Successful" },
   { id: "d4",  referenceCode: "CS-2602-00171-AB-195990",  dateOfPurchase: "Mar 19, 2026", agent: "Akosua Boateng",    farmerName: "Mariama Naabu",      totalQuantityKg: 2340.00,  totalPriceGHS: 14040.00,   disbursementStatus: "Successful" },
-  { id: "d5",  referenceCode: "CS-2602-00168-KA-195880",  dateOfPurchase: "Mar 15, 2026", agent: "Kwame Asante",      farmerName: "Bintu Alhassan",     totalQuantityKg: 675.80,   totalPriceGHS: 4054.80,    disbursementStatus: "Successful" },
+  { id: "d5",  referenceCode: "CS-2602-00168-KA-195880",  dateOfPurchase: "Mar 15, 2026", agent: "Kwame Asante",      farmerName: "Bintu Alhassan",     isRecoveryPurchase: true, totalQuantityKg: 675.80,   totalPriceGHS: 4054.80,    disbursementStatus: "Successful" },
   { id: "d6",  referenceCode: "CS-2602-00165-ZY-195750",  dateOfPurchase: "Mar 10, 2026", agent: "Zakaria Yakubu",    farmerName: "Zenabu Mahama",      totalQuantityKg: 910.00,   totalPriceGHS: 5460.00,    disbursementStatus: "Successful" },
   { id: "d7",  referenceCode: "CS-2602-00162-KM-195630",  dateOfPurchase: "Mar 5, 2026",  agent: "Kofi Mensah",       farmerName: "Habiba Ziblim",      totalQuantityKg: 380.20,   totalPriceGHS: 2281.20,    disbursementStatus: "Successful" },
-  { id: "d8",  referenceCode: "CS-2601-00158-AO-195500",  dateOfPurchase: "Feb 28, 2026", agent: "Ama Owusu",         farmerName: "Hawa Abukari",       totalQuantityKg: 1725.00,  totalPriceGHS: 10350.00,   disbursementStatus: "Successful" },
+  { id: "d8",  referenceCode: "CS-2601-00158-AO-195500",  dateOfPurchase: "Feb 28, 2026", agent: "Ama Owusu",         farmerName: "Hawa Abukari",       isRecoveryPurchase: true, totalQuantityKg: 1725.00,  totalPriceGHS: 10350.00,   disbursementStatus: "Successful" },
   { id: "d9",  referenceCode: "CS-2601-00155-AB-195380",  dateOfPurchase: "Feb 22, 2026", agent: "Akosua Boateng",    farmerName: "Amina Iddrisu",      totalQuantityKg: 560.00,   totalPriceGHS: 3360.00,    disbursementStatus: "Successful" },
   { id: "d10", referenceCode: "CS-2601-00152-KA-195250",  dateOfPurchase: "Feb 15, 2026", agent: "Kwame Asante",      farmerName: "Safiatu Tampuri",    totalQuantityKg: 2100.00,  totalPriceGHS: 12600.00,   disbursementStatus: "Successful" },
   { id: "d11", referenceCode: "CS-2601-00149-ZY-195110",  dateOfPurchase: "Feb 8, 2026",  agent: "Zakaria Yakubu",    farmerName: "Ramatu Fuseini",     totalQuantityKg: 430.00,   totalPriceGHS: 2580.00,    disbursementStatus: "Successful" },
@@ -823,24 +824,28 @@ function PurchaseListScreen() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-0" style={{ marginBottom: 0 }}>
-          {(["disbursed", "activated"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setPage(1); setSearch(""); }}
-              style={{
-                height: 40, paddingLeft: 16, paddingRight: 16,
-                border: "none", background: "none", cursor: "pointer",
-                fontSize: 14, fontWeight: activeTab === tab ? 600 : 400,
-                color: activeTab === tab ? "#1ab373" : "#6b7280",
-                borderBottom: activeTab === tab ? "2.5px solid #1ab373" : "2.5px solid transparent",
-                textTransform: "capitalize",
-              }}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+        {/* Tabs — segmented control */}
+        <div style={{ paddingTop: 16 }}>
+          <div style={{ display: "inline-flex", background: "#f3f4f6", borderRadius: 8, padding: "3px", gap: 2 }}>
+            {(["disbursed", "activated"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setPage(1); setSearch(""); }}
+                style={{
+                  height: 32, paddingLeft: 18, paddingRight: 18,
+                  borderRadius: 6,
+                  border: activeTab === tab ? "1px solid rgba(0,0,0,0.06)" : "1px solid transparent",
+                  background: activeTab === tab ? "#fff" : "transparent",
+                  boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
+                  fontSize: 13, fontWeight: activeTab === tab ? 600 : 500,
+                  color: activeTab === tab ? "#111827" : "#6b7280",
+                  cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+                }}
+              >
+                {tab === "disbursed" ? "Disbursed" : "Activated"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -885,8 +890,8 @@ function PurchaseListScreen() {
       </div>
 
       {/* Content */}
-      <div style={{ padding: 0, flex: 1, overflowY: "auto" }}>
-        <div style={{ border: "none", overflow: "clip", background: "#fff" }}>
+      <div style={{ padding: "20px 28px", flex: 1, overflowY: "auto" }}>
+        <div style={{ border: "1px solid #e5e7eb", overflow: "clip", background: "#fff", borderRadius: 12 }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
               <thead>
@@ -961,8 +966,16 @@ function PurchaseListScreen() {
                     </td>
 
                     {/* Farmer */}
-                    <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>
-                      {row.farmerName}
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      <div className="flex items-center gap-1.5">
+                        <span style={{ fontSize: 13, color: "#374151" }}>{row.farmerName}</span>
+                        {row.isRecoveryPurchase && (
+                          <RecoveryIndicator
+                            title="Recovery purchase"
+                            body="This purchase item is from a recovery purchase activity"
+                          />
+                        )}
+                      </div>
                     </td>
 
                     {/* Total quantity */}
