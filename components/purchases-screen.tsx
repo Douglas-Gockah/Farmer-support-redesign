@@ -701,6 +701,370 @@ function PREsTable({ onRowClick }: { onRowClick: (id: string) => void }) {
   );
 }
 
+// ─── Purchase List ────────────────────────────────────────────────────────────
+
+type DisbursementStatusLabel = "Successful" | "Not applicable" | "Pending" | "Failed";
+
+interface PurchaseEntry {
+  id:                  string;
+  referenceCode:       string;
+  dateOfPurchase:      string;
+  agent:               string;
+  agentHasWarning?:    boolean;
+  farmerName:          string;
+  totalQuantityKg:     number;
+  totalPriceGHS:       number;
+  disbursementStatus:  DisbursementStatusLabel;
+}
+
+const MOCK_ACTIVATED_ENTRIES: PurchaseEntry[] = [
+  { id: "a1",  referenceCode: "CS-2605-00273-ARB-200263", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 32.88,    totalPriceGHS: 197.28,     disbursementStatus: "Successful" },
+  { id: "a2",  referenceCode: "CS-2605-00273-ARB-200184", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 3921.20,  totalPriceGHS: 23527.20,   disbursementStatus: "Successful" },
+  { id: "a3",  referenceCode: "CS-2605-00271-ZY-200181",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        totalQuantityKg: 306.70,   totalPriceGHS: 1840.20,    disbursementStatus: "Not applicable" },
+  { id: "a4",  referenceCode: "CS-2605-00271-ZY-199989",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        totalQuantityKg: 18928.30, totalPriceGHS: 113569.80,  disbursementStatus: "Not applicable" },
+  { id: "a5",  referenceCode: "CS-2605-00264-ZY-199985",  dateOfPurchase: "May 12, 2026", agent: "Zakaria Yakubu",                             farmerName: "Tettevi Belinda",     totalQuantityKg: 401.30,   totalPriceGHS: 2327.54,    disbursementStatus: "Successful" },
+  { id: "a6",  referenceCode: "CS-2605-00260-KM-199812",  dateOfPurchase: "May 10, 2026", agent: "Kofi Mensah",                                farmerName: "Abena Owusu",         totalQuantityKg: 580.00,   totalPriceGHS: 3480.00,    disbursementStatus: "Successful" },
+  { id: "a7",  referenceCode: "CS-2605-00258-AO-199776",  dateOfPurchase: "May 8, 2026",  agent: "Ama Owusu",                                  farmerName: "Alidu Fuseini",       totalQuantityKg: 1200.50,  totalPriceGHS: 7203.00,    disbursementStatus: "Pending" },
+  { id: "a8",  referenceCode: "CS-2605-00255-AB-199701",  dateOfPurchase: "May 5, 2026",  agent: "Akosua Boateng",                             farmerName: "Mariama Dauda",       totalQuantityKg: 750.00,   totalPriceGHS: 4500.00,    disbursementStatus: "Successful" },
+  { id: "a9",  referenceCode: "CS-2605-00253-KA-199640",  dateOfPurchase: "May 3, 2026",  agent: "Kwame Asante",                               farmerName: "Rahinatu Yahaya",     totalQuantityKg: 430.60,   totalPriceGHS: 2583.60,    disbursementStatus: "Not applicable" },
+  { id: "a10", referenceCode: "CS-2605-00251-ZY-199588",  dateOfPurchase: "May 1, 2026",  agent: "Zakaria Yakubu",                             farmerName: "Fuseini Dramani",     totalQuantityKg: 2105.00,  totalPriceGHS: 12630.00,   disbursementStatus: "Successful" },
+  { id: "a11", referenceCode: "CS-2605-00247-ARB-199410", dateOfPurchase: "Apr 28, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Issaka Sumaila",     totalQuantityKg: 875.20,   totalPriceGHS: 5251.20,    disbursementStatus: "Successful" },
+  { id: "a12", referenceCode: "CS-2605-00244-KM-199325",  dateOfPurchase: "Apr 25, 2026", agent: "Kofi Mensah",                                farmerName: "Bawah Naabu",         totalQuantityKg: 320.00,   totalPriceGHS: 1920.00,    disbursementStatus: "Failed" },
+  { id: "a13", referenceCode: "CS-2605-00241-AO-199258",  dateOfPurchase: "Apr 22, 2026", agent: "Ama Owusu",                                  farmerName: "Habiba Ziblim",       totalQuantityKg: 615.80,   totalPriceGHS: 3694.80,    disbursementStatus: "Successful" },
+  { id: "a14", referenceCode: "CS-2605-00238-AB-199180",  dateOfPurchase: "Apr 19, 2026", agent: "Akosua Boateng",                             farmerName: "Sulley Abdulai",      totalQuantityKg: 490.00,   totalPriceGHS: 2940.00,    disbursementStatus: "Pending" },
+  { id: "a15", referenceCode: "CS-2605-00235-KA-199102",  dateOfPurchase: "Apr 16, 2026", agent: "Kwame Asante",                               farmerName: "Aminu Tampuri",       totalQuantityKg: 1050.40,  totalPriceGHS: 6302.40,    disbursementStatus: "Successful" },
+];
+
+const MOCK_DISBURSED_ENTRIES: PurchaseEntry[] = [
+  { id: "d1",  referenceCode: "CS-2602-00180-ZY-196340",  dateOfPurchase: "Mar 28, 2026", agent: "Zakaria Yakubu",    farmerName: "Abiba Mahama",       totalQuantityKg: 1500.00,  totalPriceGHS: 9000.00,    disbursementStatus: "Successful" },
+  { id: "d2",  referenceCode: "CS-2602-00177-KM-196210",  dateOfPurchase: "Mar 25, 2026", agent: "Kofi Mensah",       farmerName: "Fati Seidu",         totalQuantityKg: 820.50,   totalPriceGHS: 4923.00,    disbursementStatus: "Successful" },
+  { id: "d3",  referenceCode: "CS-2602-00174-AO-196088",  dateOfPurchase: "Mar 22, 2026", agent: "Ama Owusu",         farmerName: "Rahinatu Bawah",     totalQuantityKg: 450.00,   totalPriceGHS: 2700.00,    disbursementStatus: "Successful" },
+  { id: "d4",  referenceCode: "CS-2602-00171-AB-195990",  dateOfPurchase: "Mar 19, 2026", agent: "Akosua Boateng",    farmerName: "Mariama Naabu",      totalQuantityKg: 2340.00,  totalPriceGHS: 14040.00,   disbursementStatus: "Successful" },
+  { id: "d5",  referenceCode: "CS-2602-00168-KA-195880",  dateOfPurchase: "Mar 15, 2026", agent: "Kwame Asante",      farmerName: "Bintu Alhassan",     totalQuantityKg: 675.80,   totalPriceGHS: 4054.80,    disbursementStatus: "Successful" },
+  { id: "d6",  referenceCode: "CS-2602-00165-ZY-195750",  dateOfPurchase: "Mar 10, 2026", agent: "Zakaria Yakubu",    farmerName: "Zenabu Mahama",      totalQuantityKg: 910.00,   totalPriceGHS: 5460.00,    disbursementStatus: "Successful" },
+  { id: "d7",  referenceCode: "CS-2602-00162-KM-195630",  dateOfPurchase: "Mar 5, 2026",  agent: "Kofi Mensah",       farmerName: "Habiba Ziblim",      totalQuantityKg: 380.20,   totalPriceGHS: 2281.20,    disbursementStatus: "Successful" },
+  { id: "d8",  referenceCode: "CS-2601-00158-AO-195500",  dateOfPurchase: "Feb 28, 2026", agent: "Ama Owusu",         farmerName: "Hawa Abukari",       totalQuantityKg: 1725.00,  totalPriceGHS: 10350.00,   disbursementStatus: "Successful" },
+  { id: "d9",  referenceCode: "CS-2601-00155-AB-195380",  dateOfPurchase: "Feb 22, 2026", agent: "Akosua Boateng",    farmerName: "Amina Iddrisu",      totalQuantityKg: 560.00,   totalPriceGHS: 3360.00,    disbursementStatus: "Successful" },
+  { id: "d10", referenceCode: "CS-2601-00152-KA-195250",  dateOfPurchase: "Feb 15, 2026", agent: "Kwame Asante",      farmerName: "Safiatu Tampuri",    totalQuantityKg: 2100.00,  totalPriceGHS: 12600.00,   disbursementStatus: "Successful" },
+  { id: "d11", referenceCode: "CS-2601-00149-ZY-195110",  dateOfPurchase: "Feb 8, 2026",  agent: "Zakaria Yakubu",    farmerName: "Ramatu Fuseini",     totalQuantityKg: 430.00,   totalPriceGHS: 2580.00,    disbursementStatus: "Successful" },
+  { id: "d12", referenceCode: "CS-2601-00146-KM-194990",  dateOfPurchase: "Jan 30, 2026", agent: "Kofi Mensah",       farmerName: "Fatimatu Dauda",     totalQuantityKg: 800.60,   totalPriceGHS: 4803.60,    disbursementStatus: "Successful" },
+];
+
+function disbursementStatusStyle(status: DisbursementStatusLabel): React.CSSProperties {
+  switch (status) {
+    case "Successful":     return { color: "#16a34a", fontWeight: 600 };
+    case "Not applicable": return { color: "#6b7280" };
+    case "Pending":        return { color: "#d97706", fontWeight: 600 };
+    case "Failed":         return { color: "#dc2626", fontWeight: 600 };
+  }
+}
+
+function PurchaseListScreen() {
+  const [activeTab, setActiveTab] = useState<"activated" | "disbursed">("activated");
+  const [search,    setSearch]    = useState("");
+  const [copiedId,  setCopiedId]  = useState<string | null>(null);
+  const [page,      setPage]      = useState(1);
+
+  const entries = activeTab === "activated" ? MOCK_ACTIVATED_ENTRIES : MOCK_DISBURSED_ENTRIES;
+  const totalPages = activeTab === "activated" ? 210 : 195;
+  const totalRowsHardcoded = 5228;
+
+  const q = search.toLowerCase().trim();
+  const filtered = q
+    ? entries.filter(
+        (e) =>
+          e.referenceCode.toLowerCase().includes(q) ||
+          e.agent.toLowerCase().includes(q) ||
+          e.farmerName.toLowerCase().includes(q)
+      )
+    : entries;
+
+  function copyCode(code: string) {
+    navigator.clipboard.writeText(code).catch(() => {});
+    setCopiedId(code);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  const PLTh = ({ children, right }: { children?: React.ReactNode; right?: boolean }) => (
+    <th style={{
+      padding: "10px 14px",
+      textAlign: right ? "right" : "left",
+      fontSize: 11, fontWeight: 600, color: "#6b7280",
+      textTransform: "uppercase", letterSpacing: "0.05em",
+      borderBottom: "1px solid #e5e7eb", background: "#f9fafb", whiteSpace: "nowrap",
+    }}>
+      {children}
+    </th>
+  );
+
+  return (
+    <div className="flex flex-col" style={{ height: "100%", overflowY: "auto" }}>
+
+      {/* Header */}
+      <div style={{ padding: "20px 28px 0", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0 }}>
+        {/* Breadcrumb + export row */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+          <div className="flex items-center gap-1.5">
+            <span style={{ fontSize: 13, color: "#9ca3af" }}>Purchases</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M5 10l4-3-4-3" stroke="#d1d5db" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Purchase List</span>
+          </div>
+          <button
+            className="inline-flex items-center gap-2"
+            style={{ height: 40, paddingLeft: 14, paddingRight: 14, borderRadius: 8, border: "1.5px solid #1ab373", background: "#fff", fontSize: 13, fontWeight: 500, color: "#1ab373", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Export data
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-0" style={{ marginBottom: 0 }}>
+          {(["disbursed", "activated"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); setPage(1); setSearch(""); }}
+              style={{
+                height: 40, paddingLeft: 16, paddingRight: 16,
+                border: "none", background: "none", cursor: "pointer",
+                fontSize: 14, fontWeight: activeTab === tab ? 600 : 400,
+                color: activeTab === tab ? "#1ab373" : "#6b7280",
+                borderBottom: activeTab === tab ? "2.5px solid #1ab373" : "2.5px solid transparent",
+                textTransform: "capitalize",
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div
+        style={{ padding: "12px 28px", background: "#fff", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}
+      >
+        {/* Search */}
+        <div
+          className="flex items-center gap-2"
+          style={{ height: 40, paddingLeft: 12, paddingRight: 12, border: "1.5px solid #e5e7eb", borderRadius: 8, background: "#fff", maxWidth: 520, marginBottom: 10 }}
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="6.5" cy="6.5" r="5" stroke="#9ca3af" strokeWidth="1.4" />
+            <path d="M10.5 10.5l3 3" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by purchase request reference"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            style={{ flex: 1, border: "none", outline: "none", fontSize: 13, color: "#111827", background: "transparent" }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 0, display: "flex", alignItems: "center" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Filter pills */}
+        <div className="flex items-center gap-2">
+          <FilterPill label="All Time" calendar />
+          <FilterPill label="All Agents" />
+          <FilterPill label="Disbursement Status" />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: 0, flex: 1, overflowY: "auto" }}>
+        <div style={{ border: "none", overflow: "clip", background: "#fff" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
+              <thead>
+                <tr>
+                  <PLTh>Reference code</PLTh>
+                  <PLTh>Date of purchase</PLTh>
+                  <PLTh>Agent</PLTh>
+                  <PLTh>Farmers name</PLTh>
+                  <PLTh right>Total quantity</PLTh>
+                  <PLTh right>Total price</PLTh>
+                  <PLTh>Disbursement status</PLTh>
+                  <PLTh>Action</PLTh>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: "40px 14px", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                      No results match your search
+                    </td>
+                  </tr>
+                ) : filtered.map((row, i) => (
+                  <tr
+                    key={row.id}
+                    style={{ borderBottom: "1px solid #f3f4f6", transition: "background 0.1s" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
+                  >
+                    {/* Reference code */}
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "#111827", letterSpacing: "0.03em" }}>
+                          {row.referenceCode}
+                        </span>
+                        <button
+                          onClick={() => copyCode(row.referenceCode)}
+                          style={{ color: copiedId === row.referenceCode ? "#16a34a" : "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 2, borderRadius: 4, display: "flex", alignItems: "center" }}
+                          title="Copy reference code"
+                        >
+                          {copiedId === row.referenceCode ? (
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                              <path d="M3 8l3.5 3.5 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : <CopyIcon />}
+                        </button>
+                      </div>
+                    </td>
+
+                    {/* Date */}
+                    <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>
+                      {row.dateOfPurchase}
+                    </td>
+
+                    {/* Agent */}
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      <div className="flex items-center gap-1.5">
+                        <span style={{ fontSize: 13, color: "#374151" }}>{row.agent}</span>
+                        {row.agentHasWarning && (
+                          <span
+                            style={{
+                              display: "inline-flex", alignItems: "center", justifyContent: "center",
+                              width: 16, height: 16, borderRadius: "50%",
+                              background: "#ef4444", color: "#fff",
+                              fontSize: 10, fontWeight: 700, flexShrink: 0,
+                            }}
+                            title="Agent warning"
+                          >
+                            !
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Farmer */}
+                    <td style={{ padding: "12px 14px", fontSize: 13, color: "#374151", whiteSpace: "nowrap" }}>
+                      {row.farmerName}
+                    </td>
+
+                    {/* Total quantity */}
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, fontWeight: 600, color: "#111827", whiteSpace: "nowrap" }}>
+                      {row.totalQuantityKg.toLocaleString()} kg
+                    </td>
+
+                    {/* Total price */}
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: 13, fontWeight: 600, color: "#111827", whiteSpace: "nowrap" }}>
+                      GHS {row.totalPriceGHS.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+
+                    {/* Disbursement status */}
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: 13, ...disbursementStatusStyle(row.disbursementStatus) }}>
+                        {row.disbursementStatus}
+                      </span>
+                    </td>
+
+                    {/* Action */}
+                    <td style={{ padding: "12px 14px" }}>
+                      <button
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", fontSize: 18, lineHeight: 1 }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
+                        title="More actions"
+                      >
+                        ⋮
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination footer */}
+          <div
+            className="flex items-center justify-between"
+            style={{ padding: "12px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexWrap: "wrap", gap: 12 }}
+          >
+            <span style={{ fontSize: 13, color: "#6b7280" }}>
+              Total Rows: <strong style={{ color: "#111827" }}>{q ? filtered.length : totalRowsHardcoded.toLocaleString()}</strong>
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: page === 1 ? "#d1d5db" : "#374151", cursor: page === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <ChevronIcon dir="left" />
+              </button>
+
+              {[1, 2, 3, 4].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  style={{ width: 30, height: 30, borderRadius: 6, border: page === p ? "1.5px solid #1ab373" : "1px solid #e5e7eb", background: page === p ? "#f0fdf4" : "#fff", color: page === p ? "#15803d" : "#374151", fontSize: 13, fontWeight: page === p ? 600 : 400, cursor: "pointer" }}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <span style={{ fontSize: 13, color: "#9ca3af", padding: "0 2px" }}>…</span>
+
+              <button
+                onClick={() => setPage(totalPages)}
+                style={{ width: 30, height: 30, borderRadius: 6, border: page === totalPages ? "1.5px solid #1ab373" : "1px solid #e5e7eb", background: page === totalPages ? "#f0fdf4" : "#fff", color: page === totalPages ? "#15803d" : "#374151", fontSize: 13, fontWeight: page === totalPages ? 600 : 400, cursor: "pointer" }}
+              >
+                {totalPages}
+              </button>
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{ width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: page === totalPages ? "#d1d5db" : "#374151", cursor: page === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <ChevronIcon dir="right" />
+              </button>
+
+              <div className="flex items-center gap-1.5" style={{ marginLeft: 8 }}>
+                <span style={{ fontSize: 12, color: "#6b7280" }}>Go to</span>
+                <input
+                  type="number" min={1} max={totalPages} defaultValue="" placeholder="—"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const v = parseInt((e.target as HTMLInputElement).value, 10);
+                      if (!isNaN(v) && v >= 1 && v <= totalPages) setPage(v);
+                    }
+                  }}
+                  style={{ width: 48, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", padding: "0 8px", fontSize: 13, textAlign: "center", outline: "none" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Placeholder panel ────────────────────────────────────────────────────────
 
 function PlaceholderPanel({ title }: { title: string }) {
