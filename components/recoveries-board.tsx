@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ColumnHeader } from "@/components/kanban/column-header";
 import { RECOVERIES_COLUMNS } from "@/components/kanban/constants";
@@ -2444,62 +2444,248 @@ interface ProofUploadLogEntry {
 function ProofThumbnailStrip({
   entries,
   onUpload,
+  onRemove,
 }: {
   entries: Array<{ url: string; isImage: boolean }>;
   onUpload?: (files: File[]) => void;
+  onRemove?: (index: number) => void;
 }) {
+  const [lightbox, setLightbox] = useState<{ url: string; isImage: boolean; index: number } | null>(null);
+
+  // Collect only real image entries (non-placeholder images) for lightbox navigation
+  const imageEntries = entries.reduce<Array<{ url: string; index: number }>>((acc, e, i) => {
+    if (e.isImage && e.url !== "") acc.push({ url: e.url, index: i });
+    return acc;
+  }, []);
+
+  function openEntry(entry: { url: string; isImage: boolean }, i: number) {
+    if (entry.url === "") return;
+    if (entry.isImage) {
+      setLightbox({ url: entry.url, isImage: true, index: i });
+    } else {
+      window.open(entry.url, "_blank");
+    }
+  }
+
+  function lightboxNav(dir: 1 | -1) {
+    if (!lightbox) return;
+    const pos = imageEntries.findIndex((e) => e.index === lightbox.index);
+    if (pos === -1) return;
+    const next = imageEntries[(pos + dir + imageEntries.length) % imageEntries.length];
+    if (next) setLightbox({ url: next.url, isImage: true, index: next.index });
+  }
+
+  const lightboxPos = lightbox ? imageEntries.findIndex((e) => e.index === lightbox.index) : -1;
+
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      {entries.map((entry, i) => {
-        const isPlaceholder = entry.url === "";
-        const inner = (entry.isImage && entry.url) ? (
-          <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-            <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-        );
-        const tileStyle: React.CSSProperties = {
-          width: 52, height: 52, borderRadius: 8,
-          border: "1px solid #e5e7eb", overflow: "hidden",
-          background: "#fff", padding: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        };
-        return isPlaceholder ? (
-          <div key={i} style={tileStyle} title="Uploaded document">{inner}</div>
-        ) : (
-          <button
-            key={i}
-            onClick={() => window.open(entry.url, "_blank")}
-            style={{ ...tileStyle, cursor: "pointer" }}
-            title="Click to view document"
-          >{inner}</button>
-        );
-      })}
-      {onUpload && (
-        <label
-          style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
-          title="Upload proof of refund"
+    <>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {entries.map((entry, i) => {
+          const isPlaceholder = entry.url === "";
+          const inner = (entry.isImage && entry.url) ? (
+            <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+              <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+          );
+          const tileStyle: React.CSSProperties = {
+            width: 52, height: 52, borderRadius: 8,
+            border: "1px solid #e5e7eb", overflow: "hidden",
+            background: "#fff", padding: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          };
+          const tile = isPlaceholder ? (
+            <div style={tileStyle} title="Uploaded document">{inner}</div>
+          ) : (
+            <button
+              onClick={() => openEntry(entry, i)}
+              style={{ ...tileStyle, cursor: "pointer" }}
+              title={entry.isImage ? "Click to view image" : "Click to open PDF"}
+            >{inner}</button>
+          );
+          return (
+            <div key={i} style={{ position: "relative", flexShrink: 0 }}>
+              {tile}
+              {onRemove && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onRemove(i); }}
+                  style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", background: "#ef4444", color: "#fff", border: "1.5px solid #fff", cursor: "pointer", fontSize: "0.625rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
+                  title="Remove"
+                >×</button>
+              )}
+            </div>
+          );
+        })}
+        {onUpload && (
+          <label
+            style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
+            title="Upload proof of refund"
+          >
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              style={{ display: "none" }}
+              onChange={(e) => {
+                if (!e.target.files) return;
+                onUpload(Array.from(e.target.files));
+              }}
+            />
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
+              <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
+          </label>
+        )}
+      </div>
+
+      {/* Lightbox overlay */}
+      {lightbox && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setLightbox(null)}
         >
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            multiple
-            style={{ display: "none" }}
-            onChange={(e) => {
-              if (!e.target.files) return;
-              onUpload(Array.from(e.target.files));
-            }}
+          {/* Close button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.125rem", fontWeight: 700, zIndex: 1 }}
+          >×</button>
+
+          {/* Left arrow */}
+          {imageEntries.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); lightboxNav(-1); }}
+              style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", fontWeight: 700 }}
+            >‹</button>
+          )}
+
+          {/* Image */}
+          <img
+            src={lightbox.url}
+            alt="Proof"
+            style={{ maxWidth: "90vw", maxHeight: "85vh", objectFit: "contain", borderRadius: 8, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+            onClick={(e) => e.stopPropagation()}
           />
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
-            <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
-        </label>
+
+          {/* Right arrow */}
+          {imageEntries.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); lightboxNav(1); }}
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", fontWeight: 700 }}
+            >›</button>
+          )}
+
+          {/* Counter */}
+          {imageEntries.length > 1 && lightboxPos !== -1 && (
+            <p style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", margin: 0 }}>
+              {lightboxPos + 1} of {imageEntries.length}
+            </p>
+          )}
+        </div>
       )}
+    </>
+  );
+}
+
+// ─── Recovery Progress Summary ────────────────────────────────────────────────
+
+function RecoveryProgressSummary({
+  farmers,
+  recovered,
+  weightPerFarmer,
+  amountPerFarmer,
+  totalRecoveredKg,
+  timeframe,
+}: {
+  farmers:          Array<{ id: string; name: string; recoveryMode?: string; recoveredKg?: number; cashAmount?: number; cashTopUp?: number; hasPenalty?: boolean; penaltyAmount?: number; partKg?: number }>;
+  recovered:        typeof farmers;
+  weightPerFarmer:  number;
+  amountPerFarmer:  number;
+  totalRecoveredKg: number;
+  timeframe:        { start: Date; end: Date } | null;
+}) {
+  const totalExpected = weightPerFarmer * farmers.length;
+  const expectedCashSum = amountPerFarmer * farmers.length;
+
+  const recoveredCashBase = recovered.reduce((s, f) => {
+    if (f.recoveryMode === "cash")  return s + (f.cashAmount ?? 0);
+    if (f.recoveryMode === "mixed") return s + (f.cashTopUp  ?? 0);
+    return s;
+  }, 0);
+
+  const balanceBags = totalExpected - totalRecoveredKg;
+  const balanceCash = expectedCashSum - recoveredCashBase;
+
+  const today = new Date();
+  const isWithinPeriod = timeframe ? today <= timeframe.end : true;
+  const interestRatePct = isWithinPeriod ? 0 : Math.round(INTEREST_RATE * 100);
+  const penaltyRatePct  = Math.round(DEFAULT_PENALTY * 100);
+
+  const hasCashFarmers = recovered.some(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
+
+  function fmtKg(n: number) {
+    return n.toLocaleString("en-GH", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + " kg";
+  }
+  function fmtGHS(n: number) {
+    return "GHS " + n.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  const periodLabel = timeframe
+    ? `Recovery period (${fmtDisplayDate(timeframe.start)} – ${fmtDisplayDate(timeframe.end)})`
+    : "Recovery period (no timeframe set)";
+
+  return (
+    <div>
+      <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+        Recovery summary
+      </p>
+      <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+        {/* Period header */}
+        <div style={{ background: "#f9fafb", padding: "10px 16px", borderBottom: "1px solid #e5e7eb" }}>
+          <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: 0 }}>{periodLabel}</p>
+        </div>
+        {/* Rates */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ padding: "12px 16px", borderRight: "1px solid #e5e7eb" }}>
+            <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: "0 0 4px" }}>Interest rate within recovery period</p>
+            <p style={{ fontSize: "1.25rem", fontWeight: 700, color: interestRatePct === 0 ? "#059669" : "#d97706", margin: 0 }}>{interestRatePct}%</p>
+          </div>
+          <div style={{ padding: "12px 16px" }}>
+            <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: "0 0 4px" }}>Penalty rate on cash sum</p>
+            <p style={{ fontSize: "1.25rem", fontWeight: 700, color: "#d97706", margin: 0 }}>{penaltyRatePct}%</p>
+          </div>
+        </div>
+        {/* Table header */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", background: "#f9fafb", borderBottom: "1px solid #e5e7eb", padding: "7px 16px", gap: 8 }}>
+          {["Item", "Expected", "Recovered", "Balance"].map(h => (
+            <span key={h} style={{ fontSize: "0.625rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</span>
+          ))}
+        </div>
+        {/* Bags row */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", padding: "10px 16px", gap: 8, borderBottom: hasCashFarmers ? "1px solid #f3f4f6" : "none" }}>
+          <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151" }}>Bags</span>
+          <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>{fmtKg(totalExpected)}</span>
+          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151" }}>{fmtKg(totalRecoveredKg)}</span>
+          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceBags <= 0.001 ? "#059669" : "#d97706" }}>
+            {balanceBags <= 0.001 ? "−" + fmtKg(0) : fmtKg(balanceBags)}
+          </span>
+        </div>
+        {/* Cash sum row */}
+        {hasCashFarmers && (
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", padding: "10px 16px", gap: 8 }}>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151" }}>Cash sum</span>
+            <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>{fmtGHS(expectedCashSum)}</span>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151" }}>{fmtGHS(recoveredCashBase)}</span>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceCash <= 0.01 ? "#059669" : "#d97706" }}>
+              {fmtGHS(Math.max(0, balanceCash))}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -2516,6 +2702,7 @@ function PartialRecoveryModal({
   onProofLog,
   onAutoComplete,
   onClose,
+  timeframe,
 }: {
   req: RecoveryRequest;
   unitPrice: number;
@@ -2526,6 +2713,7 @@ function PartialRecoveryModal({
   onProofLog: (farmerId: string, count: number) => void;
   onAutoComplete: () => void;
   onClose: () => void;
+  timeframe: { start: Date; end: Date } | null;
 }) {
   const [listOpen, setListOpen] = useState(true);
 
@@ -2559,14 +2747,7 @@ function PartialRecoveryModal({
   const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0);
   const canMarkFull       = pending.length === 0 && (cashFarmers.length === 0 || allProofsUploaded);
 
-  const completedRef = useRef(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (canMarkFull && !completedRef.current) {
-      completedRef.current = true;
-      onAutoComplete();
-    }
-  }, [canMarkFull]);
+  // No auto-fire. canMarkFull becoming true shows the success state.
 
   function fmtDate(ds: string) {
     const [y, m, d] = ds.split("-").map(Number);
@@ -2681,6 +2862,25 @@ function PartialRecoveryModal({
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
+              {/* Success banner — shown when all proofs uploaded and all farmers recovered */}
+              {canMarkFull && (
+                <div style={{ borderRadius: 12, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#14532d", margin: 0 }}>
+                      All proofs uploaded — recovery is complete!
+                    </p>
+                    <p style={{ fontSize: "0.75rem", color: "#16a34a", margin: "2px 0 0" }}>
+                      Click &ldquo;Mark as complete&rdquo; below to move this recovery to the Fully Recovered column.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Progress banner */}
               <div style={{ borderRadius: 12, background: "#fffbeb", border: "1px solid #fde68a", padding: "14px 16px" }}>
                 <div className="flex items-center justify-between mb-3">
@@ -2741,6 +2941,16 @@ function PartialRecoveryModal({
                   </div>
                 </div>
               </div>
+
+              {/* Recovery summary */}
+              <RecoveryProgressSummary
+                farmers={farmers}
+                recovered={recovered}
+                weightPerFarmer={weightPerFarmer}
+                amountPerFarmer={req.amountPerFarmer}
+                totalRecoveredKg={totalRecoveredKg}
+                timeframe={timeframe}
+              />
 
               {/* Farmer recovery list */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
@@ -2848,6 +3058,12 @@ function PartialRecoveryModal({
                                   setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...newEntries] }));
                                   onProofLog(farmerId, files.length);
                                 }}
+                                onRemove={(idx) =>
+                                  setCashProofs(prev => ({
+                                    ...prev,
+                                    [farmerId]: (prev[farmerId] ?? []).filter((_, i) => i !== idx),
+                                  }))
+                                }
                               />
                               {(proofLogs[farmerId] ?? []).map((log, li) => (
                                 <div key={li} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
@@ -3000,13 +3216,37 @@ function PartialRecoveryModal({
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
-              <button
-                onClick={onClose}
-                className="h-9 px-5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Close
-              </button>
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-3">
+              <div style={{ flex: 1 }}>
+                {!canMarkFull && pending.length === 0 && cashFarmers.length > 0 && (
+                  <p style={{ fontSize: "0.75rem", color: "#d97706", margin: 0 }}>
+                    Upload proof of refund for all cash payment farmers to complete recovery.
+                  </p>
+                )}
+                {pending.length > 0 && (
+                  <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: 0 }}>
+                    {pending.length} farmer{pending.length > 1 ? "s" : ""} still pending recovery.
+                  </p>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+                <button
+                  onClick={onClose}
+                  className="h-9 px-5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Close
+                </button>
+                {canMarkFull && (
+                  <button
+                    onClick={onAutoComplete}
+                    style={{ height: 36, padding: "0 20px", borderRadius: 8, border: "none", background: "#059669", fontSize: "0.8125rem", fontWeight: 600, color: "#fff", cursor: "pointer", transition: "background 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#047857"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#059669"; }}
+                  >
+                    Mark as complete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -3024,6 +3264,7 @@ function FullRecoveryModal({
   cashProofs,
   proofLogs,
   onClose,
+  timeframe,
 }: {
   req: RecoveryRequest;
   unitPrice: number;
@@ -3031,6 +3272,7 @@ function FullRecoveryModal({
   cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
   proofLogs: Record<string, ProofUploadLogEntry[]>;
   onClose: () => void;
+  timeframe: { start: Date; end: Date } | null;
 }) {
   const [listOpen, setListOpen] = useState(true);
 
@@ -3244,6 +3486,16 @@ function FullRecoveryModal({
                   </div>
                 </div>
               </div>
+
+              {/* Recovery summary */}
+              <RecoveryProgressSummary
+                farmers={farmers}
+                recovered={farmers}
+                weightPerFarmer={weightPerFarmer}
+                amountPerFarmer={req.amountPerFarmer}
+                totalRecoveredKg={totalRecoveredKg}
+                timeframe={timeframe}
+              />
 
               {/* All farmers list */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
@@ -4268,6 +4520,7 @@ export default function RecoveriesBoard() {
             }
             onAutoComplete={() => handleMarkAsFullyRecovered(reqId)}
             onClose={() => setPartialReq(null)}
+            timeframe={timeframe}
           />
         );
       })()}
@@ -4283,6 +4536,7 @@ export default function RecoveriesBoard() {
             cashProofs={allCashProofs[fullReq.id] ?? {}}
             proofLogs={allProofLogs[fullReq.id] ?? {}}
             onClose={() => setFullReq(null)}
+            timeframe={timeframe}
           />
         );
       })()}
