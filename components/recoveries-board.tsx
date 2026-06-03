@@ -2661,16 +2661,16 @@ function RecoveryProgressSummary({
         </div>
         {/* Table header */}
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", background: "#f9fafb", borderBottom: "1px solid #e5e7eb", padding: "7px 16px", gap: 8 }}>
-          {["Item", "Expected", "Recovered", "Balance"].map(h => (
-            <span key={h} style={{ fontSize: "0.625rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</span>
+          {["Item", "Expected", "Recovered", "Balance"].map((h, i) => (
+            <span key={h} style={{ fontSize: "0.625rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: i === 0 ? "left" : "right" }}>{h}</span>
           ))}
         </div>
         {/* Bags row */}
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", padding: "10px 16px", gap: 8, borderBottom: hasCashFarmers ? "1px solid #f3f4f6" : "none" }}>
           <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151" }}>Bags</span>
-          <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>{fmtKg(totalExpected)}</span>
-          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151" }}>{fmtKg(totalRecoveredKg)}</span>
-          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceBags <= 0.001 ? "#059669" : "#d97706" }}>
+          <span style={{ fontSize: "0.8125rem", color: "#6b7280", textAlign: "right" }}>{fmtKg(totalExpected)}</span>
+          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", textAlign: "right" }}>{fmtKg(totalRecoveredKg)}</span>
+          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceBags <= 0.001 ? "#059669" : "#d97706", textAlign: "right" }}>
             {balanceBags <= 0.001 ? "−" + fmtKg(0) : fmtKg(balanceBags)}
           </span>
         </div>
@@ -2678,9 +2678,9 @@ function RecoveryProgressSummary({
         {hasCashFarmers && (
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", padding: "10px 16px", gap: 8 }}>
             <span style={{ fontSize: "0.8125rem", fontWeight: 500, color: "#374151" }}>Cash sum</span>
-            <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>{fmtGHS(expectedCashSum)}</span>
-            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151" }}>{fmtGHS(recoveredCashBase)}</span>
-            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceCash <= 0.01 ? "#059669" : "#d97706" }}>
+            <span style={{ fontSize: "0.8125rem", color: "#6b7280", textAlign: "right" }}>{fmtGHS(expectedCashSum)}</span>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", textAlign: "right" }}>{fmtGHS(recoveredCashBase)}</span>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: balanceCash <= 0.01 ? "#059669" : "#d97706", textAlign: "right" }}>
               {fmtGHS(Math.max(0, balanceCash))}
             </span>
           </div>
