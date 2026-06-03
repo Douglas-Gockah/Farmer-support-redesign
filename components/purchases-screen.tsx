@@ -278,7 +278,13 @@ function RecoveryIndicator({
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setTip({ top: r.bottom + 8, left: r.left - 12 });
+    const tooltipW = 296;
+    const tooltipH = 90;
+    const left = Math.min(r.left - 12, window.innerWidth - tooltipW - 8);
+    const top = r.bottom + 8 + tooltipH > window.innerHeight
+      ? r.top - tooltipH - 8
+      : r.bottom + 8;
+    setTip({ top, left });
   }
 
   return (
@@ -760,11 +766,309 @@ function disbursementStatusStyle(status: DisbursementStatusLabel): React.CSSProp
   }
 }
 
+function disbursementStatusChip(status: DisbursementStatusLabel) {
+  const cfg: Record<DisbursementStatusLabel, { bg: string; color: string; dot: string }> = {
+    "Successful":     { bg: "#f0fdf4", color: "#15803d", dot: "#16a34a" },
+    "Not applicable": { bg: "#f3f4f6", color: "#6b7280", dot: "#9ca3af" },
+    "Pending":        { bg: "#fffbeb", color: "#d97706", dot: "#f59e0b" },
+    "Failed":         { bg: "#fef2f2", color: "#b91c1c", dot: "#dc2626" },
+  };
+  const s = cfg[status];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: s.bg, color: s.color }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
+      {status}
+    </span>
+  );
+}
+
+// ─── Purchase detail slide-over ───────────────────────────────────────────────
+
+function PurchaseDetailPanel({
+  entry,
+  tabLabel,
+  onClose,
+}: {
+  entry: PurchaseEntry;
+  tabLabel: string;
+  onClose: () => void;
+}) {
+  const [copiedRef, setCopiedRef] = useState(false);
+
+  function copyRef() {
+    navigator.clipboard.writeText(entry.referenceCode).catch(() => {});
+    setCopiedRef(true);
+    setTimeout(() => setCopiedRef(false), 2000);
+  }
+
+  const unitPrice = entry.totalQuantityKg > 0
+    ? entry.totalPriceGHS / entry.totalQuantityKg
+    : 0;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 200 }}
+        aria-hidden="true"
+      />
+
+      {/* Panel */}
+      <div
+        style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 480,
+          background: "#fff", zIndex: 201, display: "flex", flexDirection: "column",
+          boxShadow: "-8px 0 40px rgba(0,0,0,0.14)",
+        }}
+        role="dialog"
+        aria-label="Purchase details"
+      >
+        {/* Panel header */}
+        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+          <div className="flex items-start justify-between gap-3">
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                Purchase details
+              </p>
+              <div className="flex items-center gap-2">
+                <span style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, color: "#111827", letterSpacing: "0.03em", wordBreak: "break-all" }}>
+                  {entry.referenceCode}
+                </span>
+                <button
+                  onClick={copyRef}
+                  style={{ color: copiedRef ? "#16a34a" : "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 2, borderRadius: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
+                  title="Copy reference code"
+                >
+                  {copiedRef ? (
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8l3.5 3.5 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : <CopyIcon />}
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
+              aria-label="Close panel"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Status + tab badges */}
+          <div className="flex items-center gap-2" style={{ marginTop: 12 }}>
+            {disbursementStatusChip(entry.disbursementStatus)}
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: "#eff6ff", color: "#1d4ed8" }}>
+              {tabLabel}
+            </span>
+            {entry.isRecoveryPurchase && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: "#fffbeb", color: "#d97706" }}>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.2" />
+                  <path d="M8 5v.5M8 7.5v4" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                Recovery
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+
+          {/* Purchase info card */}
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                Purchase information
+              </p>
+            </div>
+            <div style={{ padding: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 24px" }}>
+                <div>
+                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Date of purchase</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{entry.dateOfPurchase}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Disbursement status</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, ...disbursementStatusStyle(entry.disbursementStatus) }}>
+                    {entry.disbursementStatus}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Total quantity</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                    {entry.totalQuantityKg.toLocaleString()} kg
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Total price</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                    GHS {entry.totalPriceGHS.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                {unitPrice > 0 && (
+                  <div>
+                    <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Unit price</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                      GHS {unitPrice.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / kg
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Agent card */}
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                Agent
+              </p>
+            </div>
+            <div style={{ padding: "16px" }}>
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div
+                  style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: "#1ab373", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 700, flexShrink: 0,
+                  }}
+                >
+                  {entry.agent.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>{entry.agent}</p>
+                    {entry.agentHasWarning && (
+                      <span
+                        style={{
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: "#ef4444", color: "#fff",
+                          fontSize: 11, fontWeight: 700, flexShrink: 0,
+                        }}
+                        title="Agent has a warning flag"
+                      >
+                        !
+                      </span>
+                    )}
+                  </div>
+                  {entry.agentHasWarning && (
+                    <p style={{ fontSize: 12, color: "#ef4444", margin: "3px 0 0" }}>Has active warning flag</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Farmer card */}
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                Farmer
+              </p>
+            </div>
+            <div style={{ padding: "16px" }}>
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div
+                  style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: "#6366f1", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 700, flexShrink: 0,
+                  }}
+                >
+                  {entry.farmerName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>{entry.farmerName}</p>
+                    {entry.isRecoveryPurchase && (
+                      <span
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px",
+                          borderRadius: 20, fontSize: 11, fontWeight: 600,
+                          background: "#fffbeb", color: "#d97706",
+                        }}
+                      >
+                        Recovery purchase
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 12, color: "#6b7280", margin: "3px 0 0" }}>Farmer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick links */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <a
+              href="#"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+            >
+              <ExternalLinkIcon />
+              View purchase request
+            </a>
+            <a
+              href="#"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
+            >
+              <ExternalLinkIcon />
+              View purchase reconciliations
+            </a>
+          </div>
+        </div>
+
+        {/* Panel footer */}
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexShrink: 0 }}>
+          <div className="flex items-center gap-3">
+            <button
+              style={{
+                flex: 1, height: 40, borderRadius: 8,
+                border: "1.5px solid #1ab373", background: "#1ab373",
+                fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#16a34a")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#1ab373")}
+            >
+              View full details
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                height: 40, paddingLeft: 16, paddingRight: 16, borderRadius: 8,
+                border: "1px solid #e5e7eb", background: "#fff",
+                fontSize: 13, fontWeight: 500, color: "#374151", cursor: "pointer",
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function PurchaseListScreen() {
-  const [activeTab, setActiveTab] = useState<"activated" | "disbursed">("activated");
-  const [search,    setSearch]    = useState("");
-  const [copiedId,  setCopiedId]  = useState<string | null>(null);
-  const [page,      setPage]      = useState(1);
+  const [activeTab,      setActiveTab]      = useState<"activated" | "disbursed">("activated");
+  const [search,         setSearch]         = useState("");
+  const [copiedId,       setCopiedId]       = useState<string | null>(null);
+  const [page,           setPage]           = useState(1);
+  const [selectedEntry,  setSelectedEntry]  = useState<PurchaseEntry | null>(null);
 
   const entries = activeTab === "activated" ? MOCK_ACTIVATED_ENTRIES : MOCK_DISBURSED_ENTRIES;
   const totalPages = activeTab === "activated" ? 210 : 195;
@@ -799,6 +1103,14 @@ function PurchaseListScreen() {
   );
 
   return (
+    <>
+    {selectedEntry && (
+      <PurchaseDetailPanel
+        entry={selectedEntry}
+        tabLabel={activeTab === "activated" ? "Activated" : "Disbursed"}
+        onClose={() => setSelectedEntry(null)}
+      />
+    )}
     <div className="flex flex-col" style={{ height: "100%", overflowY: "auto" }}>
 
       {/* Header */}
@@ -916,7 +1228,8 @@ function PurchaseListScreen() {
                 ) : filtered.map((row, i) => (
                   <tr
                     key={row.id}
-                    style={{ borderBottom: "1px solid #f3f4f6", transition: "background 0.1s" }}
+                    style={{ borderBottom: "1px solid #f3f4f6", transition: "background 0.1s", cursor: "pointer" }}
+                    onClick={() => setSelectedEntry(row)}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f9fafb")}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "")}
                   >
@@ -927,7 +1240,7 @@ function PurchaseListScreen() {
                           {row.referenceCode}
                         </span>
                         <button
-                          onClick={() => copyCode(row.referenceCode)}
+                          onClick={(e) => { e.stopPropagation(); copyCode(row.referenceCode); }}
                           style={{ color: copiedId === row.referenceCode ? "#16a34a" : "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 2, borderRadius: 4, display: "flex", alignItems: "center" }}
                           title="Copy reference code"
                         >
@@ -998,6 +1311,7 @@ function PurchaseListScreen() {
                     {/* Action */}
                     <td style={{ padding: "12px 14px" }}>
                       <button
+                        onClick={(e) => e.stopPropagation()}
                         style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", fontSize: 18, lineHeight: 1 }}
                         onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
                         onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
@@ -1012,7 +1326,7 @@ function PurchaseListScreen() {
             </table>
           </div>
 
-          {/* Pagination footer */}
+          {/* Pagination footer — purchase list */}
           <div
             className="flex items-center justify-between"
             style={{ padding: "12px 16px", borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexWrap: "wrap", gap: 12 }}
@@ -1075,6 +1389,7 @@ function PurchaseListScreen() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
