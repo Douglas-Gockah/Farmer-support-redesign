@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ColumnHeader } from "@/components/kanban/column-header";
 import { RECOVERIES_COLUMNS } from "@/components/kanban/constants";
@@ -291,7 +291,6 @@ const MOCK_RECOVERY_REQUESTS: RecoveryRequest[] = [
       { id: "r008-11", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Bintu Alhassan",  action: "Receipt confirmation signed", summary: "Bintu Alhassan confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-09T11:30:00" },
       { id: "r008-12", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Safiatu Tampuri", action: "Receipt confirmation signed", summary: "Safiatu Tampuri confirmed receipt of cash refund — GHS 450. Signature captured on mobile app.", timestamp: "2025-10-07T14:00:00" },
       { id: "r008-13", stage: "rec_full", type: "receipt_confirmation" as const, actor: "Alidu Mahama",    action: "Receipt confirmation signed", summary: "Alidu Mahama confirmed receipt of cash refund — GHS 517 (incl. GHS 67 penalty). Signature captured on mobile app.", timestamp: "2025-10-06T09:55:00" },
-      { id: "r008-14", stage: "rec_full", type: "proof_upload" as const,         actor: "Ama Owusu",       action: "Proof uploaded",    summary: "Ama Owusu uploaded proof of refund documents for all cash payment farmers.", timestamp: "2025-10-10T14:45:00" },
     ],
     farmersList: [
       { id: "D101", name: "Abiba Fuseini",    recoveryMode: "in_kind", recoveredKg: 100, recoveredDate: "2025-10-10" },
@@ -2434,6 +2433,77 @@ function CanceledSummaryModal({
   );
 }
 
+// ─── Proof Upload Types & Strip ───────────────────────────────────────────────
+
+interface ProofUploadLogEntry {
+  by:    string;
+  at:    Date;
+  count: number;
+}
+
+function ProofThumbnailStrip({
+  entries,
+  onUpload,
+}: {
+  entries: Array<{ url: string; isImage: boolean }>;
+  onUpload?: (files: File[]) => void;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      {entries.map((entry, i) => {
+        const isPlaceholder = entry.url === "";
+        const inner = (entry.isImage && entry.url) ? (
+          <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
+            <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+        );
+        const tileStyle: React.CSSProperties = {
+          width: 52, height: 52, borderRadius: 8,
+          border: "1px solid #e5e7eb", overflow: "hidden",
+          background: "#fff", padding: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        };
+        return isPlaceholder ? (
+          <div key={i} style={tileStyle} title="Uploaded document">{inner}</div>
+        ) : (
+          <button
+            key={i}
+            onClick={() => window.open(entry.url, "_blank")}
+            style={{ ...tileStyle, cursor: "pointer" }}
+            title="Click to view document"
+          >{inner}</button>
+        );
+      })}
+      {onUpload && (
+        <label
+          style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
+          title="Upload proof of refund"
+        >
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (!e.target.files) return;
+              onUpload(Array.from(e.target.files));
+            }}
+          />
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
+            <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
+        </label>
+      )}
+    </div>
+  );
+}
+
 // ─── Partial Recovery Modal ───────────────────────────────────────────────────
 
 function PartialRecoveryModal({
@@ -2442,7 +2512,9 @@ function PartialRecoveryModal({
   purchasePrice,
   cashProofs,
   setCashProofs,
-  onMarkFullyRecovered,
+  proofLogs,
+  onProofLog,
+  onAutoComplete,
   onClose,
 }: {
   req: RecoveryRequest;
@@ -2450,7 +2522,9 @@ function PartialRecoveryModal({
   purchasePrice: number;
   cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
   setCashProofs: (setter: (prev: Record<string, Array<{ url: string; isImage: boolean }>>) => Record<string, Array<{ url: string; isImage: boolean }>>) => void;
-  onMarkFullyRecovered: () => void;
+  proofLogs: Record<string, ProofUploadLogEntry[]>;
+  onProofLog: (farmerId: string, count: number) => void;
+  onAutoComplete: () => void;
   onClose: () => void;
 }) {
   const [listOpen, setListOpen] = useState(true);
@@ -2480,6 +2554,19 @@ function PartialRecoveryModal({
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
   const totalAmount   = req.farmersSupported * req.amountPerFarmer;
+
+  const cashFarmers       = recovered.filter(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
+  const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0);
+  const canMarkFull       = pending.length === 0 && (cashFarmers.length === 0 || allProofsUploaded);
+
+  const completedRef = useRef(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (canMarkFull && !completedRef.current) {
+      completedRef.current = true;
+      onAutoComplete();
+    }
+  }, [canMarkFull]);
 
   function fmtDate(ds: string) {
     const [y, m, d] = ds.split("-").map(Number);
@@ -2754,46 +2841,25 @@ function PartialRecoveryModal({
                               <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
                                 Proof of refund
                               </p>
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                                {(cashProofs[farmerId] ?? []).map((entry, i) => (
-                                  <button
-                                    key={i}
-                                    onClick={() => window.open(entry.url, "_blank")}
-                                    style={{ width: 52, height: 52, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                                    title="Click to view document"
-                                  >
-                                    {entry.isImage ? (
-                                      <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                    ) : (
-                                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-                                        <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                        <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                      </svg>
-                                    )}
-                                  </button>
-                                ))}
-                                <label
-                                  style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
-                                  title="Upload proof of refund"
-                                >
-                                  <input
-                                    type="file"
-                                    accept="image/*,application/pdf"
-                                    multiple
-                                    style={{ display: "none" }}
-                                    onChange={(e) => {
-                                      if (!e.target.files) return;
-                                      const entries = Array.from(e.target.files).map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
-                                      setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...entries] }));
-                                    }}
-                                  />
-                                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
-                                    <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                              <ProofThumbnailStrip
+                                entries={cashProofs[farmerId] ?? []}
+                                onUpload={(files) => {
+                                  const newEntries = files.map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
+                                  setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...newEntries] }));
+                                  onProofLog(farmerId, files.length);
+                                }}
+                              />
+                              {(proofLogs[farmerId] ?? []).map((log, li) => (
+                                <div key={li} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af", flexShrink: 0 }}>
+                                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                                    <path d="M8 5v3.2l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                                   </svg>
-                                  <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
-                                </label>
-                              </div>
+                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>
+                                    <strong>{log.by}</strong> uploaded {log.count} document{log.count !== 1 ? "s" : ""} · {fmtTimestamp(log.at)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </React.Fragment>
@@ -2934,53 +3000,14 @@ function PartialRecoveryModal({
             </div>
 
             {/* Footer */}
-            {(() => {
-              const cashFarmers = recovered.filter(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
-              const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0);
-              const canMarkFull = pending.length === 0 && (cashFarmers.length === 0 || allProofsUploaded);
-              const proofsMissing = cashFarmers.length > 0 && !allProofsUploaded;
-              return (
-                <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between gap-3">
-                  <div style={{ flex: 1 }}>
-                    {proofsMissing && (
-                      <p style={{ fontSize: "0.75rem", color: "#d97706", margin: 0 }}>
-                        Upload proof of refund for all cash payment farmers to mark as fully recovered.
-                      </p>
-                    )}
-                    {pending.length > 0 && (
-                      <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: 0 }}>
-                        {pending.length} farmer{pending.length > 1 ? "s" : ""} still pending recovery.
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-                    <button
-                      onClick={onClose}
-                      className="h-9 px-5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={() => { if (canMarkFull) onMarkFullyRecovered(); }}
-                      disabled={!canMarkFull}
-                      style={{
-                        height: 36, padding: "0 20px", borderRadius: 8, border: "none",
-                        background: canMarkFull ? "#059669" : "#d1d5db",
-                        fontSize: "0.8125rem", fontWeight: 600,
-                        color: canMarkFull ? "#fff" : "#9ca3af",
-                        cursor: canMarkFull ? "pointer" : "not-allowed",
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) => { if (canMarkFull) e.currentTarget.style.background = "#047857"; }}
-                      onMouseLeave={(e) => { if (canMarkFull) e.currentTarget.style.background = "#059669"; }}
-                      title={!canMarkFull ? (pending.length > 0 ? "All farmers must be recovered first" : "Upload proof of refund for all cash payment farmers") : "Mark as fully recovered"}
-                    >
-                      Mark as fully recovered
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end">
+              <button
+                onClick={onClose}
+                className="h-9 px-5 rounded-lg border border-gray-200 text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2995,12 +3022,14 @@ function FullRecoveryModal({
   unitPrice,
   purchasePrice,
   cashProofs,
+  proofLogs,
   onClose,
 }: {
   req: RecoveryRequest;
   unitPrice: number;
   purchasePrice: number;
   cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
+  proofLogs: Record<string, ProofUploadLogEntry[]>;
   onClose: () => void;
 }) {
   const [listOpen, setListOpen] = useState(true);
@@ -3216,88 +3245,6 @@ function FullRecoveryModal({
                 </div>
               </div>
 
-              {/* Recovery rating */}
-              {req.recoveryRating && (
-                <div>
-                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                    Recovery experience rating
-                  </p>
-                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-                    <div style={{ padding: "14px 16px", borderBottom: "1px solid #f3f4f6" }}>
-                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
-                        How was your recovery experience with the farmer group?
-                      </p>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {([
-                          { value: "excellent", label: "Excellent",  emoji: "🌟" },
-                          { value: "very_good", label: "Very Good",  emoji: "😊" },
-                          { value: "average",   label: "Average",    emoji: "😐" },
-                          { value: "difficult", label: "Difficult",  emoji: "😕" },
-                          { value: "very_bad",  label: "Very Bad",   emoji: "😞" },
-                        ] as { value: string; label: string; emoji: string }[]).map((opt) => {
-                          const sel = req.recoveryRating!.experience === opt.value;
-                          return (
-                            <div
-                              key={opt.value}
-                              style={{
-                                display: "inline-flex", alignItems: "center", gap: 5,
-                                padding: "6px 12px", borderRadius: 20,
-                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
-                                background: sel ? "#f0fdf4" : "#fafafa",
-                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
-                                color: sel ? "#16a34a" : "#6b7280",
-                              }}
-                            >
-                              <span>{opt.emoji}</span>
-                              <span>{opt.label}</span>
-                              {sel && (
-                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div style={{ padding: "14px 16px" }}>
-                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
-                        Would you suggest we lend again?
-                      </p>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {([
-                          { value: "yes",   label: "Yes"   },
-                          { value: "maybe", label: "Maybe" },
-                          { value: "no",    label: "No"    },
-                        ] as { value: string; label: string }[]).map((opt) => {
-                          const sel = req.recoveryRating!.lendAgain === opt.value;
-                          return (
-                            <div
-                              key={opt.value}
-                              style={{
-                                display: "inline-flex", alignItems: "center", gap: 5,
-                                padding: "6px 18px", borderRadius: 20,
-                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
-                                background: sel ? "#f0fdf4" : "#fafafa",
-                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
-                                color: sel ? "#16a34a" : "#6b7280",
-                              }}
-                            >
-                              <span>{opt.label}</span>
-                              {sel && (
-                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* All farmers list */}
               <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
                 <button
@@ -3385,43 +3332,21 @@ function FullRecoveryModal({
                               Proof of refund
                             </p>
                             {(cashProofs[farmerId] ?? []).length > 0 ? (
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                                {(cashProofs[farmerId] ?? []).map((entry, i) => {
-                                  const isPlaceholder = entry.url === "";
-                                  const tileStyle: React.CSSProperties = {
-                                    width: 52, height: 52, borderRadius: 8,
-                                    border: "1px solid #e5e7eb", overflow: "hidden",
-                                    background: "#fff", padding: 0,
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    flexShrink: 0,
-                                  };
-                                  const inner = entry.isImage && entry.url ? (
-                                    <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  ) : (
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-                                      <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                      <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                    </svg>
-                                  );
-                                  return isPlaceholder ? (
-                                    <div key={i} style={tileStyle} title="Uploaded document">
-                                      {inner}
-                                    </div>
-                                  ) : (
-                                    <button
-                                      key={i}
-                                      onClick={() => window.open(entry.url, "_blank")}
-                                      style={{ ...tileStyle, cursor: "pointer" }}
-                                      title="Click to view document"
-                                    >
-                                      {inner}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                              <ProofThumbnailStrip entries={cashProofs[farmerId] ?? []} />
                             ) : (
                               <span style={{ fontSize: "0.75rem", color: "#d1d5db", fontStyle: "italic" }}>No files uploaded</span>
                             )}
+                            {(proofLogs[farmerId] ?? []).map((log, li) => (
+                              <div key={li} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af", flexShrink: 0 }}>
+                                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                                  <path d="M8 5v3.2l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                                </svg>
+                                <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>
+                                  <strong>{log.by}</strong> uploaded {log.count} document{log.count !== 1 ? "s" : ""} · {fmtTimestamp(log.at)}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         )}
                         </React.Fragment>
@@ -3450,6 +3375,88 @@ function FullRecoveryModal({
                   </>
                 )}
               </div>
+
+              {/* Recovery experience rating — shown at the bottom of the right panel */}
+              {req.recoveryRating && (
+                <div>
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Recovery experience rating
+                  </p>
+                  <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                    <div style={{ padding: "14px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        How was your recovery experience with the farmer group?
+                      </p>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {([
+                          { value: "excellent", label: "Excellent",  emoji: "🌟" },
+                          { value: "very_good", label: "Very Good",  emoji: "😊" },
+                          { value: "average",   label: "Average",    emoji: "😐" },
+                          { value: "difficult", label: "Difficult",  emoji: "😕" },
+                          { value: "very_bad",  label: "Very Bad",   emoji: "😞" },
+                        ] as { value: string; label: string; emoji: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.experience === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 12px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
+                                background: sel ? "#f0fdf4" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#16a34a" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.emoji}</span>
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ padding: "14px 16px" }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: "0 0 10px" }}>
+                        Would you suggest we lend again?
+                      </p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {([
+                          { value: "yes",   label: "Yes"   },
+                          { value: "maybe", label: "Maybe" },
+                          { value: "no",    label: "No"    },
+                        ] as { value: string; label: string }[]).map((opt) => {
+                          const sel = req.recoveryRating!.lendAgain === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "6px 18px", borderRadius: 20,
+                                border: `1.5px solid ${sel ? "#16a34a" : "#e5e7eb"}`,
+                                background: sel ? "#f0fdf4" : "#fafafa",
+                                fontSize: "0.8125rem", fontWeight: sel ? 700 : 400,
+                                color: sel ? "#16a34a" : "#6b7280",
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {sel && (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -3842,6 +3849,17 @@ export default function RecoveriesBoard() {
       "D114": [{ url: "", isImage: false }],  // Alidu Mahama    — cash + penalty
     },
   });
+  // Per-farmer upload activity log — pre-populated for REC-008 completed uploads.
+  const [allProofLogs, setAllProofLogs] = useState<Record<string, Record<string, ProofUploadLogEntry[]>>>({
+    "REC-008": {
+      "D103": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+      "D105": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+      "D107": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+      "D110": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+      "D112": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+      "D114": [{ by: "Ama Owusu", at: new Date("2025-10-10T14:45:00"), count: 1 }],
+    },
+  });
   const [filters,         setFilters]         = useState<ActiveFilters>(DEFAULT_FILTERS);
 
   function enrichActions(req: RecoveryRequest): RecoveryRequest {
@@ -4225,19 +4243,30 @@ export default function RecoveriesBoard() {
       {/* ── Partial recovery modal ── */}
       {partialReq && (() => {
         const { unitPrice, purchasePrice } = resolvedPrices(partialReq);
+        const reqId = partialReq.id;
         return (
           <PartialRecoveryModal
             req={enrichActions(partialReq)}
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
-            cashProofs={allCashProofs[partialReq.id] ?? {}}
+            cashProofs={allCashProofs[reqId] ?? {}}
             setCashProofs={(setter) =>
               setAllCashProofs((prev) => ({
                 ...prev,
-                [partialReq.id]: setter(prev[partialReq.id] ?? {}),
+                [reqId]: setter(prev[reqId] ?? {}),
               }))
             }
-            onMarkFullyRecovered={() => handleMarkAsFullyRecovered(partialReq.id)}
+            proofLogs={allProofLogs[reqId] ?? {}}
+            onProofLog={(farmerId, count) =>
+              setAllProofLogs((prev) => ({
+                ...prev,
+                [reqId]: {
+                  ...(prev[reqId] ?? {}),
+                  [farmerId]: [...((prev[reqId] ?? {})[farmerId] ?? []), { by: "Douglas Gockah", at: new Date(), count }],
+                },
+              }))
+            }
+            onAutoComplete={() => handleMarkAsFullyRecovered(reqId)}
             onClose={() => setPartialReq(null)}
           />
         );
@@ -4252,6 +4281,7 @@ export default function RecoveriesBoard() {
             unitPrice={unitPrice}
             purchasePrice={purchasePrice}
             cashProofs={allCashProofs[fullReq.id] ?? {}}
+            proofLogs={allProofLogs[fullReq.id] ?? {}}
             onClose={() => setFullReq(null)}
           />
         );
