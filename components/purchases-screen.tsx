@@ -711,6 +711,12 @@ function PREsTable({ onRowClick }: { onRowClick: (id: string) => void }) {
 
 type DisbursementStatusLabel = "Successful" | "Not applicable" | "Pending" | "Failed";
 
+interface CommodityItem {
+  commodity:   string;
+  quantityKg:  number;
+  amountGHS:   number;
+}
+
 interface PurchaseEntry {
   id:                   string;
   referenceCode:        string;
@@ -718,43 +724,75 @@ interface PurchaseEntry {
   agent:                string;
   agentHasWarning?:     boolean;
   farmerName:           string;
+  farmerId?:            string;
+  community?:           string;
+  momoNumber?:          string;
+  walletName?:          string;
   isRecoveryPurchase?:  boolean;
   totalQuantityKg:      number;
   totalPriceGHS:        number;
   disbursementStatus:   DisbursementStatusLabel;
+  commodityItems?:      CommodityItem[];
 }
 
 const MOCK_ACTIVATED_ENTRIES: PurchaseEntry[] = [
-  { id: "a1",  referenceCode: "CS-2605-00273-ARB-200263", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 32.88,    totalPriceGHS: 197.28,     disbursementStatus: "Successful" },
-  { id: "a2",  referenceCode: "CS-2605-00273-ARB-200184", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",    totalQuantityKg: 3921.20,  totalPriceGHS: 23527.20,   disbursementStatus: "Successful" },
-  { id: "a3",  referenceCode: "CS-2605-00271-ZY-200181",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        isRecoveryPurchase: true, totalQuantityKg: 306.70,   totalPriceGHS: 1840.20,    disbursementStatus: "Not applicable" },
-  { id: "a4",  referenceCode: "CS-2605-00271-ZY-199989",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",                             farmerName: "Salifu Issah",        isRecoveryPurchase: true, totalQuantityKg: 18928.30, totalPriceGHS: 113569.80,  disbursementStatus: "Not applicable" },
-  { id: "a5",  referenceCode: "CS-2605-00264-ZY-199985",  dateOfPurchase: "May 12, 2026", agent: "Zakaria Yakubu",                             farmerName: "Tettevi Belinda",     totalQuantityKg: 401.30,   totalPriceGHS: 2327.54,    disbursementStatus: "Successful" },
-  { id: "a6",  referenceCode: "CS-2605-00260-KM-199812",  dateOfPurchase: "May 10, 2026", agent: "Kofi Mensah",                                farmerName: "Abena Owusu",         totalQuantityKg: 580.00,   totalPriceGHS: 3480.00,    disbursementStatus: "Successful" },
-  { id: "a7",  referenceCode: "CS-2605-00258-AO-199776",  dateOfPurchase: "May 8, 2026",  agent: "Ama Owusu",                                  farmerName: "Alidu Fuseini",       isRecoveryPurchase: true, totalQuantityKg: 1200.50,  totalPriceGHS: 7203.00,    disbursementStatus: "Pending" },
-  { id: "a8",  referenceCode: "CS-2605-00255-AB-199701",  dateOfPurchase: "May 5, 2026",  agent: "Akosua Boateng",                             farmerName: "Mariama Dauda",       totalQuantityKg: 750.00,   totalPriceGHS: 4500.00,    disbursementStatus: "Successful" },
-  { id: "a9",  referenceCode: "CS-2605-00253-KA-199640",  dateOfPurchase: "May 3, 2026",  agent: "Kwame Asante",                               farmerName: "Rahinatu Yahaya",     totalQuantityKg: 430.60,   totalPriceGHS: 2583.60,    disbursementStatus: "Not applicable" },
-  { id: "a10", referenceCode: "CS-2605-00251-ZY-199588",  dateOfPurchase: "May 1, 2026",  agent: "Zakaria Yakubu",                             farmerName: "Fuseini Dramani",     isRecoveryPurchase: true, totalQuantityKg: 2105.00,  totalPriceGHS: 12630.00,   disbursementStatus: "Successful" },
-  { id: "a11", referenceCode: "CS-2605-00247-ARB-199410", dateOfPurchase: "Apr 28, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Issaka Sumaila",     totalQuantityKg: 875.20,   totalPriceGHS: 5251.20,    disbursementStatus: "Successful" },
-  { id: "a12", referenceCode: "CS-2605-00244-KM-199325",  dateOfPurchase: "Apr 25, 2026", agent: "Kofi Mensah",                                farmerName: "Bawah Naabu",         totalQuantityKg: 320.00,   totalPriceGHS: 1920.00,    disbursementStatus: "Failed" },
-  { id: "a13", referenceCode: "CS-2605-00241-AO-199258",  dateOfPurchase: "Apr 22, 2026", agent: "Ama Owusu",                                  farmerName: "Habiba Ziblim",       isRecoveryPurchase: true, totalQuantityKg: 615.80,   totalPriceGHS: 3694.80,    disbursementStatus: "Successful" },
-  { id: "a14", referenceCode: "CS-2605-00238-AB-199180",  dateOfPurchase: "Apr 19, 2026", agent: "Akosua Boateng",                             farmerName: "Sulley Abdulai",      totalQuantityKg: 490.00,   totalPriceGHS: 2940.00,    disbursementStatus: "Pending" },
-  { id: "a15", referenceCode: "CS-2605-00235-KA-199102",  dateOfPurchase: "Apr 16, 2026", agent: "Kwame Asante",                               farmerName: "Aminu Tampuri",       isRecoveryPurchase: true, totalQuantityKg: 1050.40,  totalPriceGHS: 6302.40,    disbursementStatus: "Successful" },
+  { id: "a1",  referenceCode: "CS-2605-00273-ARB-200263", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",  farmerId: "149812", community: "Tamale",   momoNumber: "0244123456", walletName: "Abdulai Iddrisu",             totalQuantityKg: 32.88,    totalPriceGHS: 197.28,     disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 32.88, amountGHS: 197.28 }] },
+  { id: "a2",  referenceCode: "CS-2605-00273-ARB-200184", dateOfPurchase: "May 30, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Iddrisu Abdulai",  farmerId: "149812", community: "Tamale",   momoNumber: "0244123456", walletName: "Abdulai Iddrisu",             totalQuantityKg: 3921.20,  totalPriceGHS: 23527.20,   disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 1960.60, amountGHS: 11763.60 }, { commodity: "Shea nuts", quantityKg: 1960.60, amountGHS: 11763.60 }] },
+  { id: "a3",  referenceCode: "CS-2605-00271-ZY-200181",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",     farmerName: "Salifu Issah",     isRecoveryPurchase: true, farmerId: "148901", community: "Savelugu", momoNumber: "0557891234", walletName: "Issah Salifu / GCB",          totalQuantityKg: 306.70,   totalPriceGHS: 1840.20,    disbursementStatus: "Not applicable",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 153.35, amountGHS: 920.10 }, { commodity: "Soybeans", quantityKg: 153.35, amountGHS: 920.10 }] },
+  { id: "a4",  referenceCode: "CS-2605-00271-ZY-199989",  dateOfPurchase: "May 21, 2026", agent: "Zakaria Yakubu",     farmerName: "Salifu Issah",     isRecoveryPurchase: true, farmerId: "148901", community: "Savelugu", momoNumber: "0557891234", walletName: "Issah Salifu / GCB",          totalQuantityKg: 18928.30, totalPriceGHS: 113569.80,  disbursementStatus: "Not applicable",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 9464.15, amountGHS: 56784.90 }, { commodity: "Soybeans", quantityKg: 9464.15, amountGHS: 56784.90 }] },
+  { id: "a5",  referenceCode: "CS-2605-00264-ZY-199985",  dateOfPurchase: "May 12, 2026", agent: "Zakaria Yakubu",     farmerName: "Tettevi Belinda",                            farmerId: "149993", community: "Yendi",    momoNumber: "0240452347", walletName: "Gbewa Quality/ Seidu Misbaw", totalQuantityKg: 401.30,   totalPriceGHS: 2327.54,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 100.15, amountGHS: 580.87 }, { commodity: "Soybeans", quantityKg: 100.05, amountGHS: 580.29 }, { commodity: "Soybeans", quantityKg: 100.50, amountGHS: 582.90 }, { commodity: "Soybeans", quantityKg: 100.60, amountGHS: 583.48 }] },
+  { id: "a6",  referenceCode: "CS-2605-00260-KM-199812",  dateOfPurchase: "May 10, 2026", agent: "Kofi Mensah",        farmerName: "Abena Owusu",                                farmerId: "149701", community: "Kumbungu", momoNumber: "0246543210", walletName: "Owusu Abena",                  totalQuantityKg: 580.00,   totalPriceGHS: 3480.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 290.00, amountGHS: 1740.00 }, { commodity: "Shea nuts", quantityKg: 290.00, amountGHS: 1740.00 }] },
+  { id: "a7",  referenceCode: "CS-2605-00258-AO-199776",  dateOfPurchase: "May 8, 2026",  agent: "Ama Owusu",          farmerName: "Alidu Fuseini",    isRecoveryPurchase: true, farmerId: "149650", community: "Tolon",    momoNumber: "0241987654", walletName: "Fuseini Alidu",                totalQuantityKg: 1200.50,  totalPriceGHS: 7203.00,    disbursementStatus: "Pending",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 600.25, amountGHS: 3601.50 }, { commodity: "Soybeans", quantityKg: 600.25, amountGHS: 3601.50 }] },
+  { id: "a8",  referenceCode: "CS-2605-00255-AB-199701",  dateOfPurchase: "May 5, 2026",  agent: "Akosua Boateng",     farmerName: "Mariama Dauda",                              farmerId: "149580", community: "Karaga",   momoNumber: "0243765432", walletName: "Dauda Mariama",                totalQuantityKg: 750.00,   totalPriceGHS: 4500.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 250.00, amountGHS: 1500.00 }, { commodity: "Shea nuts", quantityKg: 250.00, amountGHS: 1500.00 }, { commodity: "Shea nuts", quantityKg: 250.00, amountGHS: 1500.00 }] },
+  { id: "a9",  referenceCode: "CS-2605-00253-KA-199640",  dateOfPurchase: "May 3, 2026",  agent: "Kwame Asante",       farmerName: "Rahinatu Yahaya",                            farmerId: "149510", community: "Gushegu",  momoNumber: "0248321098", walletName: "Yahaya Rahinatu",               totalQuantityKg: 430.60,   totalPriceGHS: 2583.60,    disbursementStatus: "Not applicable",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 215.30, amountGHS: 1291.80 }, { commodity: "Soybeans", quantityKg: 215.30, amountGHS: 1291.80 }] },
+  { id: "a10", referenceCode: "CS-2605-00251-ZY-199588",  dateOfPurchase: "May 1, 2026",  agent: "Zakaria Yakubu",     farmerName: "Fuseini Dramani",  isRecoveryPurchase: true, farmerId: "149460", community: "Savelugu", momoNumber: "0557654321", walletName: "Dramani Fuseini",               totalQuantityKg: 2105.00,  totalPriceGHS: 12630.00,   disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 701.67, amountGHS: 4210.00 }, { commodity: "Soybeans", quantityKg: 701.67, amountGHS: 4210.00 }, { commodity: "Soybeans", quantityKg: 701.66, amountGHS: 4210.00 }] },
+  { id: "a11", referenceCode: "CS-2605-00247-ARB-199410", dateOfPurchase: "Apr 28, 2026", agent: "Abdul Razak Bushran", agentHasWarning: true, farmerName: "Issaka Sumaila",   farmerId: "149320", community: "Tamale",   momoNumber: "0244876543", walletName: "Sumaila Issaka",               totalQuantityKg: 875.20,   totalPriceGHS: 5251.20,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 437.60, amountGHS: 2625.60 }, { commodity: "Shea nuts", quantityKg: 437.60, amountGHS: 2625.60 }] },
+  { id: "a12", referenceCode: "CS-2605-00244-KM-199325",  dateOfPurchase: "Apr 25, 2026", agent: "Kofi Mensah",        farmerName: "Bawah Naabu",                                farmerId: "149210", community: "Kumbungu", momoNumber: "0246234567", walletName: "Naabu Bawah",                  totalQuantityKg: 320.00,   totalPriceGHS: 1920.00,    disbursementStatus: "Failed",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 320.00, amountGHS: 1920.00 }] },
+  { id: "a13", referenceCode: "CS-2605-00241-AO-199258",  dateOfPurchase: "Apr 22, 2026", agent: "Ama Owusu",          farmerName: "Habiba Ziblim",    isRecoveryPurchase: true, farmerId: "149150", community: "Tolon",    momoNumber: "0241543210", walletName: "Ziblim Habiba",                totalQuantityKg: 615.80,   totalPriceGHS: 3694.80,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 205.27, amountGHS: 1231.60 }, { commodity: "Soybeans", quantityKg: 205.27, amountGHS: 1231.60 }, { commodity: "Soybeans", quantityKg: 205.26, amountGHS: 1231.60 }] },
+  { id: "a14", referenceCode: "CS-2605-00238-AB-199180",  dateOfPurchase: "Apr 19, 2026", agent: "Akosua Boateng",     farmerName: "Sulley Abdulai",                             farmerId: "149080", community: "Karaga",   momoNumber: "0243098765", walletName: "Abdulai Sulley",               totalQuantityKg: 490.00,   totalPriceGHS: 2940.00,    disbursementStatus: "Pending",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 245.00, amountGHS: 1470.00 }, { commodity: "Shea nuts", quantityKg: 245.00, amountGHS: 1470.00 }] },
+  { id: "a15", referenceCode: "CS-2605-00235-KA-199102",  dateOfPurchase: "Apr 16, 2026", agent: "Kwame Asante",       farmerName: "Aminu Tampuri",    isRecoveryPurchase: true, farmerId: "149010", community: "Gushegu",  momoNumber: "0248765432", walletName: "Tampuri Aminu",                totalQuantityKg: 1050.40,  totalPriceGHS: 6302.40,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 350.13, amountGHS: 2100.80 }, { commodity: "Soybeans", quantityKg: 350.13, amountGHS: 2100.80 }, { commodity: "Soybeans", quantityKg: 350.14, amountGHS: 2100.80 }] },
 ];
 
 const MOCK_DISBURSED_ENTRIES: PurchaseEntry[] = [
-  { id: "d1",  referenceCode: "CS-2602-00180-ZY-196340",  dateOfPurchase: "Mar 28, 2026", agent: "Zakaria Yakubu",    farmerName: "Abiba Mahama",       isRecoveryPurchase: true, totalQuantityKg: 1500.00,  totalPriceGHS: 9000.00,    disbursementStatus: "Successful" },
-  { id: "d2",  referenceCode: "CS-2602-00177-KM-196210",  dateOfPurchase: "Mar 25, 2026", agent: "Kofi Mensah",       farmerName: "Fati Seidu",         totalQuantityKg: 820.50,   totalPriceGHS: 4923.00,    disbursementStatus: "Successful" },
-  { id: "d3",  referenceCode: "CS-2602-00174-AO-196088",  dateOfPurchase: "Mar 22, 2026", agent: "Ama Owusu",         farmerName: "Rahinatu Bawah",     isRecoveryPurchase: true, totalQuantityKg: 450.00,   totalPriceGHS: 2700.00,    disbursementStatus: "Successful" },
-  { id: "d4",  referenceCode: "CS-2602-00171-AB-195990",  dateOfPurchase: "Mar 19, 2026", agent: "Akosua Boateng",    farmerName: "Mariama Naabu",      totalQuantityKg: 2340.00,  totalPriceGHS: 14040.00,   disbursementStatus: "Successful" },
-  { id: "d5",  referenceCode: "CS-2602-00168-KA-195880",  dateOfPurchase: "Mar 15, 2026", agent: "Kwame Asante",      farmerName: "Bintu Alhassan",     isRecoveryPurchase: true, totalQuantityKg: 675.80,   totalPriceGHS: 4054.80,    disbursementStatus: "Successful" },
-  { id: "d6",  referenceCode: "CS-2602-00165-ZY-195750",  dateOfPurchase: "Mar 10, 2026", agent: "Zakaria Yakubu",    farmerName: "Zenabu Mahama",      totalQuantityKg: 910.00,   totalPriceGHS: 5460.00,    disbursementStatus: "Successful" },
-  { id: "d7",  referenceCode: "CS-2602-00162-KM-195630",  dateOfPurchase: "Mar 5, 2026",  agent: "Kofi Mensah",       farmerName: "Habiba Ziblim",      totalQuantityKg: 380.20,   totalPriceGHS: 2281.20,    disbursementStatus: "Successful" },
-  { id: "d8",  referenceCode: "CS-2601-00158-AO-195500",  dateOfPurchase: "Feb 28, 2026", agent: "Ama Owusu",         farmerName: "Hawa Abukari",       isRecoveryPurchase: true, totalQuantityKg: 1725.00,  totalPriceGHS: 10350.00,   disbursementStatus: "Successful" },
-  { id: "d9",  referenceCode: "CS-2601-00155-AB-195380",  dateOfPurchase: "Feb 22, 2026", agent: "Akosua Boateng",    farmerName: "Amina Iddrisu",      totalQuantityKg: 560.00,   totalPriceGHS: 3360.00,    disbursementStatus: "Successful" },
-  { id: "d10", referenceCode: "CS-2601-00152-KA-195250",  dateOfPurchase: "Feb 15, 2026", agent: "Kwame Asante",      farmerName: "Safiatu Tampuri",    totalQuantityKg: 2100.00,  totalPriceGHS: 12600.00,   disbursementStatus: "Successful" },
-  { id: "d11", referenceCode: "CS-2601-00149-ZY-195110",  dateOfPurchase: "Feb 8, 2026",  agent: "Zakaria Yakubu",    farmerName: "Ramatu Fuseini",     totalQuantityKg: 430.00,   totalPriceGHS: 2580.00,    disbursementStatus: "Successful" },
-  { id: "d12", referenceCode: "CS-2601-00146-KM-194990",  dateOfPurchase: "Jan 30, 2026", agent: "Kofi Mensah",       farmerName: "Fatimatu Dauda",     totalQuantityKg: 800.60,   totalPriceGHS: 4803.60,    disbursementStatus: "Successful" },
+  { id: "d1",  referenceCode: "CS-2602-00180-ZY-196340",  dateOfPurchase: "Mar 28, 2026", agent: "Zakaria Yakubu",   farmerName: "Abiba Mahama",    isRecoveryPurchase: true, farmerId: "148205", community: "Savelugu", momoNumber: "0557112233", walletName: "Mahama Abiba",    totalQuantityKg: 1500.00,  totalPriceGHS: 9000.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 750.00, amountGHS: 4500.00 }, { commodity: "Soybeans", quantityKg: 750.00, amountGHS: 4500.00 }] },
+  { id: "d2",  referenceCode: "CS-2602-00177-KM-196210",  dateOfPurchase: "Mar 25, 2026", agent: "Kofi Mensah",      farmerName: "Fati Seidu",                        farmerId: "148101", community: "Kumbungu", momoNumber: "0246445566", walletName: "Seidu Fati",      totalQuantityKg: 820.50,   totalPriceGHS: 4923.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 410.25, amountGHS: 2461.50 }, { commodity: "Shea nuts", quantityKg: 410.25, amountGHS: 2461.50 }] },
+  { id: "d3",  referenceCode: "CS-2602-00174-AO-196088",  dateOfPurchase: "Mar 22, 2026", agent: "Ama Owusu",        farmerName: "Rahinatu Bawah",  isRecoveryPurchase: true, farmerId: "147980", community: "Tolon",    momoNumber: "0241334455", walletName: "Bawah Rahinatu", totalQuantityKg: 450.00,   totalPriceGHS: 2700.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 150.00, amountGHS: 900.00 }, { commodity: "Soybeans", quantityKg: 150.00, amountGHS: 900.00 }, { commodity: "Soybeans", quantityKg: 150.00, amountGHS: 900.00 }] },
+  { id: "d4",  referenceCode: "CS-2602-00171-AB-195990",  dateOfPurchase: "Mar 19, 2026", agent: "Akosua Boateng",   farmerName: "Mariama Naabu",                     farmerId: "147870", community: "Karaga",   momoNumber: "0243556677", walletName: "Naabu Mariama",  totalQuantityKg: 2340.00,  totalPriceGHS: 14040.00,   disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 1170.00, amountGHS: 7020.00 }, { commodity: "Shea nuts", quantityKg: 1170.00, amountGHS: 7020.00 }] },
+  { id: "d5",  referenceCode: "CS-2602-00168-KA-195880",  dateOfPurchase: "Mar 15, 2026", agent: "Kwame Asante",     farmerName: "Bintu Alhassan",  isRecoveryPurchase: true, farmerId: "147760", community: "Gushegu",  momoNumber: "0248778899", walletName: "Alhassan Bintu", totalQuantityKg: 675.80,   totalPriceGHS: 4054.80,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 337.90, amountGHS: 2027.40 }, { commodity: "Soybeans", quantityKg: 337.90, amountGHS: 2027.40 }] },
+  { id: "d6",  referenceCode: "CS-2602-00165-ZY-195750",  dateOfPurchase: "Mar 10, 2026", agent: "Zakaria Yakubu",   farmerName: "Zenabu Mahama",                     farmerId: "147640", community: "Savelugu", momoNumber: "0557990011", walletName: "Mahama Zenabu",  totalQuantityKg: 910.00,   totalPriceGHS: 5460.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 455.00, amountGHS: 2730.00 }, { commodity: "Shea nuts", quantityKg: 455.00, amountGHS: 2730.00 }] },
+  { id: "d7",  referenceCode: "CS-2602-00162-KM-195630",  dateOfPurchase: "Mar 5, 2026",  agent: "Kofi Mensah",      farmerName: "Habiba Ziblim",                     farmerId: "147520", community: "Kumbungu", momoNumber: "0246112233", walletName: "Ziblim Habiba",  totalQuantityKg: 380.20,   totalPriceGHS: 2281.20,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 190.10, amountGHS: 1140.60 }, { commodity: "Shea nuts", quantityKg: 190.10, amountGHS: 1140.60 }] },
+  { id: "d8",  referenceCode: "CS-2601-00158-AO-195500",  dateOfPurchase: "Feb 28, 2026", agent: "Ama Owusu",        farmerName: "Hawa Abukari",    isRecoveryPurchase: true, farmerId: "147390", community: "Tolon",    momoNumber: "0241223344", walletName: "Abukari Hawa",   totalQuantityKg: 1725.00,  totalPriceGHS: 10350.00,   disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 575.00, amountGHS: 3450.00 }, { commodity: "Soybeans", quantityKg: 575.00, amountGHS: 3450.00 }, { commodity: "Soybeans", quantityKg: 575.00, amountGHS: 3450.00 }] },
+  { id: "d9",  referenceCode: "CS-2601-00155-AB-195380",  dateOfPurchase: "Feb 22, 2026", agent: "Akosua Boateng",   farmerName: "Amina Iddrisu",                     farmerId: "147260", community: "Karaga",   momoNumber: "0243334455", walletName: "Iddrisu Amina",  totalQuantityKg: 560.00,   totalPriceGHS: 3360.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 280.00, amountGHS: 1680.00 }, { commodity: "Shea nuts", quantityKg: 280.00, amountGHS: 1680.00 }] },
+  { id: "d10", referenceCode: "CS-2601-00152-KA-195250",  dateOfPurchase: "Feb 15, 2026", agent: "Kwame Asante",     farmerName: "Safiatu Tampuri",                   farmerId: "147130", community: "Gushegu",  momoNumber: "0248556677", walletName: "Tampuri Safiatu",totalQuantityKg: 2100.00,  totalPriceGHS: 12600.00,   disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Soybeans", quantityKg: 700.00, amountGHS: 4200.00 }, { commodity: "Soybeans", quantityKg: 700.00, amountGHS: 4200.00 }, { commodity: "Soybeans", quantityKg: 700.00, amountGHS: 4200.00 }] },
+  { id: "d11", referenceCode: "CS-2601-00149-ZY-195110",  dateOfPurchase: "Feb 8, 2026",  agent: "Zakaria Yakubu",   farmerName: "Ramatu Fuseini",                    farmerId: "146990", community: "Savelugu", momoNumber: "0557778899", walletName: "Fuseini Ramatu", totalQuantityKg: 430.00,   totalPriceGHS: 2580.00,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 215.00, amountGHS: 1290.00 }, { commodity: "Shea nuts", quantityKg: 215.00, amountGHS: 1290.00 }] },
+  { id: "d12", referenceCode: "CS-2601-00146-KM-194990",  dateOfPurchase: "Jan 30, 2026", agent: "Kofi Mensah",      farmerName: "Fatimatu Dauda",                    farmerId: "146860", community: "Kumbungu", momoNumber: "0246890123", walletName: "Dauda Fatimatu", totalQuantityKg: 800.60,   totalPriceGHS: 4803.60,    disbursementStatus: "Successful",
+    commodityItems: [{ commodity: "Shea nuts", quantityKg: 400.30, amountGHS: 2401.80 }, { commodity: "Shea nuts", quantityKg: 400.30, amountGHS: 2401.80 }] },
 ];
 
 function disbursementStatusStyle(status: DisbursementStatusLabel): React.CSSProperties {
@@ -766,44 +804,18 @@ function disbursementStatusStyle(status: DisbursementStatusLabel): React.CSSProp
   }
 }
 
-function disbursementStatusChip(status: DisbursementStatusLabel) {
-  const cfg: Record<DisbursementStatusLabel, { bg: string; color: string; dot: string }> = {
-    "Successful":     { bg: "#f0fdf4", color: "#15803d", dot: "#16a34a" },
-    "Not applicable": { bg: "#f3f4f6", color: "#6b7280", dot: "#9ca3af" },
-    "Pending":        { bg: "#fffbeb", color: "#d97706", dot: "#f59e0b" },
-    "Failed":         { bg: "#fef2f2", color: "#b91c1c", dot: "#dc2626" },
-  };
-  const s = cfg[status];
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: s.bg, color: s.color }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
-      {status}
-    </span>
-  );
-}
-
 // ─── Purchase detail slide-over ───────────────────────────────────────────────
 
 function PurchaseDetailPanel({
   entry,
-  tabLabel,
   onClose,
 }: {
   entry: PurchaseEntry;
-  tabLabel: string;
   onClose: () => void;
 }) {
-  const [copiedRef, setCopiedRef] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline">("overview");
 
-  function copyRef() {
-    navigator.clipboard.writeText(entry.referenceCode).catch(() => {});
-    setCopiedRef(true);
-    setTimeout(() => setCopiedRef(false), 2000);
-  }
-
-  const unitPrice = entry.totalQuantityKg > 0
-    ? entry.totalPriceGHS / entry.totalQuantityKg
-    : 0;
+  const items = entry.commodityItems ?? [];
 
   return (
     <>
@@ -814,248 +826,191 @@ function PurchaseDetailPanel({
         aria-hidden="true"
       />
 
-      {/* Panel */}
+      {/* Panel — scrollable */}
       <div
         style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 480,
-          background: "#fff", zIndex: 201, display: "flex", flexDirection: "column",
-          boxShadow: "-8px 0 40px rgba(0,0,0,0.14)",
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 520,
+          background: "#fff", zIndex: 201, overflowY: "auto",
+          boxShadow: "-4px 0 32px rgba(0,0,0,0.13)",
         }}
         role="dialog"
         aria-label="Purchase details"
       >
-        {/* Panel header */}
-        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
-          <div className="flex items-start justify-between gap-3">
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-                Purchase details
-              </p>
-              <div className="flex items-center gap-2">
-                <span style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, color: "#111827", letterSpacing: "0.03em", wordBreak: "break-all" }}>
-                  {entry.referenceCode}
-                </span>
-                <button
-                  onClick={copyRef}
-                  style={{ color: copiedRef ? "#16a34a" : "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 2, borderRadius: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
-                  title="Copy reference code"
-                >
-                  {copiedRef ? (
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8l3.5 3.5 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : <CopyIcon />}
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
-              aria-label="Close panel"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
+        {/* ── Header ── */}
+        <div style={{ padding: "28px 28px 20px", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: 0 }}>Purchase Details</h1>
+          <button
+            onClick={onClose}
+            style={{
+              width: 36, height: 36, borderRadius: "50%",
+              border: "1.5px solid #d1d5db", background: "#fff",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0, color: "#6b7280",
+            }}
+            aria-label="Close panel"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
-          {/* Status + tab badges */}
-          <div className="flex items-center gap-2" style={{ marginTop: 12 }}>
-            {disbursementStatusChip(entry.disbursementStatus)}
-            <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: "#eff6ff", color: "#1d4ed8" }}>
-              {tabLabel}
-            </span>
-            {entry.isRecoveryPurchase && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: "#fffbeb", color: "#d97706" }}>
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.2" />
-                  <path d="M8 5v.5M8 7.5v4" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                Recovery
-              </span>
-            )}
+        {/* ── Farmer ── */}
+        <div style={{ padding: "0 28px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              width: 52, height: 52, borderRadius: "50%",
+              background: "#6366f1", color: "#fff", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 17, fontWeight: 700,
+            }}
+          >
+            {entry.farmerName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+          </div>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: 0 }}>{entry.farmerName}</p>
+            <p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>
+              {[entry.farmerId, entry.community].filter(Boolean).join(" | ") || "—"}
+            </p>
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        {/* ── Tabs ── */}
+        <div style={{ padding: "0 28px 18px" }}>
+          <div style={{ display: "inline-flex", background: "#f3f4f6", borderRadius: 8, padding: "3px", gap: 2 }}>
+            {(["overview", "timeline"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  height: 32, paddingLeft: 18, paddingRight: 18, borderRadius: 6,
+                  border: activeTab === tab ? "1px solid rgba(0,0,0,0.06)" : "1px solid transparent",
+                  background: activeTab === tab ? "#fff" : "transparent",
+                  boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
+                  fontSize: 13, fontWeight: activeTab === tab ? 600 : 500,
+                  color: activeTab === tab ? "#111827" : "#6b7280",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                {tab === "overview" ? "Overview" : "Timeline"}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* Purchase info card */}
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-                Purchase information
-              </p>
+        {/* ── Quick links ── */}
+        <div style={{ padding: "0 28px 20px", display: "flex", gap: 28, flexWrap: "wrap" }}>
+          <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}>
+            <ExternalLinkIcon />
+            View purchase request
+          </a>
+          <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}>
+            <ExternalLinkIcon />
+            View purchase reconciliations
+          </a>
+        </div>
+
+        {/* ── Request details ── */}
+        <div style={{ borderTop: "1px solid #f3f4f6" }}>
+          <div style={{ padding: "10px 28px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#374151", margin: 0 }}>Request details</p>
+          </div>
+          <div style={{ padding: "16px 28px 20px" }}>
+            {/* Row 1 — 3 cols */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0 12px", marginBottom: 18 }}>
+              <div>
+                <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 5px" }}>Purchase date</p>
+                <p style={{ fontSize: 14, color: "#111827", margin: 0 }}>{entry.dateOfPurchase}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 5px" }}>Who bought items</p>
+                <p style={{ fontSize: 14, color: "#111827", margin: 0 }}>{entry.agent}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 5px" }}>Community</p>
+                <p style={{ fontSize: 14, color: "#111827", margin: 0 }}>{entry.community ?? "—"}</p>
+              </div>
             </div>
-            <div style={{ padding: "16px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 24px" }}>
-                <div>
-                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Date of purchase</p>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{entry.dateOfPurchase}</p>
-                </div>
-                <div>
-                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Disbursement status</p>
-                  <p style={{ fontSize: 14, fontWeight: 600, ...disbursementStatusStyle(entry.disbursementStatus) }}>
-                    {entry.disbursementStatus}
-                  </p>
-                </div>
-                <div>
-                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Total quantity</p>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
-                    {entry.totalQuantityKg.toLocaleString()} kg
-                  </p>
-                </div>
-                <div>
-                  <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Total price</p>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
-                    GHS {entry.totalPriceGHS.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                {unitPrice > 0 && (
-                  <div>
-                    <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>Unit price</p>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
-                      GHS {unitPrice.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / kg
-                    </p>
-                  </div>
+            {/* Row 2 — 2 cols */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 12px", marginBottom: 16 }}>
+              <div>
+                <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 5px" }}>MoMo number</p>
+                <p style={{ fontSize: 14, color: "#111827", margin: 0 }}>{entry.momoNumber ?? "—"}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 5px" }}>Wallet name</p>
+                <p style={{ fontSize: 14, color: "#111827", margin: 0 }}>{entry.walletName ?? "—"}</p>
+              </div>
+            </div>
+            <a href="#" style={{ fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}>
+              Edit wallet details
+            </a>
+          </div>
+        </div>
+
+        {/* ── Commodity Bought ── */}
+        <div style={{ borderTop: "1px solid #f3f4f6" }}>
+          <div style={{ padding: "10px 28px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#374151", margin: 0 }}>Commodity Bought</p>
+          </div>
+          <div style={{ padding: "0 28px 28px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: "12px 0 8px", textAlign: "left",  fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #e5e7eb" }}>Commodity</th>
+                  <th style={{ padding: "12px 0 8px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #e5e7eb" }}>Quantity</th>
+                  <th style={{ padding: "12px 0 8px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #e5e7eb" }}>Amount</th>
+                  <th style={{ padding: "12px 0 8px 16px", textAlign: "left", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #e5e7eb" }}>App sourced weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: "10px 0", fontSize: 13, color: "#374151", borderBottom: "1px solid #f3f4f6" }}>{item.commodity}</td>
+                    <td style={{ padding: "10px 0", textAlign: "right", fontSize: 13, color: "#374151", borderBottom: "1px solid #f3f4f6", whiteSpace: "nowrap" }}>
+                      {item.quantityKg.toFixed(2)} kg
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", fontSize: 13, color: "#374151", borderBottom: "1px solid #f3f4f6", whiteSpace: "nowrap" }}>
+                      GHS {item.amountGHS.toFixed(2)}
+                    </td>
+                    <td style={{ padding: "10px 0 10px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                      <a href="#" style={{ fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}>View</a>
+                    </td>
+                  </tr>
+                ))}
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "20px 0", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
+                      No commodity items available
+                    </td>
+                  </tr>
                 )}
-              </div>
-            </div>
-          </div>
-
-          {/* Agent card */}
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-                Agent
-              </p>
-            </div>
-            <div style={{ padding: "16px" }}>
-              <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: "#1ab373", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, fontWeight: 700, flexShrink: 0,
-                  }}
-                >
-                  {entry.agent.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>{entry.agent}</p>
-                    {entry.agentHasWarning && (
-                      <span
-                        style={{
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          width: 18, height: 18, borderRadius: "50%",
-                          background: "#ef4444", color: "#fff",
-                          fontSize: 11, fontWeight: 700, flexShrink: 0,
-                        }}
-                        title="Agent has a warning flag"
-                      >
-                        !
-                      </span>
-                    )}
-                  </div>
-                  {entry.agentHasWarning && (
-                    <p style={{ fontSize: 12, color: "#ef4444", margin: "3px 0 0" }}>Has active warning flag</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Farmer card */}
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-                Farmer
-              </p>
-            </div>
-            <div style={{ padding: "16px" }}>
-              <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: "#6366f1", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, fontWeight: 700, flexShrink: 0,
-                  }}
-                >
-                  {entry.farmerName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0 }}>{entry.farmerName}</p>
-                    {entry.isRecoveryPurchase && (
-                      <span
-                        style={{
-                          display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px",
-                          borderRadius: 20, fontSize: 11, fontWeight: 600,
-                          background: "#fffbeb", color: "#d97706",
-                        }}
-                      >
-                        Recovery purchase
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: 12, color: "#6b7280", margin: "3px 0 0" }}>Farmer</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick links */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <a
-              href="#"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
-            >
-              <ExternalLinkIcon />
-              View purchase request
-            </a>
-            <a
-              href="#"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1ab373", textDecoration: "none" }}
-            >
-              <ExternalLinkIcon />
-              View purchase reconciliations
-            </a>
-          </div>
-        </div>
-
-        {/* Panel footer */}
-        <div style={{ padding: "16px 24px", borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexShrink: 0 }}>
-          <div className="flex items-center gap-3">
-            <button
-              style={{
-                flex: 1, height: 40, borderRadius: 8,
-                border: "1.5px solid #1ab373", background: "#1ab373",
-                fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#16a34a")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#1ab373")}
-            >
-              View full details
-            </button>
-            <button
-              onClick={onClose}
-              style={{
-                height: 40, paddingLeft: 16, paddingRight: 16, borderRadius: 8,
-                border: "1px solid #e5e7eb", background: "#fff",
-                fontSize: 13, fontWeight: 500, color: "#374151", cursor: "pointer",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#f3f4f6")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#fff")}
-            >
-              Close
-            </button>
+                {items.length > 0 && (
+                  <>
+                    {/* Total */}
+                    <tr>
+                      <td style={{ padding: "10px 0", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #f3f4f6" }}>Total</td>
+                      <td style={{ padding: "10px 0", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #f3f4f6", whiteSpace: "nowrap" }}>
+                        {entry.totalQuantityKg.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111827", borderBottom: "1px solid #f3f4f6", whiteSpace: "nowrap" }}>
+                        GHS {entry.totalPriceGHS.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td style={{ borderBottom: "1px solid #f3f4f6" }} />
+                    </tr>
+                    {/* Amount due farmer */}
+                    <tr>
+                      <td style={{ padding: "10px 0", fontSize: 13, fontWeight: 700, color: "#111827" }}>Amount due farmer</td>
+                      <td />
+                      <td style={{ padding: "10px 0", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}>
+                        GHS {entry.totalPriceGHS.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td />
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1107,7 +1062,6 @@ function PurchaseListScreen() {
     {selectedEntry && (
       <PurchaseDetailPanel
         entry={selectedEntry}
-        tabLabel={activeTab === "activated" ? "Activated" : "Disbursed"}
         onClose={() => setSelectedEntry(null)}
       />
     )}

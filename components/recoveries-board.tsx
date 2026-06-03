@@ -3471,17 +3471,39 @@ function FullRecoveryModal({
 
 // ─── Set Timeframe Modal ──────────────────────────────────────────────────────
 
+interface TimeframeEntry {
+  start:   Date;
+  end:     Date;
+  setBy:   string;
+  setAt:   Date;
+  reason?: string;
+}
+
+function fmtDisplayDate(d: Date): string {
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+
+function fmtTimestamp(d: Date): string {
+  const date = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return `${date} • ${time}`;
+}
+
 function SetTimeframeModal({
   current,
+  history,
   onConfirm,
   onClose,
 }: {
-  current: { start: Date; end: Date } | null;
-  onConfirm: (start: Date, end: Date) => void;
-  onClose: () => void;
+  current:  { start: Date; end: Date } | null;
+  history:  TimeframeEntry[];
+  onConfirm: (start: Date, end: Date, reason?: string) => void;
+  onClose:  () => void;
 }) {
+  const isEditing = current !== null;
   const [startVal, setStartVal] = useState(current ? toInputValue(current.start) : "");
   const [endVal,   setEndVal]   = useState(current ? toInputValue(current.end)   : "");
+  const [reason,   setReason]   = useState("");
   const [error,    setError]    = useState<string | null>(null);
 
   function handleConfirm() {
@@ -3489,7 +3511,8 @@ function SetTimeframeModal({
     const s = parseInputDate(startVal);
     const e = parseInputDate(endVal);
     if (e <= s) { setError("End date must be after the start date."); return; }
-    onConfirm(s, e);
+    if (isEditing && !reason.trim()) { setError("Please provide a reason for updating the timeframe."); return; }
+    onConfirm(s, e, isEditing ? reason.trim() : undefined);
   }
 
   return (
@@ -3503,11 +3526,14 @@ function SetTimeframeModal({
     >
       <div style={{
         background: "#fff", borderRadius: 16, padding: 28,
-        width: "100%", maxWidth: 440,
+        width: "100%", maxWidth: history.length > 0 ? 520 : 440,
         boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+        maxHeight: "90vh", overflowY: "auto",
       }}>
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+
+        {/* ── Header ── */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 38, height: 38, borderRadius: 10, background: "#f0fdf4", flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -3521,31 +3547,46 @@ function SetTimeframeModal({
               </svg>
             </div>
             <p style={{ fontSize: "1rem", fontWeight: 700, color: "#111827", margin: 0 }}>
-              Set Recovery Timeframe
+              {isEditing ? "Edit Recovery Timeframe" : "Set Recovery Timeframe"}
             </p>
           </div>
-          <p style={{ fontSize: "0.8125rem", color: "#6b7280", lineHeight: 1.55, margin: 0 }}>
-            Define the start and end date for the active recovery period.
-            Field agents will be notified via the mobile app once confirmed.
-          </p>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
+            aria-label="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "9px 12px", borderRadius: 8,
-          background: "#eff6ff", border: "1px solid #bfdbfe", marginBottom: 20,
-        }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-            <rect x="4" y="1" width="8" height="13" rx="2" stroke="#3b82f6" strokeWidth="1.4"/>
-            <line x1="8" y1="11.5" x2="8" y2="11.5" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round"/>
-            <line x1="6.5" y1="3" x2="9.5" y2="3" stroke="#3b82f6" strokeWidth="1.2" strokeLinecap="round"/>
-          </svg>
-          <span style={{ fontSize: "0.75rem", color: "#1d4ed8", fontWeight: 500 }}>
-            This will trigger a recovery banner on field agents' mobile app.
-          </span>
-        </div>
+        {/* ── Description + banner (first set only) ── */}
+        {!isEditing && (
+          <>
+            <p style={{ fontSize: "0.8125rem", color: "#6b7280", lineHeight: 1.55, margin: "0 0 16px" }}>
+              Define the start and end date for the active recovery period.
+              Field agents will be notified via the mobile app once confirmed.
+            </p>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "9px 12px", borderRadius: 8,
+              background: "#eff6ff", border: "1px solid #bfdbfe", marginBottom: 20,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                <rect x="4" y="1" width="8" height="13" rx="2" stroke="#3b82f6" strokeWidth="1.4"/>
+                <line x1="8" y1="11.5" x2="8" y2="11.5" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round"/>
+                <line x1="6.5" y1="3" x2="9.5" y2="3" stroke="#3b82f6" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+              <span style={{ fontSize: "0.75rem", color: "#1d4ed8", fontWeight: 500 }}>
+                This will trigger a recovery banner on field agents&apos; mobile app.
+              </span>
+            </div>
+          </>
+        )}
 
-        <div style={{ display: "flex", gap: 12, marginBottom: error ? 10 : 22 }}>
+        {/* ── Date fields ── */}
+        <div style={{ display: "flex", gap: 12, marginBottom: isEditing ? 16 : (error ? 10 : 22) }}>
           {[
             { label: "Start date", val: startVal, set: (v: string) => { setStartVal(v); setError(null); }, min: undefined },
             { label: "End date",   val: endVal,   set: (v: string) => { setEndVal(v);   setError(null); }, min: startVal || undefined },
@@ -3571,12 +3612,104 @@ function SetTimeframeModal({
           ))}
         </div>
 
+        {/* ── Reason field (edit mode only) ── */}
+        {isEditing && (
+          <div style={{ marginBottom: error ? 4 : 20 }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+              Reason for update <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => { setReason(e.target.value); setError(null); }}
+              placeholder="Briefly describe why you are updating the recovery timeframe…"
+              rows={3}
+              style={{
+                width: "100%", borderRadius: 8, border: "1.5px solid #d1d5db",
+                fontSize: "0.875rem", color: "#374151", padding: "10px 12px",
+                resize: "vertical", outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit", lineHeight: 1.55,
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#16a34a")}
+              onBlur={(e)  => (e.currentTarget.style.borderColor = "#d1d5db")}
+            />
+          </div>
+        )}
+
         {error && (
-          <p style={{ fontSize: "0.75rem", color: "var(--error-600)", marginBottom: 16, marginTop: -6 }}>
+          <p style={{ fontSize: "0.75rem", color: "#dc2626", marginBottom: 14, marginTop: isEditing ? 4 : -6 }}>
             {error}
           </p>
         )}
 
+        {/* ── Timeframe history timeline ── */}
+        {history.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ height: 1, background: "#f3f4f6", marginBottom: 16 }} />
+            <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>
+              Timeframe history
+            </p>
+            <div>
+              {[...history].reverse().map((entry, idx, arr) => {
+                const isUpdate = entry.reason !== undefined;
+                const isLast   = idx === arr.length - 1;
+                return (
+                  <div key={idx} style={{ display: "flex", gap: 12 }}>
+                    {/* Spine */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 22 }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                        background: isUpdate ? "#f59e0b" : "#16a34a",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {isUpdate ? (
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
+                          </svg>
+                        ) : (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5.5l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      {!isLast && (
+                        <div style={{ flex: 1, width: 1.5, background: "#e5e7eb", marginTop: 4, minHeight: 18 }} />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ paddingBottom: isLast ? 0 : 16, minWidth: 0 }}>
+                      <p style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#111827", margin: "0 0 3px" }}>
+                        {isUpdate ? "Recovery timeframe updated" : "Recovery timeframe set"}
+                      </p>
+                      <p style={{ fontSize: "0.75rem", color: "#374151", margin: "0 0 1px", lineHeight: 1.5 }}>
+                        {fmtDisplayDate(entry.start)} → {fmtDisplayDate(entry.end)}
+                      </p>
+                      <p style={{ fontSize: "0.75rem", color: "#6b7280", margin: "0 0 2px" }}>
+                        by {entry.setBy}
+                      </p>
+                      {entry.reason && (
+                        <p style={{
+                          fontSize: "0.75rem", color: "#6b7280",
+                          margin: "5px 0 4px", padding: "6px 10px",
+                          background: "#f9fafb", borderRadius: 6,
+                          border: "1px solid #f3f4f6", fontStyle: "italic",
+                          lineHeight: 1.5,
+                        }}>
+                          &ldquo;{entry.reason}&rdquo;
+                        </p>
+                      )}
+                      <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "2px 0 0" }}>
+                        {fmtTimestamp(entry.setAt)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Action buttons ── */}
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={onClose}
@@ -3600,7 +3733,7 @@ function SetTimeframeModal({
             onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "#16a34a")}
           >
-            Confirm timeframe
+            {isEditing ? "Update timeframe" : "Confirm timeframe"}
           </button>
         </div>
       </div>
@@ -3684,8 +3817,9 @@ function EmptyColState() {
 
 export default function RecoveriesBoard() {
   const [mobileColId,    setMobileColId]    = useState(RECOVERIES_COLUMNS[0].id);
-  const [timeframe,      setTimeframe]      = useState<{ start: Date; end: Date } | null>(null);
-  const [modalOpen,      setModalOpen]      = useState(false);
+  const [timeframe,        setTimeframe]        = useState<{ start: Date; end: Date } | null>(null);
+  const [timeframeHistory, setTimeframeHistory] = useState<TimeframeEntry[]>([]);
+  const [modalOpen,        setModalOpen]        = useState(false);
   const [reviewingReq,   setReviewingReq]   = useState<RecoveryRequest | null>(null);
   const [financingReq,       setFinancingReq]       = useState<RecoveryRequest | null>(null);
   const [activatedReq,       setActivatedReq]       = useState<RecoveryRequest | null>(null);
@@ -4127,7 +4261,15 @@ export default function RecoveriesBoard() {
       {modalOpen && (
         <SetTimeframeModal
           current={timeframe}
-          onConfirm={(s, e) => { setTimeframe({ start: s, end: e }); setModalOpen(false); }}
+          history={timeframeHistory}
+          onConfirm={(s, e, reason) => {
+            setTimeframe({ start: s, end: e });
+            setTimeframeHistory((prev) => [
+              ...prev,
+              { start: s, end: e, setBy: "Douglas Gockah", setAt: new Date(), reason },
+            ]);
+            setModalOpen(false);
+          }}
           onClose={() => setModalOpen(false)}
         />
       )}
