@@ -2445,26 +2445,25 @@ function ProofThumbnailStrip({
   entries,
   onUpload,
   onRemove,
+  onRemoveAll,
 }: {
-  entries: Array<{ url: string; isImage: boolean }>;
+  entries: Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>;
   onUpload?: (files: File[]) => void;
   onRemove?: (index: number) => void;
+  onRemoveAll?: () => void;
 }) {
-  const [lightbox, setLightbox] = useState<{ url: string; isImage: boolean; index: number } | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; index: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Collect only real image entries (non-placeholder images) for lightbox navigation
   const imageEntries = entries.reduce<Array<{ url: string; index: number }>>((acc, e, i) => {
     if (e.isImage && e.url !== "") acc.push({ url: e.url, index: i });
     return acc;
   }, []);
 
-  function openEntry(entry: { url: string; isImage: boolean }, i: number) {
-    if (entry.url === "") return;
-    if (entry.isImage) {
-      setLightbox({ url: entry.url, isImage: true, index: i });
-    } else {
-      window.open(entry.url, "_blank");
-    }
+  function openLightbox(entry: { url: string; isImage: boolean }, i: number) {
+    if (!entry.url) return;
+    if (entry.isImage) setLightbox({ url: entry.url, index: i });
+    else window.open(entry.url, "_blank");
   }
 
   function lightboxNav(dir: 1 | -1) {
@@ -2472,75 +2471,189 @@ function ProofThumbnailStrip({
     const pos = imageEntries.findIndex((e) => e.index === lightbox.index);
     if (pos === -1) return;
     const next = imageEntries[(pos + dir + imageEntries.length) % imageEntries.length];
-    if (next) setLightbox({ url: next.url, isImage: true, index: next.index });
+    if (next) setLightbox({ url: next.url, index: next.index });
   }
 
   const lightboxPos = lightbox ? imageEntries.findIndex((e) => e.index === lightbox.index) : -1;
 
+  function fmtSize(bytes: number) {
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + "KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + "MB";
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!onUpload) return;
+    const files = Array.from(e.dataTransfer.files).filter(
+      (f) => f.type.startsWith("image/") || f.type === "application/pdf"
+    );
+    if (files.length > 0) onUpload(files);
+  }
+
+  function PdfFileIcon() {
+    return (
+      <div style={{ width: 36, height: 44, position: "relative", flexShrink: 0 }}>
+        <div style={{ width: "100%", height: "100%", background: "#f3f4f6", borderRadius: 4, border: "1px solid #e5e7eb" }} />
+        <div style={{ position: "absolute", top: 0, right: 0, width: 12, height: 12, background: "#e5e7eb", borderBottomLeftRadius: 4 }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 4 }}>
+          <span style={{ background: "#ef4444", color: "#fff", fontSize: "0.5rem", fontWeight: 800, padding: "2px 4px", borderRadius: 2, letterSpacing: "0.03em" }}>PDF</span>
+        </div>
+      </div>
+    );
+  }
+
+  const uploadInput = (
+    <input
+      type="file"
+      accept="image/png,image/jpeg,application/pdf"
+      multiple
+      style={{ display: "none" }}
+      onChange={(e) => { if (e.target.files && onUpload) onUpload(Array.from(e.target.files)); }}
+    />
+  );
+
+  const UploadArrowIcon = ({ size = 16, color = "#6b7280" }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M12 16V8M8 12l4-4 4 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 18h16" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+
+  const TrashIcon = ({ size = 16 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  // ── Empty state ──────────────────────────────────────────────────────────────
+  if (entries.length === 0 && onUpload) {
+    return (
+      <>
+        <label
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 16, padding: "32px 24px", borderRadius: 12, cursor: "pointer",
+            border: `1.5px dashed ${isDragging ? "#16a34a" : "#d1d5db"}`,
+            background: isDragging ? "#f0fdf4" : "#fff",
+            transition: "border-color 0.15s, background 0.15s",
+          }}
+        >
+          {uploadInput}
+          {/* Upload icon circle */}
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <UploadArrowIcon size={24} color="#16a34a" />
+          </div>
+          {/* Text */}
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: "1.0625rem", fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>Upload or drag and drop file here</p>
+            <p style={{ fontSize: "0.8125rem", color: "#9ca3af", margin: 0 }}>PNG, JPEG/JPG, or PDF (Up to 2 files, Max size: 2MB each)</p>
+          </div>
+          {/* Choose files button */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 22px", background: "#fff", color: "#374151", fontSize: "0.9375rem", fontWeight: 600, pointerEvents: "none" }}>
+            <UploadArrowIcon size={16} color="#6b7280" />
+            Choose files
+          </div>
+        </label>
+      </>
+    );
+  }
+
+  // ── File list state ──────────────────────────────────────────────────────────
   return (
     <>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      {/* Header */}
+      {onUpload && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <span style={{ fontSize: "0.9375rem", fontWeight: 500, color: "#9ca3af" }}>Files ({entries.length})</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 7, border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 14px", background: "#fff", color: "#374151", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
+              {uploadInput}
+              <UploadArrowIcon size={14} />
+              Add more
+            </label>
+            {onRemoveAll && (
+              <button
+                onClick={onRemoveAll}
+                style={{ display: "flex", alignItems: "center", gap: 7, border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 14px", background: "#fff", color: "#374151", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+              >
+                <TrashIcon size={14} />
+                Remove all
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* File rows */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {entries.map((entry, i) => {
-          const isPlaceholder = entry.url === "";
-          const inner = (entry.isImage && entry.url) ? (
-            <img src={entry.url} alt={`Proof ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "#6b7280" }}>
-              <rect x="4" y="2" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-              <path d="M8 8h6M8 12h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-          );
-          const tileStyle: React.CSSProperties = {
-            width: 52, height: 52, borderRadius: 8,
-            border: "1px solid #e5e7eb", overflow: "hidden",
-            background: "#fff", padding: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          };
-          const tile = isPlaceholder ? (
-            <div style={tileStyle} title="Uploaded document">{inner}</div>
-          ) : (
-            <button
-              onClick={() => openEntry(entry, i)}
-              style={{ ...tileStyle, cursor: "pointer" }}
-              title={entry.isImage ? "Click to view image" : "Click to open PDF"}
-            >{inner}</button>
-          );
+          const canClick = !!entry.url && entry.isImage;
           return (
-            <div key={i} style={{ position: "relative", flexShrink: 0 }}>
-              {tile}
+            <div
+              key={i}
+              style={{
+                border: entry.error ? "1.5px solid #ef4444" : "1px solid #e5e7eb",
+                borderRadius: 10, padding: "10px 14px",
+                display: "flex", alignItems: "center", gap: 12, background: "#fff",
+              }}
+            >
+              {/* Thumbnail or PDF icon */}
+              <button
+                onClick={() => openLightbox(entry, i)}
+                disabled={!canClick}
+                style={{
+                  width: 56, height: 56, borderRadius: 8, overflow: "hidden",
+                  border: "1px solid #e5e7eb", background: "#f9fafb",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, padding: 0,
+                  cursor: canClick ? "pointer" : "default",
+                }}
+              >
+                {entry.isImage && entry.url ? (
+                  <img src={entry.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <PdfFileIcon />
+                )}
+              </button>
+
+              {/* File info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {entry.name ?? "Uploaded document"}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+                  {entry.size ? (
+                    <span style={{ fontSize: "0.8125rem", color: "#9ca3af" }}>{fmtSize(entry.size)}</span>
+                  ) : null}
+                  {entry.error && entry.size && (
+                    <span style={{ fontSize: "0.8125rem", color: "#9ca3af" }}>|</span>
+                  )}
+                  {entry.error && (
+                    <span style={{ fontSize: "0.8125rem", color: "#ef4444", fontWeight: 500 }}>Upload failed</span>
+                  )}
+                </div>
+                {entry.error && (
+                  <p style={{ fontSize: "0.8125rem", color: "#ef4444", margin: "1px 0 0", fontWeight: 500 }}>Please try again</p>
+                )}
+              </div>
+
+              {/* Trash button */}
               {onRemove && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); onRemove(i); }}
-                  style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", background: "#ef4444", color: "#fff", border: "1.5px solid #fff", cursor: "pointer", fontSize: "0.625rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
-                  title="Remove"
-                >×</button>
+                  onClick={() => onRemove(i)}
+                  style={{ width: 36, height: 36, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", flexShrink: 0 }}
+                  title="Remove file"
+                >
+                  <TrashIcon size={18} />
+                </button>
               )}
             </div>
           );
         })}
-        {onUpload && (
-          <label
-            style={{ width: 52, height: 52, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, flexShrink: 0 }}
-            title="Upload proof of refund"
-          >
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              style={{ display: "none" }}
-              onChange={(e) => {
-                if (!e.target.files) return;
-                onUpload(Array.from(e.target.files));
-              }}
-            />
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af" }}>
-              <path d="M8 10V3M5 6l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            <span style={{ fontSize: "0.5625rem", color: "#9ca3af", lineHeight: 1 }}>Upload</span>
-          </label>
-        )}
       </div>
 
       {/* Lightbox overlay */}
@@ -2549,37 +2662,28 @@ function ProofThumbnailStrip({
           style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setLightbox(null)}
         >
-          {/* Close button */}
           <button
             onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
             style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.125rem", fontWeight: 700, zIndex: 1 }}
           >×</button>
-
-          {/* Left arrow */}
           {imageEntries.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); lightboxNav(-1); }}
               style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", fontWeight: 700 }}
             >‹</button>
           )}
-
-          {/* Image */}
           <img
             src={lightbox.url}
             alt="Proof"
             style={{ maxWidth: "90vw", maxHeight: "85vh", objectFit: "contain", borderRadius: 8, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
             onClick={(e) => e.stopPropagation()}
           />
-
-          {/* Right arrow */}
           {imageEntries.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); lightboxNav(1); }}
               style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", fontWeight: 700 }}
             >›</button>
           )}
-
-          {/* Counter */}
           {imageEntries.length > 1 && lightboxPos !== -1 && (
             <p style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", margin: 0 }}>
               {lightboxPos + 1} of {imageEntries.length}
@@ -2707,8 +2811,8 @@ function PartialRecoveryModal({
   req: RecoveryRequest;
   unitPrice: number;
   purchasePrice: number;
-  cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
-  setCashProofs: (setter: (prev: Record<string, Array<{ url: string; isImage: boolean }>>) => Record<string, Array<{ url: string; isImage: boolean }>>) => void;
+  cashProofs: Record<string, Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>>;
+  setCashProofs: (setter: (prev: Record<string, Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>>) => Record<string, Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>>) => void;
   proofLogs: Record<string, ProofUploadLogEntry[]>;
   onProofLog: (farmerId: string, count: number) => void;
   onAutoComplete: () => void;
@@ -3047,14 +3151,14 @@ function PartialRecoveryModal({
 
                           {/* Proof of refund upload — cash/mixed farmers only */}
                           {needsProof && (
-                            <div style={{ padding: "8px 16px 12px 52px", borderBottom: "1px solid #f3f4f6", background: "#f8fafc" }}>
-                              <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
+                            <div style={{ padding: "12px 16px 16px", borderBottom: "1px solid #f3f4f6", background: "#f8fafc" }}>
+                              <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 8px" }}>
                                 Proof of refund
                               </p>
                               <ProofThumbnailStrip
                                 entries={cashProofs[farmerId] ?? []}
                                 onUpload={(files) => {
-                                  const newEntries = files.map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/") }));
+                                  const newEntries = files.map(file => ({ url: URL.createObjectURL(file), isImage: file.type.startsWith("image/"), name: file.name, size: file.size }));
                                   setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...newEntries] }));
                                   onProofLog(farmerId, files.length);
                                 }}
@@ -3063,6 +3167,9 @@ function PartialRecoveryModal({
                                     ...prev,
                                     [farmerId]: (prev[farmerId] ?? []).filter((_, i) => i !== idx),
                                   }))
+                                }
+                                onRemoveAll={() =>
+                                  setCashProofs(prev => ({ ...prev, [farmerId]: [] }))
                                 }
                               />
                               {(proofLogs[farmerId] ?? []).map((log, li) => (
@@ -3269,7 +3376,7 @@ function FullRecoveryModal({
   req: RecoveryRequest;
   unitPrice: number;
   purchasePrice: number;
-  cashProofs: Record<string, Array<{ url: string; isImage: boolean }>>;
+  cashProofs: Record<string, Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>>;
   proofLogs: Record<string, ProofUploadLogEntry[]>;
   onClose: () => void;
   timeframe: { start: Date; end: Date } | null;
@@ -3579,8 +3686,8 @@ function FullRecoveryModal({
                           </div>
                         </div>
                         {needsProof && (
-                          <div style={{ padding: "6px 16px 10px 52px", borderBottom: isLast ? "none" : "1px solid #f3f4f6", background: "#f8fafc" }}>
-                            <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 6px" }}>
+                          <div style={{ padding: "12px 16px 16px", borderBottom: isLast ? "none" : "1px solid #f3f4f6", background: "#f8fafc" }}>
+                            <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 8px" }}>
                               Proof of refund
                             </p>
                             {(cashProofs[farmerId] ?? []).length > 0 ? (
@@ -4091,7 +4198,7 @@ export default function RecoveriesBoard() {
   const [dynamicActions,  setDynamicActions]  = useState<Record<string, ActionRecord[]>>({});
   // Pre-populate proof thumbnails for already-completed recoveries (REC-008).
   // Empty url ("") marks a placeholder (document was uploaded before this session).
-  const [allCashProofs,   setAllCashProofs]   = useState<Record<string, Record<string, Array<{ url: string; isImage: boolean }>>>>({
+  const [allCashProofs,   setAllCashProofs]   = useState<Record<string, Record<string, Array<{ url: string; isImage: boolean; name?: string; size?: number; error?: boolean }>>>>({
     "REC-008": {
       "D103": [{ url: "", isImage: false }],  // Rahinatu Bawah  — cash
       "D105": [{ url: "", isImage: false }],  // Bintu Alhassan  — cash + penalty
