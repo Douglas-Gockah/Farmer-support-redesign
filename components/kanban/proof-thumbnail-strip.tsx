@@ -27,10 +27,12 @@ export type ProofEntry = {
 // Shared upload / preview strip with staged commit flow
 //
 // Props:
-//   entries     — committed (saved) proof files
-//   onSave      — called when user clicks "Save upload"; receives staged files
-//   onRemove    — called when user trashes a committed file (entry + index)
-//   onRemoveAll — called when user clicks "Remove all"
+//   entries         — committed (saved) proof files
+//   onSave          — called after simulated backend save; receives staged files
+//   onRemove        — called when user trashes a committed file (entry + index)
+//   onRemoveAll     — called when user clicks "Remove all"
+//   recoveryAmount  — shown below thumbnail in committed rows (e.g. "GHS 500")
+//   lockedCount     — first N committed entries are non-deletable
 //
 // When none of the *on* callbacks are provided the component is read-only.
 // ---------------------------------------------------------------------------
@@ -40,11 +42,15 @@ export function ProofThumbnailStrip({
   onSave,
   onRemove,
   onRemoveAll,
+  recoveryAmount,
+  lockedCount = 0,
 }: {
-  entries:      ProofEntry[];
-  onSave?:      (staged: StagedEntry[]) => void;
-  onRemove?:    (entry: ProofEntry, idx: number) => void;
-  onRemoveAll?: () => void;
+  entries:          ProofEntry[];
+  onSave?:          (staged: StagedEntry[]) => void;
+  onRemove?:        (entry: ProofEntry, idx: number) => void;
+  onRemoveAll?:     () => void;
+  recoveryAmount?:  string;
+  lockedCount?:     number;
 }) {
   const [lightbox,   setLightbox]   = useState<{ url: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -195,9 +201,9 @@ export function ProofThumbnailStrip({
                 </div>
               }
             />
-            {(entries.length > 0 || staged.length > 0) && (
+            {onRemoveAll && (entries.length > 0 || staged.length > 0) && (
               <button
-                onClick={() => { setStaged([]); onRemoveAll?.(); }}
+                onClick={() => { setStaged([]); onRemoveAll(); }}
                 style={{ display: "flex", alignItems: "center", gap: 7, border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 14px", background: "#fff", color: "#374151", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
               >
                 <TrashIcon size={14} />
@@ -213,6 +219,7 @@ export function ProofThumbnailStrip({
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {entries.map((entry, i) => {
             const canClick = !!entry.url && entry.isImage;
+            const isLocked = i < lockedCount;
             return (
               <div
                 key={entry.id ?? i}
@@ -231,9 +238,13 @@ export function ProofThumbnailStrip({
                   <p style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {entry.name ?? "Uploaded document"}
                   </p>
-                  {entry.size ? <span style={{ fontSize: "0.8125rem", color: "#9ca3af", marginTop: 2, display: "block" }}>{fmtSize(entry.size)}</span> : null}
+                  {recoveryAmount && (
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#16a34a", marginTop: 2, display: "block" }}>
+                      {recoveryAmount}
+                    </span>
+                  )}
                 </div>
-                {onRemove && (
+                {onRemove && !isLocked && (
                   <button
                     onClick={() => onRemove(entry, i)}
                     style={{ width: 36, height: 36, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", flexShrink: 0 }}
@@ -241,6 +252,17 @@ export function ProofThumbnailStrip({
                   >
                     <TrashIcon size={18} />
                   </button>
+                )}
+                {isLocked && (
+                  <div
+                    style={{ width: 36, height: 36, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#d1d5db", flexShrink: 0 }}
+                    title="Locked after confirmation"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                      <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </div>
                 )}
               </div>
             );
@@ -291,7 +313,7 @@ export function ProofThumbnailStrip({
         </div>
       )}
 
-      {/* Save footer */}
+      {/* Save / Confirm receipt footer */}
       {staged.length > 0 && onSave && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid #fde68a" }}>
           <span style={{ fontSize: "0.8125rem", color: "#92400e", flex: 1 }}>
@@ -316,7 +338,7 @@ export function ProofThumbnailStrip({
                 setIsSaving(false);
               }, 900);
             }}
-            style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: isSaving ? "#4ade80" : "#16a34a", color: "#fff", fontSize: "0.875rem", fontWeight: 600, cursor: isSaving ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, minWidth: 120, justifyContent: "center", transition: "background 0.15s" }}
+            style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: isSaving ? "#4ade80" : "#16a34a", color: "#fff", fontSize: "0.875rem", fontWeight: 600, cursor: isSaving ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, minWidth: 140, justifyContent: "center", transition: "background 0.15s" }}
           >
             {isSaving ? (
               <>
@@ -331,7 +353,7 @@ export function ProofThumbnailStrip({
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                   <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Save upload
+                Confirm receipt
               </>
             )}
           </button>
