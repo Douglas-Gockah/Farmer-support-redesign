@@ -49,6 +49,7 @@ export function ProofThumbnailStrip({
   const [lightbox,   setLightbox]   = useState<{ url: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [staged,     setStaged]     = useState<StagedEntry[]>([]);
+  const [isSaving,   setIsSaving]   = useState(false);
 
   // All non-empty image URLs (committed + staged) — used for lightbox navigation
   const allImageUrls: string[] = [
@@ -297,22 +298,46 @@ export function ProofThumbnailStrip({
             {staged.length} file{staged.length > 1 ? "s" : ""} waiting to be saved
           </span>
           <button
-            onClick={() => setStaged([])}
-            style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
+            disabled={isSaving}
+            onClick={() => !isSaving && setStaged([])}
+            style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: isSaving ? "#d1d5db" : "#6b7280", fontSize: "0.875rem", fontWeight: 600, cursor: isSaving ? "default" : "pointer" }}
           >
             Discard
           </button>
           <button
-            onClick={() => { onSave(staged); setStaged([]); }}
-            style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+            disabled={isSaving}
+            onClick={() => {
+              if (isSaving) return;
+              setIsSaving(true);
+              const toSave = staged;
+              setTimeout(() => {
+                onSave(toSave);
+                setStaged([]);
+                setIsSaving(false);
+              }, 900);
+            }}
+            style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: isSaving ? "#4ade80" : "#16a34a", color: "#fff", fontSize: "0.875rem", fontWeight: 600, cursor: isSaving ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, minWidth: 120, justifyContent: "center", transition: "background 0.15s" }}
           >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Save upload
+            {isSaving ? (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+                  <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                Saving…
+              </>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Save upload
+              </>
+            )}
           </button>
         </div>
       )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* Lightbox overlay */}
       {lightbox && (
