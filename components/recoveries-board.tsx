@@ -2999,6 +2999,27 @@ function PartialRecoveryModal({
                                     }}
                                   />
 
+                                  {/* Proof upload timeline entries — appear directly below thumbnails */}
+                                  {(proofLogs[farmerId] ?? []).length > 0 && (
+                                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                                      {(proofLogs[farmerId] ?? []).map((log, li) => (
+                                        <div key={li} style={{ display: "flex", gap: 8 }}>
+                                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#dcfce7", border: "2px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                                              <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </div>
+                                          <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827", margin: "0 0 1px", lineHeight: 1.35 }}>
+                                              {log.by} uploaded proof of refund{log.farmerName ? ` for ${log.farmerName}` : ""}{log.amount ? ` — ${log.amount}` : ""}
+                                            </p>
+                                            <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: 0 }}>{fmtTimestamp(log.at)}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
                                   {/* New recovery upload — shown after confirmation */}
                                   {isConfirmed && (
                                     <button
@@ -3012,51 +3033,6 @@ function PartialRecoveryModal({
                                       </svg>
                                       Upload for new recovery
                                     </button>
-                                  )}
-
-                                  {/* Proof upload timeline entries */}
-                                  {(proofLogs[farmerId] ?? []).length > 0 && (
-                                    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                                      {(proofLogs[farmerId] ?? []).map((log, li) => (
-                                        <div key={li} style={{ display: "flex", gap: 8 }}>
-                                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#dcfce7", border: "2px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                                              <path d="M2 6l3 3 5-5" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                            </svg>
-                                          </div>
-                                          <div style={{ flex: 1, minWidth: 0 }}>
-                                            <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827", margin: "0 0 1px", lineHeight: 1.35 }}>
-                                              {log.by} uploaded proof of refund{log.farmerName ? ` for ${log.farmerName}` : ""}{log.amount ? ` — ${log.amount}` : ""}
-                                            </p>
-                                            <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "0 0 6px" }}>{fmtTimestamp(log.at)}</p>
-                                            {(log.fileUrls ?? []).length > 0 && (
-                                              <div style={{ display: "flex", gap: 5 }}>
-                                                {(log.fileUrls ?? []).map((url, fi) => (
-                                                  <button
-                                                    key={fi}
-                                                    onClick={() => {/* lightbox handled inside strip */}}
-                                                    style={{ width: 40, height: 40, borderRadius: 6, overflow: "hidden", border: "1px solid #d1fae5", padding: 0, cursor: "default", flexShrink: 0 }}
-                                                    title="Proof of payment"
-                                                  >
-                                                    <img src={url} alt="Proof of payment" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                  </button>
-                                                ))}
-                                                <span style={{ display: "flex", alignItems: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#059669", gap: 3 }}>
-                                                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3"/></svg>
-                                                  Proof of payment
-                                                </span>
-                                              </div>
-                                            )}
-                                            {(log.fileUrls ?? []).length === 0 && (
-                                              <span style={{ display: "flex", alignItems: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#059669", gap: 3 }}>
-                                                <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3"/></svg>
-                                                Proof of payment · {log.count} file{log.count !== 1 ? "s" : ""}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -3581,7 +3557,7 @@ function FullRecoveryModal({
                                 <span style={{ fontSize: "0.75rem", color: "#d1d5db", fontStyle: "italic" }}>No files uploaded</span>
                               )}
                               {(proofLogs[farmerId] ?? []).length > 0 && (
-                                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                                   {(proofLogs[farmerId] ?? []).map((log, li) => (
                                     <div key={li} style={{ display: "flex", gap: 8 }}>
                                       <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#dcfce7", border: "2px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
@@ -3593,11 +3569,7 @@ function FullRecoveryModal({
                                         <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#111827", margin: "0 0 1px", lineHeight: 1.35 }}>
                                           {log.by} uploaded proof of refund{log.farmerName ? ` for ${log.farmerName}` : ""}{log.amount ? ` — ${log.amount}` : ""}
                                         </p>
-                                        <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: "0 0 6px" }}>{fmtTimestamp(log.at)}</p>
-                                        <span style={{ display: "flex", alignItems: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#059669", gap: 3 }}>
-                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3"/></svg>
-                                          Proof of payment · {log.count} file{log.count !== 1 ? "s" : ""}
-                                        </span>
+                                        <p style={{ fontSize: "0.6875rem", color: "#9ca3af", margin: 0 }}>{fmtTimestamp(log.at)}</p>
                                       </div>
                                     </div>
                                   ))}
