@@ -1,58 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { FulfillmentRequest } from "@/components/kanban/types";
+import { useEffect, useState } from "react";
+import type { FulfillmentRequest, ActionRecord } from "@/components/kanban/types";
 import { initials, avatarColor } from "@/components/kanban/helpers";
 import { ActionTimeline } from "@/components/kanban/action-timeline";
+import { ProofThumbnailStrip } from "@/components/kanban/proof-thumbnail-strip";
+import type { StagedEntry } from "@/components/kanban/proof-thumbnail-strip";
 
 // ---------------------------------------------------------------------------
-// Group reconciliation record — covers all opted-out farmers at once
+// Types
 // ---------------------------------------------------------------------------
+
 interface ReconciliationRecord {
-  fileNames: string[];
-  comment:   string;
-}
-
-// ---------------------------------------------------------------------------
-// File chip
-// ---------------------------------------------------------------------------
-function FileChip({
-  fileName,
-  onRemove,
-}: {
-  fileName: string;
-  onRemove?: () => void;
-}) {
-  return (
-    <div
-      className="flex items-center gap-1.5 rounded-lg px-2 py-1"
-      style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", maxWidth: "100%" }}
-    >
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-        <rect x="2" y="1" width="10" height="14" rx="1.5" stroke="var(--green-600)" strokeWidth="1.4" />
-        <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--green-600)" strokeWidth="1.2" strokeLinecap="round" />
-      </svg>
-      <span
-        className="truncate"
-        style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)" }}
-        title={fileName}
-      >
-        {fileName}
-      </span>
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center transition-colors"
-          style={{ color: "var(--green-600)", background: "var(--green-100)" }}
-          aria-label={`Remove ${fileName}`}
-        >
-          <svg width="7" height="7" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
-    </div>
-  );
+  files:    StagedEntry[];
+  comment:  string;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,12 +32,12 @@ export default function FulfillmentOptOutModal({
   const refundPerFarmer = req.approvedAmountPerFarmer;
   const totalRefund     = farmers.length * refundPerFarmer;
 
-  // ── group reconciliation state ────────────────────────────────────────────
-  const [record,         setRecord]         = useState<ReconciliationRecord | null>(null);
-  const [pendingFiles,   setPendingFiles]   = useState<File[]>([]);
-  const [pendingComment, setPendingComment] = useState("");
+  // ── state ──────────────────────────────────────────────────────────────────
+  const [record,            setRecord]            = useState<ReconciliationRecord | null>(null);
+  const [savedProofEntries, setSavedProofEntries] = useState<StagedEntry[]>([]);
+  const [pendingComment,    setPendingComment]    = useState("");
+  const [localActions,      setLocalActions]      = useState<ActionRecord[]>([]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isReconciled = record !== null;
 
   // Close on Escape
@@ -87,35 +48,30 @@ export default function FulfillmentOptOutModal({
   }, [onClose]);
 
   // ── derived values ────────────────────────────────────────────────────────
-  const hasFiles   = pendingFiles.length > 0;
+  const hasFiles   = savedProofEntries.length > 0;
   const hasComment = pendingComment.trim().length > 0;
   const canSubmit  = hasFiles && hasComment;
 
   // ── handlers ──────────────────────────────────────────────────────────────
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const incoming = Array.from(e.target.files ?? []) as File[];
-    if (incoming.length > 0) {
-      setPendingFiles((prev) => {
-        const existingNames = new Set(prev.map((f) => f.name));
-        return [...prev, ...incoming.filter((f) => !existingNames.has(f.name))];
-      });
-    }
-    e.target.value = "";
-  }
-
-  function removeFile(name: string) {
-    setPendingFiles((prev) => prev.filter((f) => f.name !== name));
-  }
-
   function handleSubmit() {
     if (!canSubmit) return;
-    setRecord({ fileNames: pendingFiles.map((f) => f.name), comment: pendingComment.trim() });
+    setRecord({ files: savedProofEntries, comment: pendingComment.trim() });
+    setLocalActions([{
+      id:        "reconcile-" + Date.now(),
+      stage:     "opted_out",
+      actor:     "Douglas Gockah",
+      action:    "Refunds reconciled",
+      summary:   `${farmers.length} farmer${farmers.length !== 1 ? "s" : ""} covered · GHS ${totalRefund.toLocaleString()} total`,
+      timestamp: new Date().toISOString(),
+      type:      "default",
+    }]);
     onReconcile?.();
   }
 
   // ── left-panel meta ───────────────────────────────────────────────────────
   const agentColor    = avatarColor(req.agent);
   const agentInitials = initials(req.agent);
+  const allActions    = [...localActions, ...(req.actionHistory ?? [])];
 
   return (
     <>
@@ -240,9 +196,10 @@ export default function FulfillmentOptOutModal({
                 </div>
               </div>
 
-              {req.actionHistory && req.actionHistory.length > 0 && (
+              {/* Action timeline — includes local reconciliation entry once submitted */}
+              {allActions.length > 0 && (
                 <div>
-                  <ActionTimeline records={req.actionHistory} accordion />
+                  <ActionTimeline records={allActions} accordion />
                 </div>
               )}
             </div>
@@ -255,7 +212,7 @@ export default function FulfillmentOptOutModal({
                 {isReconciled ? (
                   /* Green completion banner */
                   <div style={{ borderRadius: 12, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px 16px" }}>
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-4">
                       <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                           <path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -268,13 +225,14 @@ export default function FulfillmentOptOutModal({
                         </p>
                       </div>
                     </div>
-                    {/* Proof files */}
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {record!.fileNames.map((name) => (
-                        <FileChip key={name} fileName={name} />
-                      ))}
+                    {/* Proof files — ProofThumbnailStrip in read-only mode */}
+                    <div style={{ marginBottom: 12 }}>
+                      <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                        Proof documents
+                      </p>
+                      <ProofThumbnailStrip entries={record!.files} />
                     </div>
-                    {/* Note */}
+                    {/* Reconciliation note */}
                     <div style={{ borderRadius: 8, background: "#fff", border: "1px solid #bbf7d0", padding: "10px 12px" }}>
                       <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Reconciliation note</p>
                       <p style={{ fontSize: "0.8125rem", color: "#374151", lineHeight: 1.5, margin: 0 }}>{record!.comment}</p>
@@ -291,7 +249,7 @@ export default function FulfillmentOptOutModal({
                       <div>
                         <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#92400e", margin: 0 }}>Refunds pending reconciliation</p>
                         <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "2px 0 0" }}>
-                          Upload proof documents and leave a note to reconcile all {farmers.length} farmer{farmers.length !== 1 ? "s" : ""} at once
+                          Upload and save proof documents, then leave a reconciliation note to complete
                         </p>
                       </div>
                     </div>
@@ -302,56 +260,25 @@ export default function FulfillmentOptOutModal({
                 {!isReconciled && (
                   <div className="space-y-4">
 
-                    {/* Step 1 — File upload */}
+                    {/* Step 1 — Staged proof upload */}
                     <div>
                       <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--gray-700)", marginBottom: 6 }}>
                         Step 1 — Upload proof documents
                       </p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileChange}
+                      <ProofThumbnailStrip
+                        entries={savedProofEntries}
+                        onSave={(staged) => setSavedProofEntries(prev => [...prev, ...staged])}
+                        onRemove={(_, idx) => setSavedProofEntries(prev => prev.filter((__, i) => i !== idx))}
+                        onRemoveAll={() => setSavedProofEntries([])}
                       />
-                      {pendingFiles.length > 0 ? (
-                        <div
-                          className="rounded-xl p-3 space-y-2"
-                          style={{ background: "#fff", border: "1.5px solid var(--green-200)" }}
-                        >
-                          <div className="flex flex-wrap gap-1.5">
-                            {pendingFiles.map((f) => (
-                              <FileChip key={f.name} fileName={f.name} onRemove={() => removeFile(f.name)} />
-                            ))}
-                          </div>
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors"
-                            style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--green-700)", background: "var(--green-50)", border: "1px dashed var(--green-300)" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--green-100)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--green-50)")}
-                          >
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                              <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                            </svg>
-                            Add more files
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full rounded-xl flex items-center justify-center gap-2 transition-colors"
-                          style={{ height: 64, border: "1.5px dashed var(--gray-300)", background: "#fff", color: "var(--gray-500)", fontSize: "0.8125rem", fontWeight: 600 }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--green-400)"; e.currentTarget.style.color = "var(--green-600)"; e.currentTarget.style.background = "var(--green-25)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gray-300)"; e.currentTarget.style.color = "var(--gray-500)"; e.currentTarget.style.background = "#fff"; }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 2v8M5.5 4.5L8 2l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      {hasFiles && (
+                        <p style={{ fontSize: "0.6875rem", color: "#16a34a", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6.5" stroke="#16a34a" strokeWidth="1.4"/>
+                            <path d="M5 8l2.5 2.5 4-4" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          Click to upload proof documents — multiple files allowed (PDF, JPG, PNG)
-                        </button>
+                          {savedProofEntries.length} file{savedProofEntries.length !== 1 ? "s" : ""} saved — proceed to add a reconciliation note
+                        </p>
                       )}
                     </div>
 
@@ -395,7 +322,7 @@ export default function FulfillmentOptOutModal({
                       onMouseLeave={(e) => { if (canSubmit) e.currentTarget.style.background = "var(--green-600)"; }}
                     >
                       {!hasFiles
-                        ? "Upload proof documents to continue"
+                        ? "Upload and save proof documents to continue"
                         : !hasComment
                         ? "Add a reconciliation note to continue"
                         : `Mark all ${farmers.length} farmer${farmers.length !== 1 ? "s" : ""} as reconciled`}
