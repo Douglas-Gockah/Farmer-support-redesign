@@ -2580,7 +2580,8 @@ function PartialRecoveryModal({
   onClose: () => void;
   timeframe: { start: Date; end: Date } | null;
 }) {
-  const [listOpen, setListOpen] = useState(true);
+  const [listOpen,         setListOpen]         = useState(true);
+  const [confirmedFarmers, setConfirmedFarmers] = useState<Record<string, boolean>>({});
 
   const bagWeightKg     = req.bagWeightKg ?? 100;
   const wantsDouble     = req.wantsDouble ?? false;
@@ -2609,7 +2610,7 @@ function PartialRecoveryModal({
   const totalAmount   = req.farmersSupported * req.amountPerFarmer;
 
   const cashFarmers       = recovered.filter(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
-  const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0);
+  const allProofsUploaded = cashFarmers.every(f => (cashProofs[f.id] ?? []).length > 0 && confirmedFarmers[f.id]);
   const canMarkFull       = pending.length === 0 && (cashFarmers.length === 0 || allProofsUploaded);
 
   // No auto-fire. canMarkFull becoming true shows the success state.
@@ -2877,11 +2878,17 @@ function PartialRecoveryModal({
                               </div>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                              {needsProof && (
-                                <span style={{ fontSize: "0.5625rem", fontWeight: 600, padding: "2px 7px", borderRadius: 10, background: hasProof ? "#dcfce7" : "#fef3c7", color: hasProof ? "#059669" : "#d97706" }}>
-                                  {hasProof ? "✓ Proof uploaded" : "Proof required"}
-                                </span>
-                              )}
+                              {needsProof && (() => {
+                                const isConfirmed = !!confirmedFarmers[farmerId];
+                                const bg    = isConfirmed ? "#dcfce7" : hasProof ? "#dbeafe" : "#fef3c7";
+                                const color = isConfirmed ? "#059669" : hasProof ? "#1d4ed8" : "#d97706";
+                                const label = isConfirmed ? "✓ Confirmed" : hasProof ? "✓ Proof uploaded" : "Proof required";
+                                return (
+                                  <span style={{ fontSize: "0.5625rem", fontWeight: 600, padding: "2px 7px", borderRadius: 10, background: bg, color }}>
+                                    {label}
+                                  </span>
+                                );
+                              })()}
                               <div style={{ textAlign: "right", width: 120 }}>
                                 {mode === "in_kind" && (
                                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
@@ -2911,43 +2918,68 @@ function PartialRecoveryModal({
                           </div>
 
                           {/* Proof of refund upload — cash/mixed farmers only */}
-                          {needsProof && (
-                            <div style={{ padding: "12px 16px 16px", borderBottom: "1px solid #f3f4f6", background: "#f8fafc" }}>
-                              <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 8px" }}>
-                                Proof of refund
-                              </p>
-                              <ProofThumbnailStrip
-                                entries={cashProofs[farmerId] ?? []}
-                                onSave={(staged) => {
-                                  const newEntries = staged.map(s => ({ id: s.id, url: s.url, isImage: s.isImage, name: s.name, size: s.size }));
-                                  setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...newEntries] }));
-                                  onProofLog(farmerId, staged.length, staged.map(s => s.id));
-                                }}
-                                onRemove={(entry, idx) => {
-                                  setCashProofs(prev => ({
-                                    ...prev,
-                                    [farmerId]: (prev[farmerId] ?? []).filter((_, i) => i !== idx),
-                                  }));
-                                  if (entry.id) onRemoveProofLog(farmerId, entry.id);
-                                }}
-                                onRemoveAll={() => {
-                                  setCashProofs(prev => ({ ...prev, [farmerId]: [] }));
-                                  onClearProofLogs(farmerId);
-                                }}
-                              />
-                              {(proofLogs[farmerId] ?? []).map((log, li) => (
-                                <div key={li} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
-                                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af", flexShrink: 0 }}>
-                                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
-                                    <path d="M8 5v3.2l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                                  </svg>
-                                  <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>
-                                    <strong>{log.by}</strong> uploaded {log.count} document{log.count !== 1 ? "s" : ""} · {fmtTimestamp(log.at)}
-                                  </span>
+                          {needsProof && (() => {
+                            const isConfirmed = !!confirmedFarmers[farmerId];
+                            return (
+                              <div style={{ padding: "12px 16px 16px", borderBottom: "1px solid #f3f4f6", background: isConfirmed ? "#f0fdf4" : "#f8fafc" }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                                    Proof of refund
+                                  </p>
+                                  {isConfirmed && (
+                                    <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.625rem", fontWeight: 700, color: "#059669", background: "#dcfce7", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                      Receipt confirmed
+                                    </span>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                                <ProofThumbnailStrip
+                                  entries={cashProofs[farmerId] ?? []}
+                                  onSave={isConfirmed ? undefined : (staged) => {
+                                    const newEntries = staged.map(s => ({ id: s.id, url: s.url, isImage: s.isImage, name: s.name, size: s.size }));
+                                    setCashProofs(prev => ({ ...prev, [farmerId]: [...(prev[farmerId] ?? []), ...newEntries] }));
+                                    onProofLog(farmerId, staged.length, staged.map(s => s.id));
+                                  }}
+                                  onRemove={isConfirmed ? undefined : (entry, idx) => {
+                                    setCashProofs(prev => ({
+                                      ...prev,
+                                      [farmerId]: (prev[farmerId] ?? []).filter((_, i) => i !== idx),
+                                    }));
+                                    if (entry.id) onRemoveProofLog(farmerId, entry.id);
+                                  }}
+                                  onRemoveAll={isConfirmed ? undefined : () => {
+                                    setCashProofs(prev => ({ ...prev, [farmerId]: [] }));
+                                    onClearProofLogs(farmerId);
+                                  }}
+                                />
+                                {/* Confirm receipt CTA — shown after files are saved, before confirmation */}
+                                {hasProof && !isConfirmed && (
+                                  <button
+                                    onClick={() => setConfirmedFarmers(prev => ({ ...prev, [farmerId]: true }))}
+                                    style={{ marginTop: 10, width: "100%", height: 36, borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background 0.15s" }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = "#15803d"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = "#16a34a"; }}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                      <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    Confirm receipt
+                                  </button>
+                                )}
+                                {(proofLogs[farmerId] ?? []).map((log, li) => (
+                                  <div key={li} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: "#9ca3af", flexShrink: 0 }}>
+                                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                                      <path d="M8 5v3.2l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                                    </svg>
+                                    <span style={{ fontSize: "0.6875rem", color: "#6b7280" }}>
+                                      <strong>{log.by}</strong> uploaded {log.count} document{log.count !== 1 ? "s" : ""} · {fmtTimestamp(log.at)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </React.Fragment>
                       );
                     })}
@@ -3090,7 +3122,9 @@ function PartialRecoveryModal({
               <div style={{ flex: 1 }}>
                 {!canMarkFull && pending.length === 0 && cashFarmers.length > 0 && (
                   <p style={{ fontSize: "0.75rem", color: "#d97706", margin: 0 }}>
-                    Upload proof of refund for all cash payment farmers to complete recovery.
+                    {cashFarmers.some(f => (cashProofs[f.id] ?? []).length === 0)
+                      ? "Upload proof of refund for all cash payment farmers to complete recovery."
+                      : "Confirm receipt for all cash payment farmers to complete recovery."}
                   </p>
                 )}
                 {pending.length > 0 && (
