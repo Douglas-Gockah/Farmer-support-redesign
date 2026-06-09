@@ -525,6 +525,7 @@ function RecoveryCard({
   ctaLabel = "Review",
   ctaColor = "var(--green-600)",
   ctaHoverColor = "var(--green-700, #15803d)",
+  ctaOutline = false,
   subText,
 }: {
   req: RecoveryRequest;
@@ -532,6 +533,7 @@ function RecoveryCard({
   ctaLabel?: string;
   ctaColor?: string;
   ctaHoverColor?: string;
+  ctaOutline?: boolean;
   subText?: string;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -619,12 +621,18 @@ function RecoveryCard({
           onClick={(e) => { e.stopPropagation(); onReview(); }}
           style={{
             width: "100%", height: 36, borderRadius: 8,
-            border: "none", background: ctaColor,
-            color: "#fff", fontSize: "0.875rem", fontWeight: 600,
+            border: ctaOutline ? `1.5px solid var(--green-600)` : "none",
+            background: ctaOutline ? "transparent" : ctaColor,
+            color: ctaOutline ? "var(--green-600)" : "#fff",
+            fontSize: "0.875rem", fontWeight: 600,
             cursor: "pointer", transition: "background 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = ctaHoverColor)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = ctaColor)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = ctaOutline ? "var(--green-50, #f0fdf4)" : ctaHoverColor;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = ctaOutline ? "transparent" : ctaColor;
+          }}
         >
           {ctaLabel}
         </button>
@@ -4176,14 +4184,9 @@ export default function RecoveriesBoard() {
             const isPartialCol          = mobileColId === "rec_partial";
             const isFullCol             = mobileColId === "rec_full";
             const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol || isPartialCol || isFullCol;
-            const ctaColor =
-              isActivatedCol ? "#2563eb" :
-              isCanceledCol  ? "#6b7280" :
-              "var(--green-600)";
-            const ctaHoverColor =
-              isActivatedCol ? "#1d4ed8" :
-              isCanceledCol  ? "#4b5563" :
-              "var(--green-700, #15803d)";
+            const ctaColor     = "var(--green-600)";
+            const ctaHoverColor = "var(--green-700, #15803d)";
+            const ctaOutline    = isCanceledCol;
             return cards.map((r) => {
               const farmers = r.farmersList ?? [];
               const recovered = farmers.filter((f) => f.recoveredKg != null);
@@ -4198,6 +4201,7 @@ export default function RecoveriesBoard() {
                   ctaLabel={isViewOnly ? "View details" : "Review"}
                   ctaColor={ctaColor}
                   ctaHoverColor={ctaHoverColor}
+                  ctaOutline={ctaOutline}
                   subText={cardSubText}
                   onReview={() => {
                     if (isActivatedCol)           setActivatedReq(r);
@@ -4230,15 +4234,10 @@ export default function RecoveriesBoard() {
             const isCanceledCol        = col.id === "rec_rejected";
             const isPartialCol         = col.id === "rec_partial";
             const isFullCol            = col.id === "rec_full";
-            const isViewOnly = isActivatedCol || isPendingRecoveryCol || isCanceledCol || isPartialCol || isFullCol;
-            const colCtaColor =
-              isActivatedCol ? "#2563eb" :
-              isCanceledCol  ? "#6b7280" :
-              "var(--green-600)";
-            const colCtaHoverColor =
-              isActivatedCol ? "#1d4ed8" :
-              isCanceledCol  ? "#4b5563" :
-              "var(--green-700, #15803d)";
+            const isViewOnly       = isActivatedCol || isPendingRecoveryCol || isCanceledCol || isPartialCol || isFullCol;
+            const colCtaColor      = "var(--green-600)";
+            const colCtaHoverColor = "var(--green-700, #15803d)";
+            const colCtaOutline    = isCanceledCol;
             return (
               <div
                 key={col.id}
@@ -4269,6 +4268,7 @@ export default function RecoveriesBoard() {
                               ctaLabel={isViewOnly ? "View details" : "Review"}
                               ctaColor={colCtaColor}
                               ctaHoverColor={colCtaHoverColor}
+                              ctaOutline={colCtaOutline}
                               subText={_subText}
                               onReview={() => {
                                 if (isActivatedCol)            setActivatedReq(r);
