@@ -2496,11 +2496,6 @@ function RecoveryProgressSummary({
   const balanceBags = totalExpected - totalRecoveredKg;
   const balanceCash = expectedCashSum - recoveredCashBase;
 
-  const today = new Date();
-  const isWithinPeriod = timeframe ? today <= timeframe.end : true;
-  const interestRatePct = isWithinPeriod ? 0 : Math.round(INTEREST_RATE * 100);
-  const penaltyRatePct  = Math.round(DEFAULT_PENALTY * 100);
-
   const hasCashFarmers = recovered.some(f => f.recoveryMode === "cash" || f.recoveryMode === "mixed");
 
   function fmtKg(n: number) {
@@ -2523,17 +2518,6 @@ function RecoveryProgressSummary({
         {/* Period header */}
         <div style={{ background: "#f9fafb", padding: "10px 16px", borderBottom: "1px solid #e5e7eb" }}>
           <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#374151", margin: 0 }}>{periodLabel}</p>
-        </div>
-        {/* Rates */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid #e5e7eb" }}>
-          <div style={{ padding: "12px 16px", borderRight: "1px solid #e5e7eb" }}>
-            <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: "0 0 4px" }}>Interest rate within recovery period</p>
-            <p style={{ fontSize: "1.25rem", fontWeight: 700, color: interestRatePct === 0 ? "#059669" : "#d97706", margin: 0 }}>{interestRatePct}%</p>
-          </div>
-          <div style={{ padding: "12px 16px" }}>
-            <p style={{ fontSize: "0.75rem", color: "#9ca3af", margin: "0 0 4px" }}>Penalty rate on cash sum</p>
-            <p style={{ fontSize: "1.25rem", fontWeight: 700, color: "#d97706", margin: 0 }}>{penaltyRatePct}%</p>
-          </div>
         </div>
         {/* Table header */}
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", background: "#f9fafb", borderBottom: "1px solid #e5e7eb", padding: "7px 16px", gap: 8 }}>
@@ -2785,6 +2769,41 @@ function PartialRecoveryModal({
                   <span style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>
                     {pending.length} still pending
                   </span>
+                </div>
+              </div>
+
+              {/* Applicable rates */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Applicable rates
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" stroke="#d97706" strokeWidth="1.5" />
+                          <path d="M8 5v4M8 11v.5" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interest rate</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#92400e", margin: 0, lineHeight: 1 }}>{INTEREST_RATE * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "4px 0 0", fontWeight: 500 }}>per month</p>
+                  </div>
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Default penalty</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#7f1d1d", margin: 0, lineHeight: 1 }}>{DEFAULT_PENALTY * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: "4px 0 0", fontWeight: 500 }}>on cash disbursed</p>
+                  </div>
                 </div>
               </div>
 
@@ -3398,6 +3417,41 @@ function FullRecoveryModal({
                   <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
                     <p style={{ fontSize: "0.6875rem", color: "#6b7280", margin: "0 0 2px" }}>Total recovery value</p>
                     <p style={{ fontSize: "1.125rem", fontWeight: 800, color: "#059669", margin: 0 }}>GHS {totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Applicable rates */}
+              <div>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Applicable rates
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ borderRadius: 12, border: "1px solid #fde68a", background: "#fffbeb", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" stroke="#d97706" strokeWidth="1.5" />
+                          <path d="M8 5v4M8 11v.5" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interest rate</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#92400e", margin: 0, lineHeight: 1 }}>{INTEREST_RATE * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b45309", margin: "4px 0 0", fontWeight: 500 }}>per month</p>
+                  </div>
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff5f5", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2L2 13h12L8 2z" stroke="#dc2626" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M8 7v3M8 11.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Default penalty</span>
+                    </div>
+                    <p style={{ fontSize: "1.375rem", fontWeight: 800, color: "#7f1d1d", margin: 0, lineHeight: 1 }}>{DEFAULT_PENALTY * 100}%</p>
+                    <p style={{ fontSize: "0.75rem", color: "#b91c1c", margin: "4px 0 0", fontWeight: 500 }}>on cash disbursed</p>
                   </div>
                 </div>
               </div>
