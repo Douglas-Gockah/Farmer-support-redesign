@@ -10,11 +10,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
       style={{ height: 64, flexShrink: 0 }}
     >
       {/* Left: hamburger (mobile only) + module title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Hamburger — visible only on mobile */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+          className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 transition-colors shrink-0"
           aria-label="Open navigation"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -22,7 +22,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </svg>
         </button>
 
-        <h1 className="text-[20px] lg:text-[22px] font-bold text-gray-900 tracking-tight select-none">
+        <h1 className="text-[20px] lg:text-[22px] font-bold text-gray-900 tracking-tight select-none truncate">
           Farmer support
         </h1>
       </div>
