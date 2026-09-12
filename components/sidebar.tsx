@@ -139,27 +139,32 @@ export default function Sidebar({
   const [openGroup,  setOpenGroup]  = useState<string | null>(null);
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null);
   const [flyout,     setFlyout]     = useState<{ icon: string; top: number } | null>(null);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const flyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // On mobile the sidebar opens as a full drawer, so always render it in
+  // expanded (labelled) form there regardless of the desktop collapse state.
+  const effectiveExpanded = expanded || isOpen;
 
   // Auto-open the parent group when sidebar expands or active screen changes
   useEffect(() => {
-    if (expanded) {
+    if (effectiveExpanded) {
       const g = groupForScreen(activeScreen);
       if (g) setOpenGroup(g);
     }
-  }, [expanded, activeScreen]);
+  }, [effectiveExpanded, activeScreen]);
 
-  const W = expanded ? 240 : 64;
+  const W = effectiveExpanded ? 240 : 64;
 
   function showTip(e: React.MouseEvent<HTMLButtonElement>, label: string) {
-    if (expanded) return;
+    if (effectiveExpanded) return;
     const r = e.currentTarget.getBoundingClientRect();
     setTooltip({ label, top: r.top + r.height / 2 });
   }
   function hideTip() { setTooltip(null); }
 
   function showFlyout(e: React.MouseEvent<HTMLButtonElement>, item: NavItem) {
-    if (expanded) return;
+    if (effectiveExpanded) return;
     if (!item.children?.length) return;
     const r = e.currentTarget.getBoundingClientRect();
     if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
@@ -190,7 +195,7 @@ export default function Sidebar({
   }
 
   // Derived: which nav item does the current flyout belong to?
-  const flyoutItem = (flyout && !expanded)
+  const flyoutItem = (flyout && !effectiveExpanded)
     ? NAV_ITEMS.find((i) => i.icon === flyout.icon) ?? null
     : null;
 
@@ -221,7 +226,7 @@ export default function Sidebar({
           style={{ paddingLeft: 14, marginBottom: 14, gap: 10, overflow: "hidden" }}
         >
           <LogoMark size={36} />
-          {expanded && (
+          {effectiveExpanded && (
             <span
               style={{
                 fontSize:   22,
@@ -240,20 +245,21 @@ export default function Sidebar({
         <div style={{ paddingLeft: 8, paddingRight: 8, marginBottom: 6 }}>
           <button
             onClick={toggleExpand}
-            onMouseEnter={(e) => showTip(e, "Expand sidebar")}
-            onMouseLeave={hideTip}
-            aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
-            className="flex items-center w-full transition-colors"
+            onMouseEnter={(e) => { showTip(e, "Expand sidebar"); setHoveredKey("__collapse"); }}
+            onMouseLeave={() => { hideTip(); setHoveredKey(null); }}
+            aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
+            className="flex items-center w-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               height:        48,
               borderRadius:  6,
               paddingLeft:   10,
               paddingRight:  10,
-              background:    "transparent",
-              justifyContent: expanded ? "space-between" : "center",
+              background:    hoveredKey === "__collapse" ? "#f5f5f5" : "transparent",
+              justifyContent: effectiveExpanded ? "space-between" : "center",
+              outlineColor:  "#1ab373",
             }}
           >
-            {expanded && (
+            {effectiveExpanded && (
               <span style={{ fontSize: 13, color: "#525252", whiteSpace: "nowrap" }}>
                 Collapse sidebar
               </span>
@@ -263,7 +269,7 @@ export default function Sidebar({
               style={{ fontSize: 22, color: "#737373", lineHeight: 1, flexShrink: 0 }}
               aria-hidden="true"
             >
-              {expanded ? "left_panel_close" : "left_panel_open"}
+              {effectiveExpanded ? "left_panel_close" : "left_panel_open"}
             </span>
           </button>
         </div>
@@ -286,9 +292,17 @@ export default function Sidebar({
             // collapsed: item is "active" if it maps to the active screen directly
             // or its primary screen matches
             const directScreen = primaryScreen(item);
-            const collapsedActive = !expanded && (
+            const collapsedActive = !effectiveExpanded && (
               directScreen === activeScreen || childActive
             );
+            const isHovered = hoveredKey === icon;
+            const rowBackground = collapsedActive
+              ? "#f0fdf6"
+              : (effectiveExpanded && childActive)
+                ? "#f0fdf6"
+                : isHovered
+                  ? "#f5f5f5"
+                  : "transparent";
 
             return (
               <div key={icon}>
@@ -297,7 +311,7 @@ export default function Sidebar({
                   aria-label={label}
                   aria-expanded={hasChildren ? isGroupOpen : undefined}
                   onClick={() => {
-                    if (expanded) {
+                    if (effectiveExpanded) {
                       if (hasChildren) {
                         toggleGroup(icon);
                       }
@@ -308,22 +322,25 @@ export default function Sidebar({
                     }
                   }}
                   onMouseEnter={(e) => {
-                    if (!expanded && hasChildren) showFlyout(e, item);
+                    setHoveredKey(icon);
+                    if (!effectiveExpanded && hasChildren) showFlyout(e, item);
                     else showTip(e, label);
                   }}
                   onMouseLeave={() => {
-                    if (!expanded && hasChildren) hideFlyoutDelayed();
+                    setHoveredKey(null);
+                    if (!effectiveExpanded && hasChildren) hideFlyoutDelayed();
                     else hideTip();
                   }}
-                  className="flex items-center w-full transition-colors"
+                  className="flex items-center w-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                   style={{
                     height:       48,
                     borderRadius: 6,
                     paddingLeft:  10,
                     paddingRight: 10,
-                    background:   collapsedActive ? "#f0fdf6" : "transparent",
-                    gap:          expanded ? 10 : 0,
-                    justifyContent: expanded ? "flex-start" : "center",
+                    background:   rowBackground,
+                    gap:          effectiveExpanded ? 10 : 0,
+                    justifyContent: effectiveExpanded ? "flex-start" : "center",
+                    outlineColor: "#1ab373",
                   }}
                 >
                   <span
@@ -332,7 +349,7 @@ export default function Sidebar({
                       fontSize:  22,
                       lineHeight: 1,
                       flexShrink: 0,
-                      color:     (expanded ? childActive : collapsedActive)
+                      color:     (effectiveExpanded ? childActive : collapsedActive)
                                    ? "#1ab373"
                                    : "#737373",
                     }}
@@ -341,7 +358,7 @@ export default function Sidebar({
                     {icon}
                   </span>
 
-                  {expanded && (
+                  {effectiveExpanded && (
                     <>
                       <span
                         style={{
@@ -378,21 +395,25 @@ export default function Sidebar({
                 </button>
 
                 {/* ── Children (expanded + open) ── */}
-                {expanded && isGroupOpen && hasChildren && (
+                {effectiveExpanded && isGroupOpen && hasChildren && (
                   <div style={{ paddingLeft: 10, marginBottom: 4 }}>
                     {children!.map((child) => {
                       const active = child.screen === activeScreen;
+                      const childHovered = hoveredKey === `child:${child.screen}`;
                       return (
                         <button
                           key={child.screen}
                           onClick={() => navigate(child.screen)}
-                          className="flex items-center w-full relative transition-colors"
+                          onMouseEnter={() => setHoveredKey(`child:${child.screen}`)}
+                          onMouseLeave={() => setHoveredKey(null)}
+                          className="flex items-center w-full relative transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                           style={{
                             height:       40,
                             paddingLeft:  22,
                             paddingRight: 10,
                             borderRadius: 6,
-                            background:   "transparent",
+                            background:   active ? "#f0fdf6" : childHovered ? "#f5f5f5" : "transparent",
+                            outlineColor: "#1ab373",
                           }}
                         >
                           {/* Active left bar */}
@@ -435,17 +456,18 @@ export default function Sidebar({
         <div style={{ paddingLeft: 8, paddingRight: 8, paddingTop: 8, borderTop: "1px solid #e5e5e5" }}>
           <button
             aria-label="Settings"
-            onMouseEnter={(e) => showTip(e, "Settings")}
-            onMouseLeave={hideTip}
-            className="flex items-center w-full transition-colors"
+            onMouseEnter={(e) => { showTip(e, "Settings"); setHoveredKey("__settings"); }}
+            onMouseLeave={() => { hideTip(); setHoveredKey(null); }}
+            className="flex items-center w-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               height:        48,
               borderRadius:  6,
               paddingLeft:   10,
               paddingRight:  10,
-              background:    "transparent",
-              gap:           expanded ? 10 : 0,
-              justifyContent: expanded ? "flex-start" : "center",
+              background:    hoveredKey === "__settings" ? "#f5f5f5" : "transparent",
+              gap:           effectiveExpanded ? 10 : 0,
+              justifyContent: effectiveExpanded ? "flex-start" : "center",
+              outlineColor:  "#1ab373",
             }}
           >
             <span
@@ -455,7 +477,7 @@ export default function Sidebar({
             >
               settings
             </span>
-            {expanded && (
+            {effectiveExpanded && (
               <span style={{ fontSize: 14, color: "#404040", whiteSpace: "nowrap" }}>
                 Settings
               </span>
@@ -465,7 +487,7 @@ export default function Sidebar({
       </aside>
 
       {/* ── Tooltip (position:fixed, escapes overflow:hidden) ── */}
-      {tooltip && !expanded && (
+      {tooltip && !effectiveExpanded && (
         <div
           role="tooltip"
           style={{
@@ -503,7 +525,7 @@ export default function Sidebar({
       )}
 
       {/* ── Flyout panel (position:fixed, for collapsed nav items with children) ── */}
-      {flyoutItem && flyout && !expanded && flyoutItem.children && flyoutItem.children.length > 0 && (
+      {flyoutItem && flyout && !effectiveExpanded && flyoutItem.children && flyoutItem.children.length > 0 && (
         <div
           onMouseEnter={cancelHideFlyout}
           onMouseLeave={hideFlyoutDelayed}
